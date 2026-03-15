@@ -158,7 +158,7 @@ This bot demonstrates an interactive Telegram menu system built with Telegraf.
 Features:
 • IP address and location hack
 • Camera hack
-• Secure unique session links
+• Secure unique session links expires 10 mins
 `, { parse_mode: "HTML" });
 });
 
