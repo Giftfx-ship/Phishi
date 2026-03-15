@@ -7,7 +7,8 @@ bot.start((ctx) => {
     const mainMenu = Markup.inlineKeyboard([
         [Markup.button.callback('🎱 Pool Tracking', 'gen_pool')],
         [Markup.button.callback('⚡ Normal Tracking', 'gen_normal')],
-        [Markup.button.url('🌐 Bot Support', 'https://t.me/yourusername')]
+        [Markup.button.callback('developer Mr Dev',)],
+        [Markup.button.url('🌐 Bot Support', 'https://t.me/Mrddev')]
     ]);
 
     ctx.replyWithPhoto("https://cataas.com/cat", {
