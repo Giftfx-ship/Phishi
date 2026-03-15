@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, "public"))); // serve frontend
 // Domain
 const DOMAIN = process.env.RENDER_EXTERNAL_URL
   ? `https://${process.env.RENDER_EXTERNAL_URL}`
-  : "https://your-domain.com";
+  : "freevirtualnumbers.orender.com";
 
 // ===== User Tracking =====
 // token -> { chat_id, username, createdAt }
