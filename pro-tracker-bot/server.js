@@ -48,7 +48,10 @@ function mainMenu() {
       Markup.button.callback("🧠 Info", "info")
     ],
     [Markup.button.callback("👨‍💻 Developer", "dev")],
-    [Markup.button.url("🌐 Support Channel", "https://t.me/Mrddev")]
+    [
+      Markup.button.url("🌐 Support Channel", "https://t.me/Mrddev"),
+      Markup.button.url("🌐 DevX Tech Zone", "https://t.me/devxtechzone")
+    ]
   ]);
 }
 
