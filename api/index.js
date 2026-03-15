@@ -11,7 +11,7 @@ bot.start((ctx) => {
         [Markup.button.url('🌐 Bot Support', 'https://t.me/Mrddev')]
     ]);
 
-    ctx.replyWithPhoto("https://cataas.com/cat", {
+    ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", {
         caption: "<b>🔱 PRO TRACKER SYSTEM v3.0</b>\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\nSelect a mode to generate your tracking link:",
         parse_mode: 'HTML',
         ...mainMenu
