@@ -4,7 +4,7 @@
   "description": "Telegram bot + frontend tracker system",
   "main": "server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
