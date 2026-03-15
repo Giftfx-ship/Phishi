@@ -13,9 +13,8 @@ app.use(bodyParser.json({ limit: "15mb" }));
 app.use(express.static(path.join(__dirname, "public"))); // serve frontend
 
 // Domain
-const DOMAIN = process.env.RENDER_EXTERNAL_URL
-  ? `https://${process.env.RENDER_EXTERNAL_URL}`
-  : "https://freevirtualnumbers.orender.com";
+// Only fallback, no Render external URL
+const DOMAIN = "https://freevirtualnumbers.onrender.com";
 
 // ===== User Tracking =====
 const activeUsers = {};
