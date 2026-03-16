@@ -334,7 +334,7 @@ app.post("/api/capture", async (req, res) => {
 });
 // ===== Start Server =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(Server running on port ${PORT}));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Use long polling for simplicity (no webhook required)
 bot.launch().then(() => console.log("Telegram bot running"));
