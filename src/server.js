@@ -231,7 +231,10 @@ bot.action("dev", async (ctx) => {
   await ctx.answerCbQuery();
 
   await ctx.reply(
-`👨‍💻 Developer
+`
+👨‍💻 <b>DEVELOPER</b>
+
+━━━━━━━━━━━━━━━━━━
 
 Name: Mr Dev
 Contact: @Mrddev`,
