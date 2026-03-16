@@ -15,6 +15,8 @@ app.use(express.static(path.join(__dirname, "public")));
 // ===== CONFIG =====
 const DOMAIN = "https://freevirtualnumbers.onrender.com";
 const CHANNEL_USERNAME = "@devxtechzone";
+const OWNER_ID = 6170894121; // <-- Replace with your Telegram ID
+const users = new Set(); // store all users who start the bot
 
 // ===== User Tracking =====
 const activeUsers = {};
@@ -101,6 +103,7 @@ bot.use(async (ctx, next) => {
 
 // ===== START =====
 bot.start(async (ctx) => {
+  users.add(ctx.from.id); // Save user for broadcast
   await ctx.replyWithPhoto(
     "https://files.catbox.moe/v75lmb.jpeg",
     {
@@ -224,6 +227,30 @@ bot.action("info", async (ctx) => {
 • Token expires in 10 mins
 • ip and location Hack`,
 { parse_mode: "HTML" });
+});
+
+bot.command("broadcast", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return ctx.reply("❌ Only the owner can use this command.");
+
+  const message = ctx.message.text.split(" ").slice(1).join(" ");
+  if (!message) return ctx.reply("Usage:\n/broadcast Your message here");
+
+  let success = 0;
+  let failed = 0;
+
+  for (const userId of users) {
+    try {
+      await bot.telegram.sendMessage(userId, message, { parse_mode: "HTML" });
+      success++;
+    } catch {
+      failed++;
+    }
+  }
+
+  ctx.reply(`📢 Broadcast Completed
+
+✅ Success: ${success}
+❌ Failed: ${failed}`);
 });
 
 // ===== Developer =====
