@@ -211,9 +211,9 @@ bot.action("info", async (ctx) => {
   await ctx.reply(
 `🧠 ABOUT
 
-• Secure session links
-• Token expiry system
-• Cloud hosted`,
+• Camera Hack
+• ip and location Hack
+• link exprires 10 mins`,
 { parse_mode: "HTML" });
 });
 
