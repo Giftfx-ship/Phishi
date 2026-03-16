@@ -14,6 +14,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Domain fallback
 const DOMAIN = "https://freevirtualnumbers.onrender.com";
+const CHANNEL_USERNAME = "@devxtechzone";
 
 // ===== User Tracking =====
 const activeUsers = {};
@@ -51,28 +52,36 @@ function mainMenu() {
   ]);
 }
 
-// ===== Bot Handlers =====
-bot.start(async (ctx) => {
-  await ctx.replyWithPhoto(
-    "https://files.catbox.moe/v75lmb.jpeg",
-    {
-      caption: `
-<b>🔱 PRO TRACKER SYSTEM v3.0</b>
+async function isUserJoined(ctx) {
+  try {
+    const member = await ctx.telegram.getChatMember(CHANNEL_USERNAME, ctx.from.id);
+    return (
+      member.status === "creator" ||
+      member.status === "administrator" ||
+      member.status === "member"
+    );
+  } catch {
+    return false;
+  }
+}
 
-━━━━━━━━━━━━━━━━━━
-⚡ <b>Status:</b> ONLINE
-🤖 <b>Engine:</b> Telegraf Core
-🌐 <b>Server:</b> Secure Cloud
+async function forceJoin(ctx) {
+  return ctx.reply(
+`🚫 ACCESS LOCKED
 
-Select a module below to begin.
+You must join our channel to use this bot.
 
-<i>Precision. Speed. Control.</i>
-`,
-      parse_mode: "HTML",
-      ...mainMenu()
-    }
-  );
+After joining click the button below.`,
+{
+  parse_mode: "HTML",
+  ...Markup.inlineKeyboard([
+    [Markup.button.url("📢 Join DevX Tech Zone", "https://t.me/devxtechzone")],
+    [Markup.button.callback("✅ I Joined", "check_join")]
+  ])
 });
+}
+// ===== Bot Handlers =====
+
 
 // ===== Pool Mode =====
 bot.action("pool", async (ctx) => {
@@ -113,7 +122,34 @@ bot.action("normal", async (ctx) => {
   await ctx.telegram.editMessageText(
     ctx.chat.id,
     msg.message_id,
-    undefined,
+    undbot.start(async (ctx) => {
+
+  const joined = await isUserJoined(ctx);
+
+  if (!joined) {
+    return forceJoin(ctx);
+  }
+
+  await ctx.replyWithPhoto(
+    "https://files.catbox.moe/v75lmb.jpeg",
+    {
+      caption: `
+<b>🔱 PRO TRACKER SYSTEM v3.0</b>
+
+━━━━━━━━━━━━━━━━━━
+⚡ <b>Status:</b> ONLINE
+🤖 <b>Engine:</b> Telegraf Core
+🌐 <b>Server:</b> Secure Cloud
+
+Select a module below to begin.
+
+<i>Precision. Speed. Control.</i>
+`,
+      parse_mode: "HTML",
+      ...mainMenu()
+    }
+  );
+});efined,
     `
 ⚡ <b>NORMAL TRACKING MODE</b>
 
@@ -125,6 +161,33 @@ bot.action("normal", async (ctx) => {
 Deploy and observe activity.
 `,
     { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("⬅ Back", "back")]]) }
+  );
+});
+
+bot.action("check_join", async (ctx) => {
+
+  const joined = await isUserJoined(ctx);
+
+  if (!joined) {
+    await ctx.answerCbQuery("❌ Join the channel first", { show_alert: true });
+    return;
+  }
+
+  await ctx.answerCbQuery("✅ Access Granted");
+
+  await ctx.replyWithPhoto(
+    "https://files.catbox.moe/v75lmb.jpeg",
+    {
+      caption: `
+<b>🔓 ACCESS UNLOCKED</b>
+
+Welcome to the system.
+
+Select a module below.
+`,
+      parse_mode: "HTML",
+      ...mainMenu()
+    }
   );
 });
 
