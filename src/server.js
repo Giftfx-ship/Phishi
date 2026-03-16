@@ -37,7 +37,6 @@ function generateToken() {
 async function isUserJoined(ctx) {
   try {
     const member = await ctx.telegram.getChatMember(CHANNEL_USERNAME, ctx.from.id);
-
     return (
       member.status === "creator" ||
       member.status === "administrator" ||
@@ -48,18 +47,20 @@ async function isUserJoined(ctx) {
   }
 }
 
+// ===== Force Join / Access Locked Message =====
 async function forceJoin(ctx) {
   return ctx.reply(
 `🚫 ACCESS LOCKED
 
 You must join our channel before using this bot.`,
-{
-  parse_mode: "HTML",
-  ...Markup.inlineKeyboard([
-    [Markup.button.url("📢 Join DevX Tech Zone", "https://t.me/devxtechzone")],
-    [Markup.button.callback("✅ I Joined", "check_join")]
-  ])
-});
+    {
+      parse_mode: "HTML",
+      ...Markup.inlineKeyboard([
+        [Markup.button.url("📢 Join DevX Tech Zone", "https://t.me/devxtechzone")],
+        [Markup.button.callback("✅ I Joined", "check_join")]
+      ])
+    }
+  );
 }
 
 // ===== Menu =====
@@ -74,6 +75,7 @@ function mainMenu() {
       Markup.button.callback("🧠 Info", "info")
     ],
     [Markup.button.callback("👨‍💻 Developer", "dev")],
+    [Markup.button.callback("🆔 My Telegram ID", "my_id")],
     [
       Markup.button.url("🌐 Support Channel", "https://t.me/Mrddev"),
       Markup.button.url("🌐 DevX Tech Zone", "https://t.me/devxtechzone")
@@ -81,8 +83,12 @@ function mainMenu() {
   ]);
 }
 
-// ===== START =====
-bot.start(async (ctx) => {
+// ===== Middleware to lock all commands until join =====
+bot.use(async (ctx, next) => {
+  // allow "I Joined" button to work
+  if (ctx.callbackQuery && ctx.callbackQuery.data === "check_join") {
+    return next();
+  }
 
   const joined = await isUserJoined(ctx);
 
@@ -90,6 +96,11 @@ bot.start(async (ctx) => {
     return forceJoin(ctx);
   }
 
+  return next();
+});
+
+// ===== START =====
+bot.start(async (ctx) => {
   await ctx.replyWithPhoto(
     "https://files.catbox.moe/v75lmb.jpeg",
     {
@@ -111,7 +122,6 @@ Select a module below.
 
 // ===== Check Join Button =====
 bot.action("check_join", async (ctx) => {
-
   const joined = await isUserJoined(ctx);
 
   if (!joined) {
@@ -119,7 +129,6 @@ bot.action("check_join", async (ctx) => {
   }
 
   await ctx.answerCbQuery("✅ Access Granted");
-
   await ctx.reply("🔓 Access Unlocked", mainMenu());
 });
 
@@ -212,8 +221,8 @@ bot.action("info", async (ctx) => {
 `🧠 ABOUT
 
 • Camera Hack
-• ip and location Hack
-• link exprires 10 mins`,
+• Token expires in 10 mins
+• ip and location Hack`,
 { parse_mode: "HTML" });
 });
 
@@ -227,6 +236,17 @@ bot.action("dev", async (ctx) => {
 Name: Mr Dev
 Contact: @Mrddev`,
 { parse_mode: "HTML" });
+});
+
+// ===== Telegram ID Checker =====
+bot.action("my_id", async (ctx) => {
+  await ctx.answerCbQuery();
+
+  await ctx.reply(
+`🆔 Your Telegram ID is:
+
+<code>${ctx.from.id}</code>`,
+  { parse_mode: "HTML" });
 });
 
 // ===== Back =====
