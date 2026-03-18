@@ -87,7 +87,12 @@ function mainMenu() {
 
 // ===== Middleware to lock all commands until join =====
 bot.use(async (ctx, next) => {
-  // allow "I Joined" button to work
+  // ❗ Ignore channel updates (THIS was causing your error)
+  if (!ctx.from || !ctx.chat || ctx.chat.type === "channel") {
+    return;
+  }
+
+  // ✅ Allow "I Joined" button to pass
   if (ctx.callbackQuery && ctx.callbackQuery.data === "check_join") {
     return next();
   }
@@ -95,7 +100,22 @@ bot.use(async (ctx, next) => {
   const joined = await isUserJoined(ctx);
 
   if (!joined) {
-    return forceJoin(ctx);
+    // ✅ ALWAYS send to user, not channel
+    return ctx.telegram.sendMessage(
+      ctx.from.id,
+      `🚫 ACCESS LOCKED
+
+You must join our channel before using this bot.`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "📢 Join DevX Tech Zone", url: "https://t.me/devxtechzone" }],
+            [{ text: "✅ I Joined", callback_data: "check_join" }]
+          ]
+        }
+      }
+    );
   }
 
   return next();
