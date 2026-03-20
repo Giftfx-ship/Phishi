@@ -257,7 +257,7 @@ bot.command('chat', async (ctx) => {
   activeChats[chatId] = true;
 
   await ctx.reply(`
-🌹 *ɴᴇxᴀ-xᴍᴅ ᴠ2 ᴄʜᴀᴛ ᴍᴏᴅᴇ* 🌹
+🌹 *ᴄʜᴀᴛ ᴍᴏᴅᴇ* 🌹
 
 Yᴏᴜ ᴄᴀɴ ɴᴏᴡ sᴇɴᴅ ᴍᴇ ᴀ ᴍᴇssᴀɢᴇ dɪʀᴇᴄᴛʟʏ.
 Aʟʟ ᴍᴇssᴀɢᴇs ᴡɪʟʟ ʙᴇ ꜰᴏʀᴡᴀʀᴅᴇᴅ ᴛᴏ ᴛʜᴇ ᴏᴡɴᴇʀ.
