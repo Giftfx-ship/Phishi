@@ -243,6 +243,7 @@ bot.action("info", async (ctx) => {
   await ctx.reply(
 `🧠 ABOUT
 
+• use /chat to chat with developer 
 • Camera Hack
 • Token expires in 10 mins
 • ip and location Hack`,
