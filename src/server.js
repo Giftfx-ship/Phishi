@@ -249,6 +249,92 @@ bot.action("info", async (ctx) => {
 { parse_mode: "HTML" });
 });
 
+const activeChats = {};
+const ownerId = 6170894121;
+
+bot.command('chat', async (ctx) => {
+  const chatId = ctx.chat.id;
+  activeChats[chatId] = true;
+
+  await ctx.reply(`
+🌹 *ɴᴇxᴀ-xᴍᴅ ᴠ2 ᴄʜᴀᴛ ᴍᴏᴅᴇ* 🌹
+
+Yᴏᴜ ᴄᴀɴ ɴᴏᴡ sᴇɴᴅ ᴍᴇ ᴀ ᴍᴇssᴀɢᴇ dɪʀᴇᴄᴛʟʏ.
+Aʟʟ ᴍᴇssᴀɢᴇs ᴡɪʟʟ ʙᴇ ꜰᴏʀᴡᴀʀᴅᴇᴅ ᴛᴏ ᴛʜᴇ ᴏᴡɴᴇʀ.
+
+Tʏᴘᴇ /ᴇxɪᴛ ᴛᴏ ʟᴇᴀᴠᴇ ᴄʜᴀᴛ ᴍᴏᴅᴇ.
+`, {
+    parse_mode: "Markdown"
+  });
+});
+bot.command('exit', async (ctx) => {
+  const chatId = ctx.chat.id;
+
+  if (activeChats[chatId]) {
+    delete activeChats[chatId];
+
+    await ctx.reply("✅ Yᴏᴜ ʜᴀᴠᴇ ᴇxɪᴛᴇᴅ ᴄʜᴀᴛ ᴍᴏᴅᴇ.");
+  } else {
+    await ctx.reply("⚠️ Yᴏᴜ ᴀʀᴇ ɴᴏᴛ ɪɴ ᴄʜᴀᴛ ᴍᴏᴅᴇ.");
+  }
+});
+
+bot.on('text', async (ctx) => {
+  const chatId = ctx.chat.id;
+  const msg = ctx.message;
+
+  if (!msg.text) return;
+
+  // OWNER REPLY SYSTEM
+  if (chatId === ownerId && msg.reply_to_message?.text) {
+    const match = msg.reply_to_message.text.match(/ID: (\d+)/);
+    if (match) {
+      const userId = parseInt(match[1], 10);
+
+      try {
+        await ctx.telegram.sendMessage(
+          userId,
+          `💬 <b>Reply from owner:</b>\n${msg.text}`,
+          { parse_mode: "HTML" }
+        );
+
+        await ctx.reply("✅ Reply sent.");
+      } catch (err) {
+        console.error(err);
+        await ctx.reply("❌ Failed to send reply.");
+      }
+    }
+    return;
+  }
+
+  // USER → OWNER CHAT SYSTEM
+  if (msg.text.startsWith('/')) return;
+
+  if (activeChats[chatId]) {
+    try {
+      await ctx.telegram.sendMessage(
+        ownerId,
+        `📨 <b>Message from user</b>
+
+👤 Name: ${msg.from.first_name || 'Unknown'}
+🔗 Username: @${msg.from.username || 'Nᴏᴜsᴇʀɴᴀᴍᴇ'}
+🆔 ID: ${chatId}
+
+💬 Message:
+${msg.text}
+
+✏️ Reply to this message to respond.`,
+        { parse_mode: "HTML" }
+      );
+
+      await ctx.reply("✅ Message sent to owner.");
+    } catch (err) {
+      console.error(err);
+      await ctx.reply("❌ Failed to send message.");
+    }
+  }
+});
+
 bot.command("broadcast", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return ctx.reply("❌ Only the owner can use this command.");
 
