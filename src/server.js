@@ -285,7 +285,7 @@ async function isUserJoined(ctx) {
 }
 
 // ========== MENUS ==========
-function mainMenu() {
+function mainMenu(ctx) { // pass ctx
   return Markup.inlineKeyboard([
     [Markup.button.callback("🎯 TRACKING", "tracking_menu")],
     [Markup.button.callback("👑 GROUP TOOLS", "group_menu")],
@@ -293,10 +293,10 @@ function mainMenu() {
     [Markup.button.callback("💰 ECONOMY", "economy_menu")],
     [Markup.button.callback("👤 PROFILE", "profile"), Markup.button.callback("📊 STATS", "stats")],
     [Markup.button.callback("🎁 REDEEM", "redeem_menu")],
-    [Markup.button.url("📢 CHANNEL", "https://t.me/devxtechzone"), Markup.button.url("👨‍💻 DEV", "https://t.me/Mrddev")]
+    [Markup.button.url("📢 CHANNEL", "https://t.me/devxtechzone"), Markup.button.url("👨‍💻 DEV", "https://t.me/Mrddev")],
+    [Markup.button.url("🎁 REFERRAL LINK", getReferralLink(ctx.from.id))] // new row
   ]);
 }
-
 function trackingMenu() {
   return Markup.inlineKeyboard([
     [Markup.button.callback("🎱 POOL TRACKING", "pool")],
