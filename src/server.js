@@ -48,11 +48,11 @@ const botStats = {
 const TOKEN_EXPIRY_MS = 10 * 60 * 1000;
 const dailyBonus = { base: 1, streakBonus: [0, 2, 5, 10, 15, 20, 25, 30, 40, 50] };
 const workJobs = [
-  { name: "💻 Developer", minPay: 10, maxPay: 50, cooldown: 3600000 },
-  { name: "🎨 Designer", minPay: 8, maxPay: 40, cooldown: 3600000 },
-  { name: "📝 Writer", minPay: 5, maxPay: 30, cooldown: 3600000 },
-  { name: "🎮 Gamer", minPay: 3, maxPay: 20, cooldown: 1800000 },
-  { name: "🛒 Shopper", minPay: 2, maxPay: 15, cooldown: 900000 }
+  { name: "💻 Developer", minPay: 1, maxPay: 2, cooldown: 3600000 },
+  { name: "🎨 Designer", minPay: 1, maxPay: 2, cooldown: 3600000 },
+  { name: "📝 Writer", minPay: 1, maxPay: 2, cooldown: 3600000 },
+  { name: "🎮 Gamer", minPay: 1, maxPay: 2, cooldown: 1800000 },
+  { name: "🛒 Shopper", minPay: 1, maxPay: 2, cooldown: 900000 }
 ];
 
 // Clean expired tokens
