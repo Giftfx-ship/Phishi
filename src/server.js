@@ -623,7 +623,7 @@ bot.action("referral_info", async (ctx) => {
 • Coins Earned: ${user.totalEarned}
 
 <b>Rewards:</b>
-• 2 coins per referral
+• 5 coins per referral
 • Special badge at 10 referrals
 • Bonus rewards at 25, 50, 100
 
