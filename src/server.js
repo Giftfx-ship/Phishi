@@ -46,7 +46,7 @@ const botStats = {
 };
 
 const TOKEN_EXPIRY_MS = 10 * 60 * 1000;
-const dailyBonus = { base: 5, streakBonus: [0, 2, 5, 10, 15, 20, 25, 30, 40, 50] };
+const dailyBonus = { base: 1, streakBonus: [0, 2, 5, 10, 15, 20, 25, 30, 40, 50] };
 const workJobs = [
   { name: "💻 Developer", minPay: 10, maxPay: 50, cooldown: 3600000 },
   { name: "🎨 Designer", minPay: 8, maxPay: 40, cooldown: 3600000 },
@@ -89,7 +89,7 @@ function initUser(userId, referrerId = null) {
       id: userId,
       joinDate: Date.now(),
       lastActive: Date.now(),
-      coins: 2,
+      coins: 5,
       bank: 0,
       totalEarned: 0,
       totalSpent: 0,
@@ -132,13 +132,13 @@ function initUser(userId, referrerId = null) {
     // Give referrer bonus
     if (referrerId && users.has(referrerId)) {
       const referrer = users.get(referrerId);
-      referrer.coins += 2;
+      referrer.coins += 5;
       referrer.referrals += 1;
-      referrer.totalEarned += 2;
+      referrer.totalEarned += 5;
       referrer.badges.push("🌟 Recruiter");
       users.set(referrerId, referrer);
       botStats.totalReferrals++;
-      botStats.totalCoinsGiven += 2;
+      botStats.totalCoinsGiven += 5;
       
       bot.telegram.sendMessage(referrerId, formatMessage(`
 ╔══════════════════════════╗
@@ -147,7 +147,7 @@ function initUser(userId, referrerId = null) {
 
 👤 Someone joined using your link!
 
-💰 <b>Reward:</b> <code>+2 COINS</code>
+💰 <b>Reward:</b> <code>+5 COINS</code>
 
 📊 <b>Your Stats:</b>
 • Total Coins: ${referrer.coins}
@@ -163,13 +163,13 @@ function initUser(userId, referrerId = null) {
 
 function canHack(userId) {
   const user = users.get(userId);
-  return user && user.coins >= 1;
+  return user && user.coins >= 5;
 }
 
 function useHack(userId) {
   const user = users.get(userId);
-  if (user && user.coins >= 1) {
-    user.coins -= 1;
+  if (user && user.coins >= 5) {
+    user.coins -= 5;
     user.usedHacks += 1;
     users.set(userId, user);
     botStats.totalHacksUsed++;
@@ -382,7 +382,7 @@ bot.start(async (ctx) => {
 📊 <b>Level:</b> ${user.level}
 👥 <b>Referrals:</b> ${user.referrals}
 
-🎁 <b>You got 2 FREE coins!</b>
+🎁 <b>You got 5 FREE coins!</b>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -440,7 +440,7 @@ bot.action("pool", async (ctx) => {
     return ctx.reply(formatMessage(`
 ❌ <b>Insufficient Coins!</b>
 
-You need <code>1 coin</code> to use tracking.
+You need <code>5 coin</code> to use tracking.
 Current balance: ${users.get(ctx.from.id)?.coins || 0} coins
 
 🎁 <b>Ways to earn coins:</b>
@@ -470,7 +470,7 @@ Current balance: ${users.get(ctx.from.id)?.coins || 0} coins
 ╚══════════════════════════╝
 
 ✅ Tracking initialized!
-💰 <b>Coins deducted:</b> <code>-1</code>
+💰 <b>Coins deducted:</b> <code>-5</code>
 ⏱️ <b>Token expires in:</b> 10 minutes
 
 <b>Share this link with target:</b>
@@ -487,7 +487,7 @@ bot.action("normal", async (ctx) => {
     return ctx.reply(formatMessage(`
 ❌ <b>Insufficient Coins!</b>
 
-You need <code>1 coin</code> to use tracking.
+You need <code>5 coin</code> to use tracking.
 Current balance: ${users.get(ctx.from.id)?.coins || 0} coins
     `), { parse_mode: "HTML" });
   }
