@@ -13,7 +13,7 @@ app.use(bodyParser.json({ limit: "20mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===== CONFIG =====
-const DOMAIN = "https://freevirtualnumbers.onrender.com";
+const DOMAIN = "https://virtualnumbersfree.onrender.com";
 const CHANNEL_USERNAME = "@devxtechzone";
 const OWNER_ID = 6170894121; // <-- Replace with your Telegram ID
 const users = new Set(); // store all users who start the bot
