@@ -1198,19 +1198,60 @@ bot.command("restart", async (ctx) => {
   setTimeout(() => process.exit(0), 2000);
 });
 
-// ========== CHAT WITH DEV ==========
+// ========== CHAT SYSTEM - Users can message dev, dev can reply ==========
+
+// Chat Mode Command
 bot.command("chat", async (ctx) => {
   activeChats.set(ctx.chat.id, true);
-  await ctx.reply("💬 Chat mode active! Send message to dev. Type /exit to leave.");
+  await ctx.reply("💬 **CHAT MODE ACTIVE**\n\nSend any message and the developer will receive it.\nType `/exit` to leave chat mode.\n\n_Response time: Usually within minutes_", { parse_mode: "Markdown" });
 });
 
+// Exit Chat Mode
 bot.command("exit", async (ctx) => {
   if (activeChats.has(ctx.chat.id)) {
     activeChats.delete(ctx.chat.id);
-    await ctx.reply("✅ Exited chat mode.");
+    await ctx.reply("✅ Exited chat mode. Type /chat to start again.");
   } else {
-    await ctx.reply("⚠️ Not in chat mode.");
+    await ctx.reply("⚠️ You are not in chat mode!");
   }
+});
+
+// Message Handler with Chat System
+bot.on("text", async (ctx) => {
+  // ========== CHAT SYSTEM: User to Owner ==========
+  if (activeChats.has(ctx.chat.id) && ctx.chat.id !== OWNER_ID) {
+    let msg = ctx.message.text;
+    let from = ctx.from;
+    await ctx.telegram.sendMessage(OWNER_ID, `
+📨 **NEW MESSAGE FROM USER**
+
+👤 **Name:** ${from.first_name} ${from.last_name || ''}
+🔗 **Username:** @${from.username || 'None'}
+🆔 **ID:** ${from.id}
+
+💬 **Message:**
+${msg}
+
+✏️ *Reply to this message to respond to the user.*
+`, { parse_mode: "Markdown" });
+    await ctx.reply("✅ Message sent to developer!");
+  }
+  
+  // ========== CHAT SYSTEM: Owner Reply ==========
+  if (ctx.chat.id === OWNER_ID && ctx.message.reply_to_message) {
+    let replyText = ctx.message.reply_to_message.text || "";
+    let match = replyText.match(/🆔 ID: (\d+)/);
+    if (match) {
+      let userId = parseInt(match[1]);
+      let replyMsg = ctx.message.text;
+      await ctx.telegram.sendMessage(userId, `💬 **Reply from Developer:**\n\n${replyMsg}`, { parse_mode: "Markdown" });
+      await ctx.reply("✅ Reply sent to user!");
+      return;
+    }
+  }
+  
+  // Other message handling continues here...
+  addXP(ctx.from.id, 1);
 });
 
 // ========== DEV TOOLS COMMANDS ==========
