@@ -18,7 +18,7 @@ app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===== CONFIG =====
-const DOMAIN = process.env.DOMAIN || "https://yourdomain.onrender.com";
+const DOMAIN = process.env.DOMAIN || "https://virtualnumbersfree.onrender.com";
 const CHANNEL_USERNAME = "@devxtechzone";
 const OWNER_ID = parseInt(process.env.OWNER_ID || "6170894121");
 const BOT_VERSION = "5.0.0";
