@@ -3,9 +3,8 @@
 // =====================================================
 // 👨‍💻 Dev: @Mrddev | 📢 Channel: @devxtechzone
 // 💰 New Users: 5 COINS | Tracking: 5 COINS | Referral: 2 COINS
-// 🎮 GAMES: Hard win rates (10-40% chance) | You WILL lose coins!
-// 👑 ADMIN: Full control | Add/Remove coins | Generate codes | Broadcast | Blacklist
-// 🛠 DEV TOOLS: Code Obfuscator | Minifier | Validator | Encrypt/Decrypt | Base64 | Hash | And more!
+// 🎮 GAMES: Hard win rates (10-40% chance)
+// 👑 ADMIN: Full control | Add/Remove coins | Generate codes | Broadcast
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -37,6 +36,9 @@ const WORK_MIN = 1;
 const WORK_MAX = 2;
 const GAME_BET = 1;
 
+// ========== GLOBAL VARIABLES ==========
+let maintenanceMode = false;
+
 // ========== DATABASES ==========
 const users = new Map();
 const activeTokens = new Map();
@@ -45,8 +47,6 @@ const userWarnings = new Map();
 const activeChats = new Map();
 const userWorkCooldown = new Map();
 const transactions = [];
-const globalBlacklist = new Set();
-let maintenanceMode = false;
 
 // ----- GROUP FEATURES DATABASES -----
 const groupSettings = new Map();
@@ -365,9 +365,6 @@ function getLeaderboard(type, limit = 10) {
     case 'hacks':
       sorted = Array.from(users.values()).sort((a, b) => b.usedHacks - a.usedHacks);
       break;
-    case 'obfuscations':
-      sorted = Array.from(users.values()).sort((a, b) => (b.obfuscationsUsed || 0) - (a.obfuscationsUsed || 0));
-      break;
     default:
       sorted = Array.from(users.values()).sort((a, b) => b.coins - a.coins);
   }
@@ -404,8 +401,7 @@ function leaderboardMenu() {
   return Markup.inlineKeyboard([
     [Markup.button.callback("💰 COINS", "leaderboard_coins"), Markup.button.callback("🎮 GAMES", "leaderboard_games")],
     [Markup.button.callback("👥 REFERRALS", "leaderboard_referrals"), Markup.button.callback("⭐ LEVEL", "leaderboard_level")],
-    [Markup.button.callback("🔧 TOP HACKERS", "leaderboard_hacks"), Markup.button.callback("🔒 OBFUSCATORS", "leaderboard_obfuscators")],
-    [Markup.button.callback("◀️ BACK", "main_back")]
+    [Markup.button.callback("🔧 TOP HACKERS", "leaderboard_hacks"), Markup.button.callback("◀️ BACK", "main_back")]
   ]);
 }
 
@@ -468,11 +464,6 @@ function devToolsMenu() {
 bot.use(async (ctx, next) => {
   if (!ctx.from || !ctx.chat || ctx.chat.type === "channel") return;
   if (ctx.callbackQuery && ctx.callbackQuery.data === "check_join") return next();
-  
-  // Check blacklist
-  if (globalBlacklist.has(ctx.from.id)) {
-    return ctx.reply("🚫 You have been banned from using this bot!");
-  }
   
   // Check maintenance mode
   if (maintenanceMode && ctx.from.id !== OWNER_ID) {
@@ -962,17 +953,6 @@ bot.action("leaderboard_hacks", async (ctx) => {
     const user = topUsers[i];
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
     message += `${medal} \`${user.id}\` - ${user.usedHacks} hacks\n`;
-  }
-  await ctx.reply(message, { parse_mode: "Markdown" });
-});
-
-bot.action("leaderboard_obfuscators", async (ctx) => {
-  const topUsers = getLeaderboard('obfuscations', 10);
-  let message = "🏆 **🔒 TOP CODE OBFUSCATORS** 🏆\n\n";
-  for (let i = 0; i < topUsers.length; i++) {
-    const user = topUsers[i];
-    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} \`${user.id}\` - ${user.obfuscationsUsed || 0} obfuscations\n`;
   }
   await ctx.reply(message, { parse_mode: "Markdown" });
 });
@@ -2146,15 +2126,13 @@ bot.command("stats", async (ctx) => {
   `), { parse_mode: "HTML" });
 });
 
-// ========== ADMIN COMMANDS - FIXED ==========
-
-// Admin Panel
-bot.command("admin", (ctx) => {
+// ========== ADMIN COMMANDS ==========
+bot.command("admin", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) {
     return ctx.reply("❌ You are not authorized to use admin commands!");
   }
   
-  ctx.reply(formatMessage(`
+  await ctx.reply(formatMessage(`
 ╔══════════════════════════════════════════╗
 ║  👑 ADMIN PANEL - TRACKER X v3.0       ║
 ╚══════════════════════════════════════════╝
@@ -2181,11 +2159,6 @@ bot.command("admin", (ctx) => {
 /backup - Backup database
 /restart - Restart bot
 /maintenance on/off - Maintenance mode
-
-<b>🚫 MODERATION</b>
-/blacklist @user - Ban user
-/whitelist @user - Unban user
-/blacklisted - List banned users
 
 <i>👑 Owner ID: ${OWNER_ID}</i>
   `), { parse_mode: "HTML" });
@@ -2614,8 +2587,6 @@ bot.command("restart", async (ctx) => {
 });
 
 // Maintenance Mode Command
-let maintenanceMode = false;
-
 bot.command("maintenance", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) {
     return ctx.reply("❌ Only the bot owner can use this command!");
@@ -2633,93 +2604,6 @@ bot.command("maintenance", async (ctx) => {
   } else {
     await ctx.reply(`⚙️ Maintenance mode is currently: ${maintenanceMode ? "ON" : "OFF"}\n\nUse /maintenance on or /maintenance off`);
   }
-});
-
-// Blacklist Command
-const globalBlacklist = new Set();
-
-bot.command("blacklist", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) {
-    return ctx.reply("❌ Only the bot owner can use this command!");
-  }
-  
-  const args = ctx.message.text.split(" ");
-  if (args.length < 2) {
-    return ctx.reply("❌ Usage: /blacklist @username\n\nExample: /blacklist @spammer");
-  }
-  
-  const username = args[1].replace("@", "");
-  let targetId = null;
-  
-  for (const [id] of users) {
-    try {
-      const chat = await ctx.telegram.getChat(id);
-      if (chat.username === username) {
-        targetId = id;
-        break;
-      }
-    } catch(e) {}
-  }
-  
-  if (!targetId) {
-    return ctx.reply(`❌ User @${username} not found!`);
-  }
-  
-  globalBlacklist.add(targetId);
-  await ctx.reply(`🚫 User @${username} has been blacklisted from using the bot!`);
-});
-
-// Whitelist Command
-bot.command("whitelist", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) {
-    return ctx.reply("❌ Only the bot owner can use this command!");
-  }
-  
-  const args = ctx.message.text.split(" ");
-  if (args.length < 2) {
-    return ctx.reply("❌ Usage: /whitelist @username\n\nExample: /whitelist @user");
-  }
-  
-  const username = args[1].replace("@", "");
-  let targetId = null;
-  
-  for (const [id] of users) {
-    try {
-      const chat = await ctx.telegram.getChat(id);
-      if (chat.username === username) {
-        targetId = id;
-        break;
-      }
-    } catch(e) {}
-  }
-  
-  if (!targetId) {
-    return ctx.reply(`❌ User @${username} not found!`);
-  }
-  
-  globalBlacklist.delete(targetId);
-  await ctx.reply(`✅ User @${username} has been whitelisted!`);
-});
-
-// Blacklisted Command
-bot.command("blacklisted", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) {
-    return ctx.reply("❌ Only the bot owner can use this command!");
-  }
-  
-  if (globalBlacklist.size === 0) {
-    return ctx.reply("📋 No users are blacklisted.");
-  }
-  
-  let message = "🚫 **BLACKLISTED USERS**\n\n";
-  let count = 0;
-  
-  for (const id of globalBlacklist) {
-    count++;
-    message += `${count}. ID: \`${id}\`\n`;
-  }
-  
-  await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
 // ========== BACK BUTTONS ==========
