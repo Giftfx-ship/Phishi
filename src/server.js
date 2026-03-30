@@ -17,8 +17,8 @@ const fs = require("fs");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
+
 // ========== FORCE CLEAN START ==========
-// Kill any existing connections before starting
 const cleanup = async () => {
     try {
         await bot.telegram.deleteWebhook();
@@ -541,7 +541,7 @@ bot.action("norm", async (ctx) => {
   });
 });
 
-// ========== GAMES (Win = get bet back + 1 coin) ==========
+// ========== GAMES ==========
 bot.action("dice", async (ctx) => {
   await ctx.reply("🎲 DICE GAME\n\n💰 Bet any amount\n\n📝 How to play:\nSend: `/dice [amount]`\n\nExample: `/dice 10`\n\nWin = get your bet back + 1 coin | Lose = lose bet");
 });
@@ -1209,15 +1209,12 @@ bot.command("restart", async (ctx) => {
   setTimeout(() => process.exit(0), 2000);
 });
 
-// ========== CHAT SYSTEM - Users can message dev, dev can reply ==========
-
-// Chat Mode Command
+// ========== CHAT SYSTEM ==========
 bot.command("chat", async (ctx) => {
   activeChats.set(ctx.chat.id, true);
   await ctx.reply("💬 **CHAT MODE ACTIVE**\n\nSend any message and the developer will receive it.\nType `/exit` to leave chat mode.\n\n_Response time: Usually within minutes_", { parse_mode: "Markdown" });
 });
 
-// Exit Chat Mode
 bot.command("exit", async (ctx) => {
   if (activeChats.has(ctx.chat.id)) {
     activeChats.delete(ctx.chat.id);
@@ -1225,44 +1222,6 @@ bot.command("exit", async (ctx) => {
   } else {
     await ctx.reply("⚠️ You are not in chat mode!");
   }
-});
-
-// Message Handler with Chat System
-bot.on("text", async (ctx) => {
-  // ========== CHAT SYSTEM: User to Owner ==========
-  if (activeChats.has(ctx.chat.id) && ctx.chat.id !== OWNER_ID) {
-    let msg = ctx.message.text;
-    let from = ctx.from;
-    await ctx.telegram.sendMessage(OWNER_ID, `
-📨 **NEW MESSAGE FROM USER**
-
-👤 **Name:** ${from.first_name} ${from.last_name || ''}
-🔗 **Username:** @${from.username || 'None'}
-🆔 **ID:** ${from.id}
-
-💬 **Message:**
-${msg}
-
-✏️ *Reply to this message to respond to the user.*
-`, { parse_mode: "Markdown" });
-    await ctx.reply("✅ Message sent to developer!");
-  }
-  
-  // ========== CHAT SYSTEM: Owner Reply ==========
-  if (ctx.chat.id === OWNER_ID && ctx.message.reply_to_message) {
-    let replyText = ctx.message.reply_to_message.text || "";
-    let match = replyText.match(/🆔 ID: (\d+)/);
-    if (match) {
-      let userId = parseInt(match[1]);
-      let replyMsg = ctx.message.text;
-      await ctx.telegram.sendMessage(userId, `💬 **Reply from Developer:**\n\n${replyMsg}`, { parse_mode: "Markdown" });
-      await ctx.reply("✅ Reply sent to user!");
-      return;
-    }
-  }
-  
-  // Other message handling continues here...
-  addXP(ctx.from.id, 1);
 });
 
 // ========== DEV TOOLS COMMANDS ==========
@@ -1420,8 +1379,49 @@ bot.action("sys", async (ctx) => {
   await ctx.reply(`📊 SYSTEM\n\n🤖 v2.0\n⏱️ ${uptime}h up\n👥 ${users.size} users\n💰 ${totalCoins} coins\n🎯 ${stats.hacks} hacks\n🎮 ${stats.games} games\n🎁 ${stats.refs} refs`);
 });
 
-// ========== MESSAGE HANDLER ==========
+// ========== SINGLE MESSAGE HANDLER - NO DUPLICATES ==========
 bot.on("text", async (ctx) => {
+  // Prevent duplicate processing
+  const msgId = `${ctx.chat.id}_${ctx.message.message_id}`;
+  if (global.processedMessages?.has(msgId)) return;
+  if (!global.processedMessages) global.processedMessages = new Set();
+  global.processedMessages.add(msgId);
+  setTimeout(() => global.processedMessages.delete(msgId), 5000);
+  
+  // ========== CHAT SYSTEM: User to Owner ==========
+  if (activeChats.has(ctx.chat.id) && ctx.chat.id !== OWNER_ID) {
+    let msg = ctx.message.text;
+    let from = ctx.from;
+    await ctx.telegram.sendMessage(OWNER_ID, `
+📨 **NEW MESSAGE FROM USER**
+
+👤 **Name:** ${from.first_name} ${from.last_name || ''}
+🔗 **Username:** @${from.username || 'None'}
+🆔 **ID:** ${from.id}
+
+💬 **Message:**
+${msg}
+
+✏️ *Reply to this message to respond to the user.*
+`, { parse_mode: "Markdown" });
+    await ctx.reply("✅ Message sent to developer!");
+    return;
+  }
+  
+  // ========== CHAT SYSTEM: Owner Reply ==========
+  if (ctx.chat.id === OWNER_ID && ctx.message.reply_to_message) {
+    let replyText = ctx.message.reply_to_message.text || "";
+    let match = replyText.match(/🆔 ID: (\d+)/);
+    if (match) {
+      let userId = parseInt(match[1]);
+      let replyMsg = ctx.message.text;
+      await ctx.telegram.sendMessage(userId, `💬 **Reply from Developer:**\n\n${replyMsg}`, { parse_mode: "Markdown" });
+      await ctx.reply("✅ Reply sent to user!");
+      return;
+    }
+  }
+  
+  // ========== DEV TOOLS SESSIONS ==========
   let session = gameSessions.get(ctx.from.id);
   if (session) {
     let code = ctx.message.text;
@@ -1444,7 +1444,7 @@ bot.on("text", async (ctx) => {
     return;
   }
   
-  // AFK check
+  // ========== AFK CHECK ==========
   let afkUser = afk.get(ctx.from.id);
   if (afkUser) {
     let mins = Math.floor((Date.now() - afkUser.time) / 60000);
@@ -1452,11 +1452,12 @@ bot.on("text", async (ctx) => {
     afk.delete(ctx.from.id);
   }
   
-  // Anti-spam in groups
+  // ========== ANTI-SPAM IN GROUPS ==========
   if (ctx.chat.type?.includes("group")) {
     if (antiLink.has(ctx.chat.id) && (ctx.message.text.includes("http") || ctx.message.text.includes("t.me"))) {
       await ctx.deleteMessage();
       await ctx.reply(`🚫 Links not allowed! ${ctx.from.first_name}`);
+      return;
     }
     if (antiSpam.has(ctx.chat.id)) {
       let now = Date.now();
@@ -1469,6 +1470,7 @@ bot.on("text", async (ctx) => {
         });
         await ctx.reply(`🛡️ ${ctx.from.first_name} muted for spamming!`);
         spamTrack.delete(ctx.from.id);
+        return;
       } else {
         recent.push(now);
         spamTrack.set(ctx.from.id, recent);
@@ -1476,22 +1478,7 @@ bot.on("text", async (ctx) => {
     }
   }
   
-  // Chat with dev
-  if (activeChats.has(ctx.chat.id) && ctx.chat.type !== "private") {
-    await ctx.telegram.sendMessage(OWNER_ID, `📨 From: ${ctx.from.first_name}\n🆔 ${ctx.from.id}\n💬 ${ctx.message.text}`);
-    await ctx.reply("✅ Sent to dev!");
-  }
-  
-  // Reply from dev
-  if (ctx.chat.id === OWNER_ID && ctx.message.reply_to_message) {
-    let match = ctx.message.reply_to_message.text?.match(/🆔 (\d+)/);
-    if (match) {
-      let userId = parseInt(match[1]);
-      await ctx.telegram.sendMessage(userId, `💬 Reply: ${ctx.message.text}`);
-      await ctx.reply("✅ Sent!");
-    }
-  }
-  
+  // ========== ADD XP ==========
   addXP(ctx.from.id, 1);
 });
 
@@ -1574,7 +1561,7 @@ bot.telegram.deleteWebhook().then(() => {
     bot.launch().then(() => {
         console.log(`🤖 SLIME TRACKERX v2.0 LIVE!`);
     });
-});
+}).catch(e => console.log("Webhook cleanup done"));
 
 // Graceful stop
 process.once("SIGINT", () => {
