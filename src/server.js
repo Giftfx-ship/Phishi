@@ -440,7 +440,7 @@ bot.action("games_menu", async (ctx) => {
       ...gamesMenu()
     });
   } catch (err) {
-    await ctx.reply("🎮 GAMES ZONE\n\n💰 Bet any amount you want!\n⚠️ VERY HARD to win!\n🎯 Win = 2x your bet | Lose = lose your bet", {
+    await ctx.reply("🎮 GAMES ZONE\n\n💰 Bet any amount you want!\n⚠️ ENJOY !\n🎯 Win = 2x your bet | Lose = lose your bet", {
       parse_mode: "HTML",
       ...gamesMenu()
     });
@@ -613,7 +613,6 @@ bot.action("dice_game", async (ctx) => {
 🎲 DICE GAME
 
 💰 Bet any amount you want!
-⚠️ VERY HARD - Only 1 in 6 chance to win!
 🎯 Win = 2x your bet | Lose = lose your bet
 
 Use: /dice <amount>
@@ -656,7 +655,6 @@ bot.action("slots_game", async (ctx) => {
 🎰 SLOTS GAME
 
 💰 Bet any amount you want!
-⚠️ VERY HARD - Low chance to win!
 🎯 Jackpot = 10x | Pair = 2x | Lose = lose bet
 
 Use: /slots <amount>
@@ -715,7 +713,6 @@ bot.action("guess_game", async (ctx) => {
 🔢 GUESS GAME
 
 💰 Bet any amount you want!
-⚠️ VERY HARD - Only 10% chance to win!
 🎯 Guess number 1-10 | Win = 5x your bet | Lose = lose bet
 
 Use: /guess <amount> <number>
@@ -757,7 +754,6 @@ bot.action("rps_game", async (ctx) => {
 ✊ ROCK PAPER SCISSORS
 
 💰 Bet any amount you want!
-⚠️ 33% chance to win, 33% tie, 33% lose
 🎯 Win = 2x your bet | Lose = lose bet | Tie = coins back
 
 Use: /rps <amount> <rock/paper/scissors>
@@ -812,7 +808,6 @@ bot.action("coinflip", async (ctx) => {
 🪙 COIN FLIP
 
 💰 Bet any amount you want!
-⚠️ 40% chance to win, 60% chance to lose
 🎯 Win = 2x your bet | Lose = lose bet
 
 Use: /flip <amount>
@@ -853,7 +848,6 @@ bot.action("high_risk", async (ctx) => {
 🔥 HIGH RISK GAME
 
 💰 Bet any amount you want!
-⚠️ ONLY 20% chance to win!
 🎯 Win = 10x your bet | Lose = lose bet
 
 Use: /risk <amount>
