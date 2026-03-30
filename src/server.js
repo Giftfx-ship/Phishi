@@ -2146,13 +2146,15 @@ bot.command("stats", async (ctx) => {
   `), { parse_mode: "HTML" });
 });
 
-// ========== ADMIN COMMANDS ==========
-bot.command("admin", async (ctx) => {
+// ========== ADMIN COMMANDS - FIXED ==========
+
+// Admin Panel
+bot.command("admin", (ctx) => {
   if (ctx.from.id !== OWNER_ID) {
     return ctx.reply("❌ You are not authorized to use admin commands!");
   }
   
-  await ctx.reply(formatMessage(`
+  ctx.reply(formatMessage(`
 ╔══════════════════════════════════════════╗
 ║  👑 ADMIN PANEL - TRACKER X v3.0       ║
 ╚══════════════════════════════════════════╝
@@ -2428,7 +2430,7 @@ bot.command("broadcast", async (ctx) => {
   let success = 0;
   let failed = 0;
   
-  for (const [userId, user] of users) {
+  for (const [userId] of users) {
     try {
       await ctx.telegram.sendMessage(userId, formatMessage(`
 ╔══════════════════════════╗
@@ -2490,10 +2492,6 @@ bot.command("botstats", async (ctx) => {
 • Messages: ${botStats.totalMessages}
 • Hacks Used: ${botStats.totalHacksUsed}
 • Obfuscations: ${botStats.totalObfuscations || 0}
-
-<b>🔗 REFERRAL SYSTEM:</b>
-• Total Referrals: ${botStats.totalReferrals}
-• Referral Reward: ${REFERRAL_REWARD} coins
   `), { parse_mode: "HTML" });
 });
 
@@ -2616,6 +2614,8 @@ bot.command("restart", async (ctx) => {
 });
 
 // Maintenance Mode Command
+let maintenanceMode = false;
+
 bot.command("maintenance", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) {
     return ctx.reply("❌ Only the bot owner can use this command!");
@@ -2636,6 +2636,8 @@ bot.command("maintenance", async (ctx) => {
 });
 
 // Blacklist Command
+const globalBlacklist = new Set();
+
 bot.command("blacklist", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) {
     return ctx.reply("❌ Only the bot owner can use this command!");
