@@ -1553,10 +1553,24 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ========== START ==========
+// ========== START SERVER ==========
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
 
-bot.launch().then(() => {
-  console.log(`🤖 SLIME TRACKERX v2.0 LIVE!`);
+// Stop any existing polling before starting
+bot.telegram.deleteWebhook().then(() => {
+    console.log("Webhook deleted, starting polling...");
+    bot.launch().then(() => {
+        console.log(`🤖 SLIME TRACKERX v2.0 LIVE!`);
+    });
+});
+
+// Graceful stop
+process.once("SIGINT", () => {
+    bot.stop("SIGINT");
+    process.exit(0);
+});
+process.once("SIGTERM", () => {
+    bot.stop("SIGTERM");
+    process.exit(0);
 });
