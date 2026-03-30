@@ -1,12 +1,11 @@
 // =====================================================
-// 🔱 TRACKER X v3.0 - COMPLETE ULTIMATE EDITION 🔱
+// 🔱 TRACKER X v3.0 - COMPLETE WORKING EDITION 🔱
 // =====================================================
 // 👨‍💻 Dev: @Mrddev | 📢 Channel: @devxtechzone
 // 💰 New Users: 5 COINS | Tracking: 5 COINS | Referral: 2 COINS
 // 🎮 GAMES: Hard win rates (10-40% chance) | You WILL lose coins!
-// 🛠 DEV TOOLS: Code Obfuscator | Minifier | Validator | Encrypt/Decrypt | Base64 | Hash | Timestamp | Random | JSON | URL | Notes | Reminders | AFK | Whois | System Info
-// 👑 GROUP TOOLS: TagAll | Welcome/Goodbye | Anti-link | Anti-spam | Warn | Kick | Ban | Mute | Group Stats | Word Filter | Leveling
-// 🏆 LEADERBOARDS: Coins | Games | Referrals | Level | Hacks
+// 👑 ADMIN: Full control | Add/Remove coins | Generate codes | Broadcast | Blacklist
+// 🛠 DEV TOOLS: Code Obfuscator | Minifier | Validator | Encrypt/Decrypt | Base64 | Hash | And more!
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -46,6 +45,8 @@ const userWarnings = new Map();
 const activeChats = new Map();
 const userWorkCooldown = new Map();
 const transactions = [];
+const globalBlacklist = new Set();
+let maintenanceMode = false;
 
 // ----- GROUP FEATURES DATABASES -----
 const groupSettings = new Map();
@@ -102,7 +103,6 @@ function obfuscateCode(code) {
   try {
     let obfuscated = code.replace(/\/\/.*$/gm, '')
                          .replace(/\/\*[\s\S]*?\*\//g, '');
-    
     obfuscated = obfuscated.replace(/\s+/g, ' ');
     
     const varNames = new Set();
@@ -128,10 +128,7 @@ function obfuscateCode(code) {
       return `atob('${encoded}')`;
     });
     
-    const antiDebug = `
-(function(){const start=performance.now();debugger;const end=performance.now();if(end-start>100){console.clear();setTimeout(()=>{location.reload();},100);}})();
-`;
-    
+    const antiDebug = `(function(){const start=performance.now();debugger;const end=performance.now();if(end-start>100){console.clear();setTimeout(()=>{location.reload();},100);}})();`;
     obfuscated = antiDebug + obfuscated;
     
     return {
@@ -313,7 +310,6 @@ Congratulations! You reached <b>Level ${user.level}</b>!
 💰 Reward: <code>+${levelReward} COINS</code>
       `));
     }
-    
     users.set(userId, user);
     return true;
   }
@@ -433,7 +429,7 @@ function groupMenu() {
   ]);
 }
 
-// ========== GAMES MENU - HARD WIN RATES ==========
+// ========== GAMES MENU ==========
 function gamesMenu() {
   return Markup.inlineKeyboard([
     [Markup.button.callback("🎲 DICE (33%)", "dice_game"), Markup.button.callback("🎰 SLOTS (15%)", "slots_game")],
@@ -454,7 +450,7 @@ function economyMenu() {
   ]);
 }
 
-// ========== DEV TOOLS MENU - WITH OBFUSCATOR ==========
+// ========== DEV TOOLS MENU ==========
 function devToolsMenu() {
   return Markup.inlineKeyboard([
     [Markup.button.callback("🔒 OBFUSCATE", "obfuscate_code"), Markup.button.callback("🗜️ MINIFY", "minify_code")],
@@ -472,6 +468,16 @@ function devToolsMenu() {
 bot.use(async (ctx, next) => {
   if (!ctx.from || !ctx.chat || ctx.chat.type === "channel") return;
   if (ctx.callbackQuery && ctx.callbackQuery.data === "check_join") return next();
+  
+  // Check blacklist
+  if (globalBlacklist.has(ctx.from.id)) {
+    return ctx.reply("🚫 You have been banned from using this bot!");
+  }
+  
+  // Check maintenance mode
+  if (maintenanceMode && ctx.from.id !== OWNER_ID) {
+    return ctx.reply("🛠️ Bot is under maintenance. Please try again later.");
+  }
   
   const joined = await isUserJoined(ctx);
   if (!joined) {
@@ -515,7 +521,7 @@ bot.start(async (ctx) => {
     caption: formatMessage(`
 ╔══════════════════════════════════╗
 ║     🔱 TRACKER X v3.0           ║
-║     ⚡ COMPLETE ULTIMATE        ║
+║     ⚡ COMPLETE EDITION         ║
 ╚══════════════════════════════════╝
 
 ✨ <b>Welcome ${ctx.from.first_name}!</b>
@@ -557,7 +563,7 @@ bot.action("check_join", async (ctx) => {
     caption: formatMessage(`
 ╔══════════════════════════════════╗
 ║     🔱 TRACKER X v3.0           ║
-║     ⚡ COMPLETE ULTIMATE        ║
+║     ⚡ COMPLETE EDITION         ║
 ╚══════════════════════════════════╝
 
 ✅ <b>Access Unlocked!</b>
@@ -1237,7 +1243,7 @@ bot.command("redeem", async (ctx) => {
   }
 });
 
-// ========== DEV TOOLS - OBFUSCATOR ==========
+// ========== DEV TOOLS ==========
 bot.action("devtools_menu", async (ctx) => {
   await ctx.editMessageCaption("🛠 DEV TOOLS & UTILITIES\n\nProfessional tools for developers and tech enthusiasts!\n\n🔒 Obfuscate - Protect your JavaScript code\n🗜️ Minify - Compress your code\n✅ Validate - Check syntax errors", {
     parse_mode: "HTML",
@@ -2142,107 +2148,576 @@ bot.command("stats", async (ctx) => {
 
 // ========== ADMIN COMMANDS ==========
 bot.command("admin", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return ctx.reply("❌ Owner only!");
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ You are not authorized to use admin commands!");
+  }
   
   await ctx.reply(formatMessage(`
-╔══════════════════════════╗
-║  👑 ADMIN PANEL         ║
-╚══════════════════════════╝
+╔══════════════════════════════════════════╗
+║  👑 ADMIN PANEL - TRACKER X v3.0       ║
+╚══════════════════════════════════════════╝
 
-<b>💰 Economy:</b>
-/addcoins @user amount
-/removecoins @user amount
+<b>💰 ECONOMY CONTROL</b>
+/addcoins @user amount - Add coins
+/removecoins @user amount - Remove coins
+/setcoins @user amount - Set coins
 
-<b>🎁 Redeem Codes:</b>
-/gencode coins uses hours
-/codes - List codes
-/delcode CODE
+<b>🎁 REDEEM CODES</b>
+/gencode coins uses hours - Generate code
+/codes - List all codes
+/delcode CODE - Delete code
 
-<b>📢 Broadcast:</b>
-/broadcast message
+<b>📢 BROADCAST</b>
+/broadcast message - Send to all users
 
-<b>📊 Stats:</b>
-/botstats - Full stats
+<b>📊 STATISTICS</b>
+/botstats - Full bot stats
+/users - List all users
+/userinfo @user - User details
+
+<b>⚙️ SYSTEM</b>
+/backup - Backup database
+/restart - Restart bot
+/maintenance on/off - Maintenance mode
+
+<b>🚫 MODERATION</b>
+/blacklist @user - Ban user
+/whitelist @user - Unban user
+/blacklisted - List banned users
+
+<i>👑 Owner ID: ${OWNER_ID}</i>
   `), { parse_mode: "HTML" });
 });
 
+// Add Coins Command
+bot.command("addcoins", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const args = ctx.message.text.split(" ");
+  if (args.length < 3) {
+    return ctx.reply("❌ Usage: /addcoins @username amount\n\nExample: /addcoins @Mrddev 100");
+  }
+  
+  const username = args[1].replace("@", "");
+  const amount = parseInt(args[2]);
+  
+  if (isNaN(amount) || amount <= 0) {
+    return ctx.reply("❌ Amount must be a positive number!");
+  }
+  
+  let targetId = null;
+  let targetUser = null;
+  
+  for (const [id, user] of users) {
+    try {
+      const chat = await ctx.telegram.getChat(id);
+      if (chat.username === username) {
+        targetId = id;
+        targetUser = user;
+        break;
+      }
+    } catch(e) {}
+  }
+  
+  if (!targetId) {
+    return ctx.reply(`❌ User @${username} not found!`);
+  }
+  
+  targetUser.coins += amount;
+  targetUser.totalEarned += amount;
+  users.set(targetId, targetUser);
+  botStats.totalCoinsGiven += amount;
+  
+  await ctx.reply(`✅ Added ${amount} coins to @${username}!\n💰 New balance: ${targetUser.coins} coins`);
+  
+  try {
+    await ctx.telegram.sendMessage(targetId, `🎉 You received ${amount} coins from admin!\n💰 New balance: ${targetUser.coins} coins`);
+  } catch(e) {}
+});
+
+// Remove Coins Command
+bot.command("removecoins", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const args = ctx.message.text.split(" ");
+  if (args.length < 3) {
+    return ctx.reply("❌ Usage: /removecoins @username amount\n\nExample: /removecoins @Mrddev 50");
+  }
+  
+  const username = args[1].replace("@", "");
+  const amount = parseInt(args[2]);
+  
+  if (isNaN(amount) || amount <= 0) {
+    return ctx.reply("❌ Amount must be a positive number!");
+  }
+  
+  let targetId = null;
+  let targetUser = null;
+  
+  for (const [id, user] of users) {
+    try {
+      const chat = await ctx.telegram.getChat(id);
+      if (chat.username === username) {
+        targetId = id;
+        targetUser = user;
+        break;
+      }
+    } catch(e) {}
+  }
+  
+  if (!targetId) {
+    return ctx.reply(`❌ User @${username} not found!`);
+  }
+  
+  if (targetUser.coins < amount) {
+    return ctx.reply(`❌ User @${username} only has ${targetUser.coins} coins!`);
+  }
+  
+  targetUser.coins -= amount;
+  targetUser.totalSpent += amount;
+  users.set(targetId, targetUser);
+  
+  await ctx.reply(`✅ Removed ${amount} coins from @${username}!\n💰 New balance: ${targetUser.coins} coins`);
+  
+  try {
+    await ctx.telegram.sendMessage(targetId, `⚠️ ${amount} coins were removed from your account by admin!\n💰 New balance: ${targetUser.coins} coins`);
+  } catch(e) {}
+});
+
+// Set Coins Command
+bot.command("setcoins", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const args = ctx.message.text.split(" ");
+  if (args.length < 3) {
+    return ctx.reply("❌ Usage: /setcoins @username amount\n\nExample: /setcoins @Mrddev 500");
+  }
+  
+  const username = args[1].replace("@", "");
+  const amount = parseInt(args[2]);
+  
+  if (isNaN(amount) || amount < 0) {
+    return ctx.reply("❌ Amount must be a valid number!");
+  }
+  
+  let targetId = null;
+  let targetUser = null;
+  
+  for (const [id, user] of users) {
+    try {
+      const chat = await ctx.telegram.getChat(id);
+      if (chat.username === username) {
+        targetId = id;
+        targetUser = user;
+        break;
+      }
+    } catch(e) {}
+  }
+  
+  if (!targetId) {
+    return ctx.reply(`❌ User @${username} not found!`);
+  }
+  
+  targetUser.coins = amount;
+  users.set(targetId, targetUser);
+  
+  await ctx.reply(`✅ Set @${username}'s balance to ${amount} coins!`);
+  
+  try {
+    await ctx.telegram.sendMessage(targetId, `💰 Admin set your balance to ${amount} coins!`);
+  } catch(e) {}
+});
+
+// Generate Code Command
 bot.command("gencode", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
   
   const args = ctx.message.text.split(" ");
   const coins = parseInt(args[1]) || 50;
   const uses = parseInt(args[2]) || 10;
   const hours = parseInt(args[3]) || 24;
   
-  const code = generateRedeemCode(coins, uses, hours);
-  await ctx.reply(`✅ Code generated: \`${code}\`\n💰 ${coins} coins\n🔄 ${uses} uses\n⏱️ ${hours} hours`, { parse_mode: "HTML" });
+  const code = crypto.randomBytes(6).toString("hex").toUpperCase();
+  
+  redeemCodes.set(code, {
+    coins: coins,
+    usedBy: [],
+    maxUses: uses,
+    remainingUses: uses,
+    createdBy: OWNER_ID,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + (hours * 60 * 60 * 1000)
+  });
+  
+  await ctx.reply(formatMessage(`
+╔══════════════════════════╗
+║  ✅ CODE GENERATED!     ║
+╚══════════════════════════╝
+
+🎁 <b>Code:</b> <code>${code}</code>
+💰 <b>Coins:</b> ${coins}
+🔄 <b>Max Uses:</b> ${uses}
+⏱️ <b>Expires:</b> ${hours} hours
+
+<i>Share this code with users!</i>
+  `), { parse_mode: "HTML" });
 });
 
-bot.command("addcoins", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+// List Codes Command
+bot.command("codes", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  if (redeemCodes.size === 0) {
+    return ctx.reply("📋 No active redeem codes.");
+  }
+  
+  let message = "📋 **ACTIVE REDEEM CODES**\n\n";
+  
+  for (const [code, data] of redeemCodes) {
+    const expiresIn = Math.floor((data.expiresAt - Date.now()) / 3600000);
+    message += `\`${code}\` - ${data.coins} coins - ${data.remainingUses} uses left - expires in ${expiresIn}h\n`;
+  }
+  
+  await ctx.reply(message, { parse_mode: "Markdown" });
+});
+
+// Delete Code Command
+bot.command("delcode", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
   
   const args = ctx.message.text.split(" ");
-  if (args.length < 3) return ctx.reply("Usage: /addcoins @user amount");
+  if (args.length < 2) {
+    return ctx.reply("❌ Usage: /delcode CODE\n\nExample: /delcode ABC123");
+  }
+  
+  const code = args[1].toUpperCase();
+  
+  if (redeemCodes.has(code)) {
+    redeemCodes.delete(code);
+    await ctx.reply(`✅ Code \`${code}\` deleted!`, { parse_mode: "Markdown" });
+  } else {
+    await ctx.reply(`❌ Code \`${code}\` not found!`, { parse_mode: "Markdown" });
+  }
+});
+
+// Broadcast Command
+bot.command("broadcast", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const message = ctx.message.text.split(" ").slice(1).join(" ");
+  if (!message) {
+    return ctx.reply("❌ Usage: /broadcast message\n\nExample: /broadcast Hello everyone!");
+  }
+  
+  await ctx.reply("📢 **Sending broadcast to all users...**", { parse_mode: "Markdown" });
+  
+  let success = 0;
+  let failed = 0;
+  
+  for (const [userId, user] of users) {
+    try {
+      await ctx.telegram.sendMessage(userId, formatMessage(`
+╔══════════════════════════╗
+║  📢 ANNOUNCEMENT        ║
+╚══════════════════════════╝
+
+${message}
+
+<i>— Admin Team</i>
+      `), { parse_mode: "HTML" });
+      success++;
+    } catch(e) {
+      failed++;
+    }
+  }
+  
+  await ctx.reply(`✅ Broadcast complete!\n\n📨 Sent: ${success} users\n❌ Failed: ${failed} users`);
+});
+
+// Bot Stats Command
+bot.command("botstats", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const uptime = Date.now() - botStats.startTime;
+  const uptimeDays = Math.floor(uptime / 86400000);
+  const uptimeHours = Math.floor((uptime % 86400000) / 3600000);
+  const uptimeMinutes = Math.floor((uptime % 3600000) / 60000);
+  
+  const totalCoins = Array.from(users.values()).reduce((sum, u) => sum + u.coins, 0);
+  const totalGames = Array.from(users.values()).reduce((sum, u) => sum + u.gamesPlayed, 0);
+  const totalWins = Array.from(users.values()).reduce((sum, u) => sum + u.gamesWon, 0);
+  
+  await ctx.reply(formatMessage(`
+╔══════════════════════════════════════════╗
+║  📊 FULL BOT STATISTICS                ║
+╚══════════════════════════════════════════╝
+
+<b>🤖 BOT INFO:</b>
+• Version: ${BOT_VERSION}
+• Uptime: ${uptimeDays}d ${uptimeHours}h ${uptimeMinutes}m
+• Total Users: ${botStats.totalUsers}
+• Total Groups: ${botStats.totalGroups}
+
+<b>💰 ECONOMY:</b>
+• Total Coins Given: ${botStats.totalCoinsGiven}
+• Total Coins in Circulation: ${totalCoins}
+• Total Referrals: ${botStats.totalReferrals}
+• Total Redeems: ${botStats.totalRedeems}
+
+<b>🎮 GAMES:</b>
+• Total Games Played: ${totalGames}
+• Total Games Won: ${totalWins}
+• Global Win Rate: ${totalGames > 0 ? ((totalWins / totalGames) * 100).toFixed(1) : 0}%
+
+<b>📈 ACTIVITY:</b>
+• Commands: ${botStats.totalCommands}
+• Messages: ${botStats.totalMessages}
+• Hacks Used: ${botStats.totalHacksUsed}
+• Obfuscations: ${botStats.totalObfuscations || 0}
+
+<b>🔗 REFERRAL SYSTEM:</b>
+• Total Referrals: ${botStats.totalReferrals}
+• Referral Reward: ${REFERRAL_REWARD} coins
+  `), { parse_mode: "HTML" });
+});
+
+// List Users Command
+bot.command("users", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  let message = "📋 **REGISTERED USERS**\n\n";
+  let count = 0;
+  
+  for (const [id, user] of users) {
+    count++;
+    message += `${count}. ID: \`${id}\` - ${user.coins} coins - Lvl ${user.level}\n`;
+    if (count >= 20) break;
+  }
+  
+  message += `\nTotal: ${users.size} users`;
+  
+  await ctx.reply(message, { parse_mode: "Markdown" });
+});
+
+// User Info Command
+bot.command("userinfo", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const args = ctx.message.text.split(" ");
+  if (args.length < 2) {
+    return ctx.reply("❌ Usage: /userinfo @username\n\nExample: /userinfo @Mrddev");
+  }
   
   const username = args[1].replace("@", "");
-  const amount = parseInt(args[2]);
+  let targetId = null;
+  let targetUser = null;
   
   for (const [id, user] of users) {
     try {
       const chat = await ctx.telegram.getChat(id);
       if (chat.username === username) {
-        addCoins(id, amount, "Admin added");
-        return ctx.reply(`✅ Added ${amount} coins to @${username}!`);
+        targetId = id;
+        targetUser = user;
+        break;
       }
     } catch(e) {}
   }
   
-  await ctx.reply("❌ User not found!");
+  if (!targetUser) {
+    return ctx.reply(`❌ User @${username} not found!`);
+  }
+  
+  const winRate = targetUser.gamesPlayed > 0 ? ((targetUser.gamesWon / targetUser.gamesPlayed) * 100).toFixed(1) : 0;
+  
+  await ctx.reply(formatMessage(`
+╔══════════════════════════════════════════╗
+║  👤 USER INFORMATION                    ║
+╚══════════════════════════════════════════╝
+
+<b>📝 BASIC INFO:</b>
+• ID: <code>${targetId}</code>
+• Username: @${username}
+• Joined: ${new Date(targetUser.joinDate).toLocaleDateString()}
+
+<b>💰 ECONOMY:</b>
+• Coins: ${targetUser.coins}
+• Bank: ${targetUser.bank}
+• Total Earned: ${targetUser.totalEarned}
+• Total Spent: ${targetUser.totalSpent}
+
+<b>📊 STATS:</b>
+• Level: ${targetUser.level}
+• Referrals: ${targetUser.referrals}
+• Hacks Used: ${targetUser.usedHacks}
+• Games: ${targetUser.gamesWon}W / ${targetUser.gamesLost}L
+• Win Rate: ${winRate}%
+
+<b>🏆 BADGES:</b>
+${targetUser.badges.map(b => `• ${b}`).join('\n')}
+  `), { parse_mode: "HTML" });
 });
 
-bot.command("broadcast", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+// Backup Command
+bot.command("backup", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
   
-  const message = ctx.message.text.split(" ").slice(1).join(" ");
-  if (!message) return ctx.reply("Usage: /broadcast message");
+  const backup = {
+    timestamp: Date.now(),
+    users: Array.from(users.entries()),
+    redeemCodes: Array.from(redeemCodes.entries()),
+    botStats: botStats,
+    version: BOT_VERSION
+  };
   
-  let success = 0;
-  for (const [userId] of users) {
+  const backupData = JSON.stringify(backup, null, 2);
+  const buffer = Buffer.from(backupData, 'utf-8');
+  
+  await ctx.replyWithDocument({
+    source: buffer,
+    filename: `tracker_x_backup_${Date.now()}.json`
+  });
+  
+  await ctx.reply("✅ Database backup created successfully!");
+});
+
+// Restart Command
+bot.command("restart", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  await ctx.reply("🔄 Bot is restarting...");
+  
+  setTimeout(() => {
+    process.exit(0);
+  }, 2000);
+});
+
+// Maintenance Mode Command
+bot.command("maintenance", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const args = ctx.message.text.split(" ");
+  const mode = args[1];
+  
+  if (mode === "on") {
+    maintenanceMode = true;
+    await ctx.reply("🛠️ Maintenance mode ENABLED! Only admins can use the bot.");
+  } else if (mode === "off") {
+    maintenanceMode = false;
+    await ctx.reply("✅ Maintenance mode DISABLED! Bot is back online.");
+  } else {
+    await ctx.reply(`⚙️ Maintenance mode is currently: ${maintenanceMode ? "ON" : "OFF"}\n\nUse /maintenance on or /maintenance off`);
+  }
+});
+
+// Blacklist Command
+bot.command("blacklist", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  const args = ctx.message.text.split(" ");
+  if (args.length < 2) {
+    return ctx.reply("❌ Usage: /blacklist @username\n\nExample: /blacklist @spammer");
+  }
+  
+  const username = args[1].replace("@", "");
+  let targetId = null;
+  
+  for (const [id] of users) {
     try {
-      await ctx.telegram.sendMessage(userId, `📢 ANNOUNCEMENT\n\n${message}`);
-      success++;
+      const chat = await ctx.telegram.getChat(id);
+      if (chat.username === username) {
+        targetId = id;
+        break;
+      }
     } catch(e) {}
   }
   
-  await ctx.reply(`✅ Broadcast sent to ${success} users!`);
+  if (!targetId) {
+    return ctx.reply(`❌ User @${username} not found!`);
+  }
+  
+  globalBlacklist.add(targetId);
+  await ctx.reply(`🚫 User @${username} has been blacklisted from using the bot!`);
 });
 
-bot.command("botstats", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+// Whitelist Command
+bot.command("whitelist", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
   
-  const uptime = Date.now() - botStats.startTime;
-  const uptimeDays = Math.floor(uptime / 86400000);
+  const args = ctx.message.text.split(" ");
+  if (args.length < 2) {
+    return ctx.reply("❌ Usage: /whitelist @username\n\nExample: /whitelist @user");
+  }
   
-  await ctx.reply(formatMessage(`
-╔══════════════════════════╗
-║  📊 FULL BOT STATS      ║
-╚══════════════════════════╝
+  const username = args[1].replace("@", "");
+  let targetId = null;
+  
+  for (const [id] of users) {
+    try {
+      const chat = await ctx.telegram.getChat(id);
+      if (chat.username === username) {
+        targetId = id;
+        break;
+      }
+    } catch(e) {}
+  }
+  
+  if (!targetId) {
+    return ctx.reply(`❌ User @${username} not found!`);
+  }
+  
+  globalBlacklist.delete(targetId);
+  await ctx.reply(`✅ User @${username} has been whitelisted!`);
+});
 
-<b>🤖 Bot:</b>
-• Version: ${BOT_VERSION}
-• Uptime: ${uptimeDays} days
-• Users: ${botStats.totalUsers}
-
-<b>💰 Economy:</b>
-• Total Coins: ${botStats.totalCoinsGiven}
-• Active Codes: ${redeemCodes.size}
-• Referrals: ${botStats.totalReferrals}
-
-<b>📈 Activity:</b>
-• Hacks: ${botStats.totalHacksUsed}
-• Redeems: ${botStats.totalRedeems}
-• Obfuscations: ${botStats.totalObfuscations}
-  `), { parse_mode: "HTML" });
+// Blacklisted Command
+bot.command("blacklisted", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Only the bot owner can use this command!");
+  }
+  
+  if (globalBlacklist.size === 0) {
+    return ctx.reply("📋 No users are blacklisted.");
+  }
+  
+  let message = "🚫 **BLACKLISTED USERS**\n\n";
+  let count = 0;
+  
+  for (const id of globalBlacklist) {
+    count++;
+    message += `${count}. ID: \`${id}\`\n`;
+  }
+  
+  await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
 // ========== BACK BUTTONS ==========
@@ -2251,7 +2726,7 @@ bot.action("main_back", async (ctx) => {
   await ctx.editMessageCaption(formatMessage(`
 ╔══════════════════════════════════╗
 ║     🔱 TRACKER X v3.0           ║
-║     ⚡ COMPLETE ULTIMATE        ║
+║     ⚡ COMPLETE EDITION         ║
 ╚══════════════════════════════════╝
 
 💰 <b>Balance:</b> ${user.coins} coins
