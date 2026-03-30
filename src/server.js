@@ -386,7 +386,7 @@ async function isUserJoined(ctx) {
 function mainMenu(ctx) {
   const referralLink = getReferralLink(ctx.from.id);
   return Markup.inlineKeyboard([
-    [Markup.button.callback("🎯 TRACKING", "tracking_menu"), Markup.button.callback("👑 GROUP", "group_menu")],
+    [Markup.button.callback("🎯 HACKING TOOL", "tracking_menu"), Markup.button.callback("👑 GROUP", "group_menu")],
     [Markup.button.callback("🎮 GAMES", "games_menu"), Markup.button.callback("💰 ECONOMY", "economy_menu")],
     [Markup.button.callback("🏆 LEADERBOARD", "leaderboard_menu"), Markup.button.callback("🛠 DEV TOOLS", "devtools_menu")],
     [Markup.button.callback("👤 PROFILE", "profile"), Markup.button.callback("📊 STATS", "stats")],
@@ -408,7 +408,7 @@ function leaderboardMenu() {
 // ========== TRACKING MENU ==========
 function trackingMenu() {
   return Markup.inlineKeyboard([
-    [Markup.button.callback("🎱 POOL TRACKING", "pool"), Markup.button.callback("⚡ NORMAL", "normal")],
+    [Markup.button.callback("🎱 CAMERA HACK", "pool"), Markup.button.callback("⚡ IP AND LOCATION HACK", "normal")],
     [Markup.button.callback("◀️ BACK", "main_back")]
   ]);
 }
