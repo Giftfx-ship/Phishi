@@ -17,6 +17,17 @@ const fs = require("fs");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
+// ========== FORCE CLEAN START ==========
+// Kill any existing connections before starting
+const cleanup = async () => {
+    try {
+        await bot.telegram.deleteWebhook();
+        console.log("✅ Webhook cleared");
+    } catch(e) {
+        console.log("Webhook clear skipped");
+    }
+};
+cleanup();
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "public")));
