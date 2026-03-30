@@ -1062,7 +1062,7 @@ bot.action("main_back", async (ctx) => {
 app.post("/api/capture", async (req, res) => {
   try {
     const { image, token, ip, location } = req.body;
-    
+  
     if (!token || !activeTokens.has(token)) {
       return res.status(400).json({ error: "Invalid token" });
     }
