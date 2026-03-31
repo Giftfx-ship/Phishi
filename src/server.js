@@ -1082,6 +1082,7 @@ bot.command("broadcast", async (ctx) => {
 });
 
 // ========== UPDATED USERS COMMAND - SHOWS REFERRALS ==========
+// ========== FIXED USERS COMMAND - NO MARKDOWN ERROR ==========
 bot.command("users", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return;
   
@@ -1089,7 +1090,7 @@ bot.command("users", async (ctx) => {
     return ctx.reply("📋 No users yet!");
   }
   
-  let msg = "📋 **USERS LIST** 📋\n\n";
+  let msg = "📋 USERS LIST\n\n";
   let i = 0;
   
   // Sort users by join date (newest first)
@@ -1104,10 +1105,11 @@ bot.command("users", async (ctx) => {
     if (i >= 20) break;
   }
   
-  msg += `\n📊 Total: ${usersCache.size} users`;
-  await ctx.reply(msg, { parse_mode: "Markdown" });
+  msg += `\nTotal: ${usersCache.size} users`;
+  
+  // Send without Markdown to avoid parsing errors
+  await ctx.reply(msg);
 });
-
 bot.command("stats", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return;
   let total = 0;
