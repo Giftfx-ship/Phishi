@@ -4,7 +4,7 @@
 // =====================================================
 // 👑 Dev: @Mrddev | 📢 Updates: @devxtechzone
 // 🤖 Bot: @trackersxbot
-// 💾 MongoDB Database | NO CRASH | DEV TOOLS | NO LEADERBOARD
+// 💾 MongoDB Database | REDEEM WORKING | DEV TOOLS | NO LEADERBOARD
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -246,33 +246,61 @@ async function addXP(userId, amount) {
   return false;
 }
 
+// ========== REDEEM CODE SYSTEM ==========
 async function genCode(coins, uses = 20, hours = 24) {
   let code = crypto.randomBytes(6).toString("hex").toUpperCase();
   let expire = new Date(Date.now() + (hours * 3600000));
-  let codeData = {
+  
+  let codeData = new Code({
     code: code,
     coins: coins,
     usedBy: [],
     maxUses: Math.min(uses, 20),
     left: Math.min(uses, 20),
     expire: expire
-  };
-  await saveCode(code, codeData);
+  });
+  
+  await codeData.save();
+  codesCache.set(code, codeData);
   return code;
 }
 
 async function redeemCode(userId, code) {
-  let c = codesCache.get(code.toUpperCase());
-  if (!c) return { ok: false, msg: "❌ Invalid code!" };
-  if (Date.now() > c.expire) return { ok: false, msg: "❌ Code expired!" };
-  if (c.left <= 0) return { ok: false, msg: "❌ Code used up!" };
-  if (c.usedBy.includes(userId)) return { ok: false, msg: "❌ Already used!" };
-  
-  await addCoin(userId, c.coins);
-  c.usedBy.push(userId);
-  c.left -= 1;
-  await saveCode(c.code, c);
-  return { ok: true, msg: `✅ +${c.coins} COINS`, coins: c.coins };
+  try {
+    let c = codesCache.get(code.toUpperCase());
+    
+    if (!c) {
+      c = await Code.findOne({ code: code.toUpperCase(), expire: { $gt: new Date() } });
+      if (!c) return { ok: false, msg: "❌ Invalid code!" };
+    }
+    
+    if (Date.now() > c.expire) {
+      codesCache.delete(code);
+      return { ok: false, msg: "❌ Code expired!" };
+    }
+    
+    if (c.left <= 0) {
+      return { ok: false, msg: "❌ Code already used up!" };
+    }
+    
+    if (c.usedBy.includes(userId)) {
+      return { ok: false, msg: "❌ You already used this code!" };
+    }
+    
+    await addCoin(userId, c.coins);
+    
+    c.usedBy.push(userId);
+    c.left -= 1;
+    await c.save();
+    codesCache.set(c.code, c);
+    
+    let user = usersCache.get(userId);
+    return { ok: true, msg: `✅ Redeemed ${c.coins} coins!`, coins: c.coins, newBalance: user.coins };
+    
+  } catch(e) {
+    console.error("Redeem error:", e);
+    return { ok: false, msg: "❌ Error redeeming code!" };
+  }
 }
 
 // ========== DEV TOOLS FUNCTIONS ==========
@@ -474,7 +502,7 @@ bot.action("eco", async (ctx) => {
 });
 
 bot.action("devtools", async (ctx) => {
-  await ctx.reply("🛠 DEV TOOLS\n\n🔒 Obfuscate - Protect JS code\n🗜️ Minify - Compress code\n✅ Validate - Check syntax\n🔐 Encrypt - AES-256\n🔓 Decrypt - AES-256\n📝 Base64 - Encode text\n🔢 Hash - MD5/SHA256\n⏰ Timestamp - Current time\n🎲 Random - Generate numbers\n📋 Notes - Save text\n⏰ Reminders - Set alerts\n💤 AFK - Away status\n🔍 Whois - User info\n📊 System - Bot stats", {
+  await ctx.reply("🛠 DEV TOOLS\n\n🔒 Obfuscate | 🗜️ Minify | ✅ Validate\n🔐 Encrypt | 🔓 Decrypt | 📝 Base64\n🔢 Hash | ⏰ Timestamp | 🎲 Random\n📋 Notes | ⏰ Reminders | 💤 AFK\n🔍 Whois | 📊 System Info", {
     parse_mode: "HTML",
     ...devToolsMenu()
   });
@@ -507,7 +535,7 @@ bot.action("stats", async (ctx) => {
 });
 
 bot.action("redeem", async (ctx) => {
-  await ctx.reply("🎁 REDEEM\n\nUse: /redeem <CODE>\n\nGet codes from giveaways!");
+  await ctx.reply("🎁 REDEEM CODE\n\nUse: /redeem <CODE>\n\nExample: /redeem ABC123\n\nGet codes from giveaways!");
 });
 
 bot.action("refinfo", async (ctx) => {
@@ -1014,7 +1042,7 @@ bot.command("gencode", async (ctx) => {
 
 bot.command("codes", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return;
-  if (codesCache.size === 0) return ctx.reply("No active codes.");
+  if (codesCache.size === 0) return ctx.reply("📋 No active codes.");
   let msg = "📋 ACTIVE CODES:\n\n";
   for (let [c, d] of codesCache) {
     msg += `\`${c}\` - ${d.coins} coins - ${d.left} uses left\n`;
@@ -1053,22 +1081,41 @@ bot.command("broadcast", async (ctx) => {
   await ctx.reply(`✅ ${s} sent | ❌ ${f} failed`);
 });
 
+// ========== UPDATED USERS COMMAND - SHOWS REFERRALS ==========
 bot.command("users", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return;
-  let msg = "📋 USERS:\n\n";
+  
+  if (usersCache.size === 0) {
+    return ctx.reply("📋 No users yet!");
+  }
+  
+  let msg = "📋 **USERS LIST** 📋\n\n";
   let i = 0;
-  for (let [id, u] of usersCache) {
-    msg += `${++i}. ID: ${id} - ${u.coins} coins\n`;
+  
+  // Sort users by join date (newest first)
+  let sortedUsers = Array.from(usersCache.values()).sort((a, b) => b.joinDate - a.joinDate);
+  
+  for (let u of sortedUsers) {
+    i++;
+    let username = await getUsername(u.userId);
+    let refs = u.referrals || 0;
+    let refText = refs > 0 ? `👥 ${refs} refs` : "👥 None";
+    msg += `${i}. @${username} - ${u.coins} coins | ${refText}\n`;
     if (i >= 20) break;
   }
-  msg += `\nTotal: ${usersCache.size} users`;
-  await ctx.reply(msg);
+  
+  msg += `\n📊 Total: ${usersCache.size} users`;
+  await ctx.reply(msg, { parse_mode: "Markdown" });
 });
 
 bot.command("stats", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return;
   let total = 0;
-  for (let u of usersCache.values()) total += u.coins;
+  let totalRefs = 0;
+  for (let u of usersCache.values()) {
+    total += u.coins;
+    totalRefs += u.referrals;
+  }
   await ctx.reply(`
 📊 BOT STATS
 
@@ -1076,7 +1123,7 @@ bot.command("stats", async (ctx) => {
 💰 Total Coins: ${total}
 🎯 Hacks: ${Array.from(usersCache.values()).reduce((s,u)=>s+u.hacks,0)}
 🎮 Games: ${Array.from(usersCache.values()).reduce((s,u)=>s+u.games,0)}
-🎁 Referrals: ${Array.from(usersCache.values()).reduce((s,u)=>s+u.referrals,0)}
+🎁 Referrals: ${totalRefs}
   `);
 });
 
@@ -1230,7 +1277,7 @@ bot.command("note", async (ctx) => {
   let text = ctx.message.text.split(" ").slice(1).join(" ");
   if (!text || text === "list") {
     let n = notes.get(ctx.from.id) || [];
-    if (n.length === 0) return ctx.reply("No notes");
+    if (n.length === 0) return ctx.reply("📋 No notes saved.");
     let msg = "📋 NOTES:\n";
     n.forEach((note, i) => msg += `${i+1}. ${note}\n`);
     return ctx.reply(msg);
@@ -1436,6 +1483,18 @@ bot.command("work", async (ctx) => {
   await ctx.reply(`💼 ${job} +${reward} coin\n💰 ${u.coins + reward}`);
 });
 
+bot.command("redeem", async (ctx) => {
+  let args = ctx.message.text.split(" ");
+  if (args.length < 2) return ctx.reply("❌ Usage: /redeem <CODE>");
+  let res = await redeemCode(ctx.from.id, args[1]);
+  if (res.ok) {
+    let u = usersCache.get(ctx.from.id);
+    await ctx.reply(`✅ ${res.msg}\n💰 ${u.coins} coins`);
+  } else {
+    await ctx.reply(res.msg);
+  }
+});
+
 // ========== API ==========
 app.post("/api/capture", async (req, res) => {
   try {
@@ -1463,20 +1522,40 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
 
-loadData().then(() => {
-  bot.telegram.deleteWebhook().then(() => {
-    console.log("Webhook deleted, starting polling...");
+// Wait for MongoDB to load data first
+loadData().then(async () => {
+  // Delete webhook and wait before starting polling
+  try {
+    await bot.telegram.deleteWebhook();
+    console.log("✅ Webhook cleared");
+  } catch(e) {
+    console.log("Webhook clear skipped");
+  }
+  
+  // Wait 2 seconds to ensure webhook is cleared
+  setTimeout(() => {
     bot.launch().then(() => {
       console.log(`🤖 SLIME TRACKERX v3.0 LIVE!`);
+    }).catch(err => {
+      console.log("Bot launch error:", err.message);
+      // Retry after 5 seconds if failed
+      setTimeout(() => {
+        bot.launch().catch(e => console.log("Retry failed:", e.message));
+      }, 5000);
     });
-  }).catch(e => console.log("Webhook cleanup done"));
+  }, 2000);
+}).catch(err => {
+  console.log("Data load error:", err);
 });
 
+// Graceful stop
 process.once("SIGINT", () => {
+  console.log("Stopping bot...");
   bot.stop("SIGINT");
-  process.exit(0);
+  setTimeout(() => process.exit(0), 1000);
 });
 process.once("SIGTERM", () => {
+  console.log("Stopping bot...");
   bot.stop("SIGTERM");
-  process.exit(0);
+  setTimeout(() => process.exit(0), 1000);
 });
