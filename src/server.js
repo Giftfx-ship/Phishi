@@ -57,9 +57,9 @@ const userSchema = new mongoose.Schema({
 const codeSchema = new mongoose.Schema({
   code: { type: String, unique: true, required: true },
   coins: Number,
-  usedBy: { type: [Number], default: [] },
+  usedBy: [Number],
   maxUses: { type: Number, default: 20 },
-  left: { type: Number, default: 20 },
+  left: Number,
   expire: Date,
   createdAt: { type: Date, default: Date.now }
 });
@@ -79,7 +79,6 @@ const REF_REWARD = 2;
 const DAILY_REWARD = 2;
 const WORK_REWARD = 1;
 const WORK_CD = 6 * 60 * 60 * 1000;
-
 // ========== MEMORY CACHE ==========
 let usersCache = new Map();
 let codesCache = new Map();
@@ -110,14 +109,15 @@ async function loadData() {
     
     const allCodes = await Code.find({ expire: { $gt: new Date() } });
     for (const code of allCodes) {
-      codesCache.set(code.code.toUpperCase(), code);
+      codesCache.set(code.code, code);
     }
     console.log(`📂 Loaded ${codesCache.size} active codes`);
   } catch(e) {
     console.log("Error loading data:", e);
   }
-  }
-  // ========== SAVE FUNCTIONS ==========
+}
+
+// ========== SAVE FUNCTIONS ==========
 async function saveUser(userId, data) {
   try {
     await User.findOneAndUpdate(
@@ -134,11 +134,11 @@ async function saveUser(userId, data) {
 async function saveCode(code, data) {
   try {
     await Code.findOneAndUpdate(
-      { code: code.toUpperCase() },
+      { code: code },
       data,
       { upsert: true, new: true }
     );
-    codesCache.set(code.toUpperCase(), data);
+    codesCache.set(code, data);
   } catch(e) {
     console.log("Error saving code:", e);
   }
@@ -224,6 +224,7 @@ async function useHack(userId) {
   }
   return false;
 }
+
 async function addXP(userId, amount) {
   let user = usersCache.get(userId);
   if (user) {
@@ -244,7 +245,7 @@ async function addXP(userId, amount) {
   return false;
 }
 
-// ========== REDEEM CODE SYSTEM (FIXED) ==========
+// ========== REDEEM CODE SYSTEM ==========
 async function genCode(coins, uses = 20, hours = 24) {
   let code = crypto.randomBytes(6).toString("hex").toUpperCase();
   let expire = new Date(Date.now() + (hours * 3600000));
@@ -265,17 +266,15 @@ async function genCode(coins, uses = 20, hours = 24) {
 
 async function redeemCode(userId, code) {
   try {
-    let upperCode = code.toUpperCase();
-    let c = codesCache.get(upperCode);
+    let c = codesCache.get(code.toUpperCase());
     
     if (!c) {
-      c = await Code.findOne({ code: upperCode });
+      c = await Code.findOne({ code: code.toUpperCase(), expire: { $gt: new Date() } });
       if (!c) return { ok: false, msg: "❌ Invalid code!" };
-      codesCache.set(upperCode, c);
     }
     
-    if (c.expire && new Date() > c.expire) {
-      codesCache.delete(upperCode);
+    if (Date.now() > c.expire) {
+      codesCache.delete(code);
       return { ok: false, msg: "❌ Code expired!" };
     }
     
@@ -283,19 +282,16 @@ async function redeemCode(userId, code) {
       return { ok: false, msg: "❌ Code already used up!" };
     }
     
-    if (c.usedBy && c.usedBy.includes(userId)) {
+    if (c.usedBy.includes(userId)) {
       return { ok: false, msg: "❌ You already used this code!" };
     }
     
-    // Add coins to user
     await addCoin(userId, c.coins);
     
-    // Update code usage
-    c.usedBy = c.usedBy || [];
     c.usedBy.push(userId);
     c.left -= 1;
     await c.save();
-    codesCache.set(upperCode, c);
+    codesCache.set(c.code, c);
     
     let user = usersCache.get(userId);
     return { ok: true, msg: `✅ Redeemed ${c.coins} coins!`, coins: c.coins, newBalance: user.coins };
@@ -335,7 +331,7 @@ function validateCode(code) {
   try { new Function(code); return { ok: true }; } 
   catch(e) { return { ok: false, error: e.message }; }
     }
-    / ========== JOIN CHECK ==========
+// ========== JOIN CHECK ==========
 async function checkJoin(ctx) {
   try {
     let m = await ctx.telegram.getChatMember(CHANNEL, ctx.from.id);
@@ -417,8 +413,9 @@ function devToolsMenu() {
     [Markup.button.callback("🔍 WHOIS", "whois"), Markup.button.callback("📊 SYSTEM", "sys")],
     [Markup.button.callback("◀️ BACK", "back")]
   ]);
-     }
-     / ========== MIDDLEWARE ==========
+}
+
+// ========== MIDDLEWARE ==========
 bot.use(async (ctx, next) => {
   if (!ctx.from) return next();
   if (ctx.chat?.type === "channel") return next();
@@ -441,7 +438,6 @@ bot.use(async (ctx, next) => {
   }
   return next();
 });
-
 // ========== START ==========
 bot.start(async (ctx) => {
   let ref = null;
@@ -463,7 +459,7 @@ bot.action("join", async (ctx) => {
     return ctx.answerCbQuery("❌ Join first!", true);
   }
   await ctx.answerCbQuery("✅ Access!");
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let user = await initUser(ctx.from.id);
   await ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", {
     caption: `✅ Access Unlocked!\n💰 ${user.coins} coins\n🎯 Select module`,
@@ -471,9 +467,10 @@ bot.action("join", async (ctx) => {
     ...mainMenu(ctx)
   });
 });
-// ========== NAVIGATION (WITH DELETE = FIXED) ==========
+
+// ========== NAVIGATION (WITH MENU DELETION) ==========
 bot.action("track", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🎯 TRACKING\n\n⚠️ 5 coins\n⏱️ 10min\n📸 Camera + IP + Location", {
     parse_mode: "HTML",
     ...trackMenu()
@@ -481,7 +478,7 @@ bot.action("track", async (ctx) => {
 });
 
 bot.action("group", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("👑 GROUP TOOLS\n\nAdmin tools for moderation!", {
     parse_mode: "HTML",
     ...groupMenu()
@@ -489,7 +486,7 @@ bot.action("group", async (ctx) => {
 });
 
 bot.action("games", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🎮 GAMES ZONE\n\n💰 Bet any amount | Win = get your bet back + 1 coin!\n🎲 Click a game to play!", {
     parse_mode: "HTML",
     ...gamesMenu()
@@ -497,7 +494,7 @@ bot.action("games", async (ctx) => {
 });
 
 bot.action("eco", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let u = await initUser(ctx.from.id);
   await ctx.reply(`💰 ECONOMY\n\n💰 Balance: ${u.coins} coins\n📈 Earned: ${u.totalEarned}\n\nDaily: ${DAILY_REWARD} coins | Work: ${WORK_REWARD} coin/6h | Referral: ${REF_REWARD} coins`, {
     parse_mode: "HTML",
@@ -506,7 +503,7 @@ bot.action("eco", async (ctx) => {
 });
 
 bot.action("devtools", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🛠 DEV TOOLS\n\n🔒 Obfuscate | 🗜️ Minify | ✅ Validate\n🔐 Encrypt | 🔓 Decrypt | 📝 Base64\n🔢 Hash | ⏰ Timestamp | 🎲 Random\n📋 Notes | ⏰ Reminders | 💤 AFK\n🔍 Whois | 📊 System Info", {
     parse_mode: "HTML",
     ...devToolsMenu()
@@ -514,7 +511,7 @@ bot.action("devtools", async (ctx) => {
 });
 
 bot.action("prof", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let u = await initUser(ctx.from.id);
   let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0;
   await ctx.reply(`👤 PROFILE\n\n📝 ${ctx.from.first_name}\n🆔 ${ctx.from.id}\n\n💰 ${u.coins} coins\n📊 Level ${u.level}\n👥 ${u.referrals} refs\n🔧 ${u.hacks} hacks\n🎮 ${u.wins}W/${u.losses}L (${winRate}%)\n\n🏆 Badges:\n${u.badges.map(b => `• ${b}`).join('\n')}`, {
@@ -524,7 +521,7 @@ bot.action("prof", async (ctx) => {
 });
 
 bot.action("stats", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let totalCoins = 0;
   let totalHacks = 0;
   let totalGames = 0;
@@ -540,13 +537,14 @@ bot.action("stats", async (ctx) => {
     ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "back")]])
   });
 });
+
 bot.action("redeem", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🎁 REDEEM CODE\n\nUse: /redeem <CODE>\n\nExample: /redeem ABC123\n\nGet codes from giveaways!");
 });
 
 bot.action("refinfo", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let u = await initUser(ctx.from.id);
   await ctx.reply(`🔗 REFERRAL\n\nLink: ${refLink(ctx.from.id)}\n\n📊 ${u.referrals} refs | ${u.referrals * REF_REWARD} coins earned\n\n🎁 ${REF_REWARD} coins per ref!`, {
     parse_mode: "HTML",
@@ -555,22 +553,21 @@ bot.action("refinfo", async (ctx) => {
 });
 
 bot.action("chat", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("💬 CHAT WITH DEV\n\nUse /chat to send message to developer.\nUse /exit to leave chat mode.");
 });
 
 bot.action("back", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let u = await initUser(ctx.from.id);
   await ctx.reply(`🟢⚡ SLIME TRACKERX v3.0 ⚡🟢\n💻 CYBER ANALYTICS CORE\n\n💰 ${u.coins} coins | 📊 Lvl ${u.level} | 👥 ${u.referrals} refs\n\n🎯 Select module`, {
     parse_mode: "HTML",
     ...mainMenu(ctx)
   });
 });
-
 // ========== TRACKING ==========
 bot.action("pool", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!await canHack(ctx.from.id)) {
     return ctx.reply(`❌ Need ${TRACK_COST} coins!`);
   }
@@ -585,7 +582,7 @@ bot.action("pool", async (ctx) => {
 });
 
 bot.action("norm", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!await canHack(ctx.from.id)) {
     return ctx.reply(`❌ Need ${TRACK_COST} coins!`);
   }
@@ -598,9 +595,10 @@ bot.action("norm", async (ctx) => {
     ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "track")]])
   });
 });
+
 // ========== GAMES ==========
 bot.action("dice", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🎲 DICE GAME\n\n💰 Bet any amount\n\nSend: /dice [amount]\n\nExample: /dice 10\n\nWin = get your bet back + 1 coin | Lose = lose bet");
 });
 
@@ -633,7 +631,7 @@ bot.command("dice", async (ctx) => {
 });
 
 bot.action("slots", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🎰 SLOTS GAME\n\n💰 Bet any amount\n\nSend: /slots [amount]\n\nExample: /slots 10\n\nWin = get your bet back + 1 coin | Lose = lose bet");
 });
 
@@ -666,7 +664,7 @@ bot.command("slots", async (ctx) => {
 });
 
 bot.action("guess", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔢 GUESS GAME\n\n💰 Bet any amount\n\nSend: /guess [amount] [1-10]\n\nExample: /guess 10 7\n\nWin = get your bet back + 1 coin | Lose = lose bet");
 });
 
@@ -695,9 +693,8 @@ bot.command("guess", async (ctx) => {
     await saveUser(ctx.from.id, u);
   } catch(e) { console.error(e); ctx.reply("⚠️ Error playing guess"); }
 });
-
 bot.action("rps", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("✊ ROCK PAPER SCISSORS\n\n💰 Bet any amount\n\nSend: /rps [amount] [rock/paper/scissors]\n\nExample: /rps 10 rock\n\nWin = get your bet back + 1 coin | Lose = lose bet | Tie = coins back");
 });
 
@@ -733,8 +730,9 @@ bot.command("rps", async (ctx) => {
     await saveUser(ctx.from.id, u);
   } catch(e) { console.error(e); ctx.reply("⚠️ Error playing RPS"); }
 });
+
 bot.action("flip", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🪙 COIN FLIP\n\n💰 Bet any amount\n\nSend: /flip [amount]\n\nExample: /flip 10\n\nWin = get your bet back + 1 coin | Lose = lose bet");
 });
 
@@ -764,7 +762,7 @@ bot.command("flip", async (ctx) => {
 });
 
 bot.action("risk", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔥 HIGH RISK GAME\n\n💰 Bet any amount\n\nSend: /risk [amount]\n\nExample: /risk 10\n\nWin = get your bet back + 1 coin | Lose = lose bet");
 });
 
@@ -795,7 +793,7 @@ bot.command("risk", async (ctx) => {
 
 // ========== ECONOMY ==========
 bot.action("daily", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let u = await initUser(ctx.from.id);
   let now = Date.now();
   if (u.lastDaily && now - u.lastDaily < 86400000) {
@@ -812,8 +810,9 @@ bot.action("daily", async (ctx) => {
   await saveUser(ctx.from.id, u);
   await ctx.reply(`🎁 DAILY! +${reward} coins\n🔥 Streak: ${streak}\n💰 ${u.coins + reward}`);
 });
+
 bot.action("work", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let u = await initUser(ctx.from.id);
   let now = Date.now();
   let last = workCD.get(u.userId) || 0;
@@ -831,7 +830,7 @@ bot.action("work", async (ctx) => {
 
 // ========== GROUP TOOLS ==========
 bot.action("tag", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!ctx.chat.type?.includes("group")) return ctx.reply("❌ Group only!");
   let admin = await ctx.getChatMember(ctx.from.id);
   if (!["administrator", "creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
@@ -853,7 +852,7 @@ bot.action("tag", async (ctx) => {
 });
 
 bot.action("setw", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
   if (!["administrator", "creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
@@ -871,7 +870,7 @@ bot.command("setwelcome", async (ctx) => {
 });
 
 bot.action("setg", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
   if (!["administrator", "creator"].includes(admin.status)) return ctx.reply("❌ Admin only!");
@@ -904,8 +903,9 @@ bot.on("left_chat_member", async (ctx) => {
   if (m.id === bot.botInfo.id) return;
   await ctx.reply(msg.replace("{name}", m.first_name).replace("{group}", ctx.chat.title));
 });
+
 bot.action("alink", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
   if (!["administrator", "creator"].includes(admin.status)) return;
@@ -919,7 +919,7 @@ bot.action("alink", async (ctx) => {
 });
 
 bot.action("aspam", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!ctx.chat.type?.includes("group")) return;
   let admin = await ctx.getChatMember(ctx.from.id);
   if (!["administrator", "creator"].includes(admin.status)) return;
@@ -931,9 +931,8 @@ bot.action("aspam", async (ctx) => {
     await ctx.reply("✅ Anti-spam ON");
   }
 });
-
 bot.action("warn", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("⚠️ Reply with /warn");
 });
 
@@ -955,7 +954,7 @@ bot.command("warn", async (ctx) => {
 });
 
 bot.action("kick", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔨 Reply with /kick");
 });
 
@@ -971,7 +970,7 @@ bot.command("kick", async (ctx) => {
 });
 
 bot.action("ban", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🚫 Reply with /ban");
 });
 
@@ -986,7 +985,7 @@ bot.command("ban", async (ctx) => {
 });
 
 bot.action("mute", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔇 Reply with /mute <minutes>");
 });
 
@@ -1007,13 +1006,14 @@ bot.command("mute", async (ctx) => {
 });
 
 bot.action("gstats", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   if (!ctx.chat.type?.includes("group")) return;
   let chat = await ctx.getChat();
   let admins = await ctx.getChatAdministrators();
   let count = await ctx.telegram.getChatMembersCount(ctx.chat.id);
   await ctx.reply(`📊 GROUP\n\n📝 ${chat.title}\n👥 ${count} members\n👑 ${admins.length} admins\n\n🚫 Anti-link: ${antiLink.has(ctx.chat.id) ? "ON" : "OFF"}\n🛡️ Anti-spam: ${antiSpam.has(ctx.chat.id) ? "ON" : "OFF"}`);
 });
+
 // ========== ADMIN COMMANDS ==========
 bot.command("admin", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return ctx.reply("❌ Owner only!");
@@ -1054,7 +1054,6 @@ bot.command("addcoin", async (ctx) => {
   }
   await ctx.reply("❌ User not found!");
 });
-
 bot.command("gencode", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return;
   let args = ctx.message.text.split(" ");
@@ -1150,6 +1149,7 @@ bot.command("stats", async (ctx) => {
 🎁 Referrals: ${totalRefs}
   `);
 });
+
 bot.command("banuser", async (ctx) => {
   if (ctx.from.id !== OWNER_ID) return;
   let args = ctx.message.text.split(" ");
@@ -1209,25 +1209,25 @@ bot.command("exit", async (ctx) => {
 
 // ========== DEV TOOLS COMMANDS ==========
 bot.action("obf", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔒 OBFUSCATE\n\nSend your JavaScript code to protect!");
   gameSessions.set(ctx.from.id, { type: "obf" });
 });
 
 bot.action("min", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🗜️ MINIFY\n\nSend your JavaScript code to compress!");
   gameSessions.set(ctx.from.id, { type: "min" });
 });
 
 bot.action("val", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("✅ VALIDATE\n\nSend your JavaScript code to check syntax!");
   gameSessions.set(ctx.from.id, { type: "val" });
 });
 
 bot.action("enc", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔐 ENCRYPT\n\nUse: /encrypt <text>");
 });
 
@@ -1240,7 +1240,7 @@ bot.command("encrypt", async (ctx) => {
 });
 
 bot.action("dec", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔓 DECRYPT\n\nUse: /decrypt <hex>");
 });
 
@@ -1257,7 +1257,7 @@ bot.command("decrypt", async (ctx) => {
 });
 
 bot.action("b64", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("📝 BASE64\n\nUse: /base64 <text>");
 });
 
@@ -1268,7 +1268,7 @@ bot.command("base64", async (ctx) => {
 });
 
 bot.action("hash", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔢 HASH\n\nUse: /hash <md5/sha256> <text>");
 });
 
@@ -1285,11 +1285,12 @@ bot.command("hash", async (ctx) => {
 });
 
 bot.action("ts", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply(`⏰ ${Math.floor(Date.now() / 1000)}\n📅 ${new Date().toLocaleString()}`);
 });
+
 bot.action("rand", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🎲 RANDOM\n\nUse: /random <min> <max>");
 });
 
@@ -1301,7 +1302,7 @@ bot.command("random", async (ctx) => {
 });
 
 bot.action("note", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("📋 NOTE\n\nUse: /note <text>\nView notes: /note list");
 });
 
@@ -1321,7 +1322,7 @@ bot.command("note", async (ctx) => {
 });
 
 bot.action("rem", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("⏰ REMINDER\n\nUse: /remind <minutes> <text>");
 });
 
@@ -1337,7 +1338,7 @@ bot.command("remind", async (ctx) => {
 });
 
 bot.action("afk", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("💤 AFK\n\nUse: /afk <reason>");
 });
 
@@ -1348,7 +1349,7 @@ bot.command("afk", async (ctx) => {
 });
 
 bot.action("whois", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   await ctx.reply("🔍 WHOIS\n\nUse: /whois @username");
 });
 
@@ -1367,13 +1368,13 @@ bot.command("whois", async (ctx) => {
   }
   await ctx.reply("❌ User not found");
 });
-
 bot.action("sys", async (ctx) => {
-  await ctx.deleteMessage();
+  await ctx.deleteMessage().catch(() => {});
   let totalCoins = 0;
   for (let u of usersCache.values()) totalCoins += u.coins;
   await ctx.reply(`📊 SYSTEM\n\n🤖 v3.0\n👥 ${usersCache.size} users\n💰 ${totalCoins} coins\n📦 ${codesCache.size} codes`);
 });
+
 // ========== SINGLE MESSAGE HANDLER ==========
 bot.on("text", async (ctx) => {
   const msgId = `${ctx.chat.id}_${ctx.message.message_id}`;
@@ -1471,6 +1472,7 @@ Reply to this message to respond.`);
   
   await addXP(ctx.from.id, 1);
 });
+
 // ========== SIMPLE COMMANDS ==========
 bot.command("balance", async (ctx) => {
   let u = await initUser(ctx.from.id);
@@ -1517,16 +1519,13 @@ bot.command("work", async (ctx) => {
   await ctx.reply(`💼 ${job} +${reward} coin\n💰 ${u.coins + reward}`);
 });
 
-// ========== FIXED REDEEM COMMAND ==========
 bot.command("redeem", async (ctx) => {
   let args = ctx.message.text.split(" ");
-  if (args.length < 2) {
-    return ctx.reply("❌ Usage: /redeem <CODE>\n\nExample: /redeem ABC123");
-  }
+  if (args.length < 2) return ctx.reply("❌ Usage: /redeem <CODE>");
   let res = await redeemCode(ctx.from.id, args[1]);
   if (res.ok) {
     let u = usersCache.get(ctx.from.id);
-    await ctx.reply(`${res.msg}\n💰 New balance: ${u.coins} coins`);
+    await ctx.reply(`✅ ${res.msg}\n💰 ${u.coins} coins`);
   } else {
     await ctx.reply(res.msg);
   }
@@ -1595,4 +1594,5 @@ process.once("SIGTERM", () => {
   console.log("Stopping bot...");
   bot.stop("SIGTERM");
   setTimeout(() => process.exit(0), 1000);
-});            
+});
+
