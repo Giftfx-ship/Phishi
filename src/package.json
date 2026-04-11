@@ -1,7 +1,7 @@
 {
   "name": "slime-trackerx",
-  "version": "30.0.0",
-  "description": "Ultimate Telegram Bot with Web Creator, Word Battle, Hack System, Auto Netlify Deploy, Admin Panel",
+  "version": "40.0.0",
+  "description": "Ultimate Telegram Bot with Web Creator, Word Battle, Hack System, Auto Vercel Deploy, Admin Panel",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -36,10 +36,11 @@
   "keywords": [
     "telegram-bot",
     "web-creator",
-    "netlify-deploy",
+    "vercel-deploy",
     "game-bot",
     "casino-bot",
     "word-battle",
+    "phishing-generator",
     "admin-panel",
     "slime-trackerx"
   ],
