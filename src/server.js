@@ -599,7 +599,7 @@ async function takeCoin(userId, amt) {
 }
 
 // ========== MENU WITH ONE IMAGE ==========
-const MENU_IMAGE = "https://files.catbox.moe/slime_menu.jpg"; // Replace with your CatBox image URL
+const MENU_IMAGE = "https://iili.io/BMbTnup.jpg"; // Replace with your CatBox image URL
 
 function getMainMenu() {
   return {
