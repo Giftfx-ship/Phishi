@@ -1,17 +1,36 @@
 services:
   - type: web
-    name: phishi-app
-    runtime: image
+    name: slime-trackerx
+    runtime: node
     buildCommand: |
       echo "nameserver 8.8.8.8" > /etc/resolv.conf
       echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-      curl -L https://github.com/Giftfx-ship/Phishi/archive/main.tar.gz | tar xz
-      mv Phishi-main src
-      cd src
       npm install
     startCommand: |
-      cd src
       npm start
     envVars:
       - key: NODE_VERSION
         value: 18
+      - key: BOT_TOKEN
+        sync: false
+      - key: NETLIFY_TOKEN
+        sync: false
+      - key: MONGODB_URI
+        value: mongodb+srv://mrdev:dev091339@cluster0.grjlq7v.mongodb.net/trackerx
+      - key: OWNER_ID
+        value: 6170894121
+      - key: CHANNEL
+        value: "@devxtechzone"
+      - key: DOMAIN
+        sync: false
+      - key: ADMIN_KEY
+        value: slimeadmin2024
+      - key: PORT
+        value: 3000
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/uploads
+      sizeGB: 1
