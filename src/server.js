@@ -2,7 +2,6 @@
 // 🎮🔥 SLIME TRACKERX v22.0 - ULTIMATE GOD EDITION 🔥🎮
 // =====================================================
 
-require('dotenv').config();
 const { Telegraf, Markup } = require("telegraf");
 const express = require("express");
 const bodyParser = require("body-parser");
