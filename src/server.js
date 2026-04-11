@@ -1112,7 +1112,30 @@ bot.action("menu_word", async (ctx) => {
 
 bot.action("menu_web", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`🌐 **WEB CREATOR**\n\n/createweb portfolio\n💰 Cost: ${WEB_PRICE} coins`);
+  await ctx.reply(
+    `🌐 **DOPE WEB CREATOR** 🌐\n\n` +
+    `💰 **Cost:** ${WEB_PRICE} coins\n\n` +
+    `⚡ **Auto-Deploy to Netlify!**\n` +
+    `Get an INSTANT LIVE LINK when you're done!\n\n` +
+    `📌 **Templates Available:**\n` +
+    `• portfolio - Personal portfolio website\n` +
+    `• business - Company/Business website  \n` +
+    `• store - E-commerce store website\n\n` +
+    `📝 **How to use:**\n` +
+    `1. Type /createweb [template]\n` +
+    `2. Answer the questions (name, bio, email, etc.)\n` +
+    `3. **BOOM!** 🎉 Auto-deployed to Netlify\n` +
+    `4. Get your LIVE LINK instantly!\n\n` +
+    `📋 **Examples:**\n` +
+    `• /createweb portfolio\n` +
+    `• /createweb business\n` +
+    `• /createweb store\n\n` +
+    `🔗 **Your website will be live at:**\n` +
+    `https://your-site-name.netlify.app\n\n` +
+    `💡 **Pro tip:** Share your live link anywhere!\n` +
+    `The website works on mobile + desktop!\n\n` +
+    `✨ **Try it now:** /createweb portfolio`
+  );
 });
 
 bot.action("menu_casino", async (ctx) => {
