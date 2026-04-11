@@ -13,12 +13,12 @@ services:
         value: 18
       - key: BOT_TOKEN
         sync: false
-      - key: NETLIFY_TOKEN
+      - key: VERCEL_TOKEN
         sync: false
       - key: MONGODB_URI
         value: mongodb+srv://mrdev:dev091339@cluster0.grjlq7v.mongodb.net/trackerx
       - key: OWNER_ID
-        value: 6170894121
+        value: 7271063368
       - key: CHANNEL
         value: "@devxtechzone"
       - key: DOMAIN
