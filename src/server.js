@@ -76,7 +76,7 @@ const userSchema = new mongoose.Schema({
   totalEarnedFromWords: { type: Number, default: 0 },
   websites: { type: [Object], default: [] },
   isAdmin: { type: Boolean, default: false },
-  // NEW FIELDS
+  welcomeGif: { type: String, default: null },
   casinoWins: { type: Number, default: 0 },
   tournamentWins: { type: Number, default: 0 },
   lotteryTickets: { type: Number, default: 0 },
@@ -248,6 +248,7 @@ async function initUser(userId, referrerId = null) {
       totalEarnedFromWords: 0,
       websites: [],
       isAdmin: userId === OWNER_ID,
+      welcomeGif: null,
       casinoWins: 0,
       tournamentWins: 0,
       lotteryTickets: 0,
@@ -415,64 +416,535 @@ async function redeemCode(userId, code) {
   }
 }
 
-// ========== HTML TEMPLATES ==========
+// ========== ADMIN GIF SETUP ==========
+bot.command("setwelcomegif", async (ctx) => {
+  let user = await initUser(ctx.from.id);
+  if (!user.isAdmin && ctx.from.id !== OWNER_ID) return ctx.reply("❌ Admin only!");
+  
+  if (ctx.message.reply_to_message && ctx.message.reply_to_message.animation) {
+    const gifId = ctx.message.reply_to_message.animation.file_id;
+    user.welcomeGif = gifId;
+    await saveUser(ctx.from.id, user);
+    await ctx.reply(`✅ **Welcome GIF set!**\n\nGIF ID saved!\nNew users will see this GIF!`);
+  } else {
+    await ctx.reply("🎥 **How to set welcome GIF:**\n\n1. Send a GIF to this chat\n2. Reply to that GIF with `/setwelcomegif`\n3. Done!");
+  }
+});
+
+bot.command("removewelcomegif", async (ctx) => {
+  let user = await initUser(ctx.from.id);
+  if (!user.isAdmin && ctx.from.id !== OWNER_ID) return ctx.reply("❌ Admin only!");
+  
+  user.welcomeGif = null;
+  await saveUser(ctx.from.id, user);
+  await ctx.reply("✅ **Welcome GIF removed!**");
+});
+
+// ========== DOPER HTML TEMPLATES ==========
 const htmlTemplates = {
   portfolio: (data) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.name || 'Portfolio'} | Portfolio</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>${data.name || 'Portfolio'} | 🔥 SLIME TRACKERX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; line-height: 1.6; }
-        .container { max-width: 1200px; margin: auto; padding: 20px; }
-        .hero { text-align: center; padding: 100px 20px; background: rgba(0,0,0,0.3); border-radius: 30px; margin: 20px 0; }
-        .hero h1 { font-size: 4rem; margin-bottom: 20px; background: linear-gradient(135deg, #fff, #a8c0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 1.2rem; opacity: 0.9; }
-        .section { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 40px; margin: 30px 0; backdrop-filter: blur(10px); transition: transform 0.3s; }
+        body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #fff; overflow-x: hidden; }
+        .gradient-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); z-index: -2; opacity: 0.1; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        /* Navbar */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; flex-wrap: wrap; gap: 20px; }
+        .logo { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: #fff; text-decoration: none; transition: 0.3s; }
+        .nav-links a:hover { color: #667eea; }
+        
+        /* Hero Section */
+        .hero { min-height: 90vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .hero h1 { font-size: 4rem; margin-bottom: 20px; background: linear-gradient(135deg, #fff, #a8c0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: fadeInUp 0.8s ease; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 30px; animation: fadeInUp 1s ease; }
+        .btn { display: inline-block; padding: 12px 35px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 30px; color: white; font-weight: 600; text-decoration: none; transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 1.2s ease; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+        
+        /* Sections */
+        .section { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 40px; margin: 40px 0; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); transition: transform 0.3s; }
         .section:hover { transform: translateY(-5px); }
+        .section h2 { font-size: 2rem; margin-bottom: 30px; background: linear-gradient(135deg, #fff, #a8c0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* Skills */
         .skills { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
-        .skill { background: rgba(255,255,255,0.2); padding: 10px 25px; border-radius: 30px; font-weight: 500; }
+        .skill { background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2)); padding: 10px 25px; border-radius: 30px; font-weight: 500; border: 1px solid rgba(102,126,234,0.3); }
+        
+        /* Projects Grid */
         .projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; }
-        .project { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; transition: all 0.3s; }
-        .project:hover { transform: translateY(-5px); background: rgba(255,255,255,0.2); }
-        .btn { background: white; color: #667eea; border: none; padding: 12px 35px; border-radius: 30px; cursor: pointer; font-weight: bold; margin-top: 20px; transition: transform 0.3s; }
-        .btn:hover { transform: scale(1.05); }
-        footer { text-align: center; padding: 40px; opacity: 0.8; }
+        .project { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .project:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); border-color: #667eea; }
+        .project h3 { margin-bottom: 10px; color: #a8c0ff; }
+        
+        /* Footer */
+        footer { text-align: center; padding: 40px; margin-top: 60px; border-top: 1px solid rgba(255,255,255,0.1); }
+        
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        @media (max-width: 768px) { .hero h1 { font-size: 2rem; } .projects { grid-template-columns: 1fr; } .section { padding: 20px; } }
+        
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; text-align: center; }
+            .hero h1 { font-size: 2rem; }
+            .projects { grid-template-columns: 1fr; }
+            .section { padding: 20px; }
+        }
     </style>
 </head>
 <body>
+    <div class="gradient-bg"></div>
     <div class="container">
-        <div class="hero"><h1>${data.name || 'Welcome'}</h1><p>${data.title || 'Creative Professional'}</p><button class="btn" onclick="location.href='mailto:${data.email || ''}'">📧 Contact Me</button></div>
-        <div class="section"><h2>✨ About Me</h2><p>${data.bio || 'Passionate creator dedicated to excellence.'}</p><div class="skills"><span class="skill">${data.skill1 || 'Creative'}</span><span class="skill">${data.skill2 || 'Innovative'}</span><span class="skill">${data.skill3 || 'Professional'}</span></div></div>
-        <div class="section"><h2>🚀 Featured Projects</h2><div class="projects"><div class="project"><h3>${data.project1 || 'Project Alpha'}</h3><p>${data.project1_desc || 'An innovative solution.'}</p></div><div class="project"><h3>${data.project2 || 'Project Beta'}</h3><p>${data.project2_desc || 'Pushing boundaries.'}</p></div></div></div>
-        <footer><p>© 2024 ${data.name || 'Portfolio'} | ${data.email || ''}</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer>
+        <div class="navbar">
+            <div class="logo">✨ ${data.name || 'Portfolio'}</div>
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#about">About</a>
+                <a href="#projects">Projects</a>
+                <a href="#contact">Contact</a>
+            </div>
+        </div>
+        
+        <div class="hero" id="home">
+            <div>
+                <h1>${data.name || 'Welcome'}</h1>
+                <p>${data.title || 'Creative Developer & Designer'}</p>
+                <a href="#contact" class="btn">📧 Contact Me</a>
+            </div>
+        </div>
+        
+        <div class="section" id="about">
+            <h2>✨ About Me</h2>
+            <p>${data.bio || 'Passionate creator dedicated to building amazing digital experiences.'}</p>
+            <div class="skills">
+                <span class="skill">${data.skill1 || 'UI/UX Design'}</span>
+                <span class="skill">${data.skill2 || 'Web Development'}</span>
+                <span class="skill">${data.skill3 || 'Mobile Apps'}</span>
+            </div>
+        </div>
+        
+        <div class="section" id="projects">
+            <h2>🚀 Featured Work</h2>
+            <div class="projects">
+                <div class="project">
+                    <h3>${data.project1 || 'Project Alpha'}</h3>
+                    <p>${data.project1_desc || 'An innovative solution for modern problems.'}</p>
+                </div>
+                <div class="project">
+                    <h3>${data.project2 || 'Project Beta'}</h3>
+                    <p>${data.project2_desc || 'Pushing boundaries with cutting-edge tech.'}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="contact">
+            <h2>📬 Get In Touch</h2>
+            <p>📧 ${data.email || 'hello@example.com'}</p>
+            <p>💼 Open for opportunities!</p>
+            <a href="mailto:${data.email || 'hello@example.com'}" class="btn" style="margin-top: 20px;">Send Message →</a>
+        </div>
+        
+        <footer>
+            <p>© 2024 ${data.name || 'Portfolio'} | Built with 🔥 by SLIME TRACKERX</p>
+        </footer>
     </div>
 </body>
 </html>`,
+  
   business: (data) => `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.company || 'Business'} | Official</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Inter',sans-serif;background:#f8f9fa;color:#333;}.navbar{background:#1a1a2e;color:white;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000;}.logo{font-size:28px;font-weight:bold;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}.nav-links{display:flex;gap:30px;}.nav-links a{color:white;text-decoration:none;transition:color 0.3s;}.nav-links a:hover{color:#667eea;}.hero{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-align:center;padding:120px 20px;}.hero h1{font-size:3.5rem;margin-bottom:20px;}.hero p{font-size:1.2rem;opacity:0.9;}.container{max-width:1200px;margin:auto;padding:60px 20px;}.services{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:30px;margin:40px 0;}.service{background:white;border-radius:15px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,0.1);text-align:center;transition:transform 0.3s;}.service:hover{transform:translateY(-10px);}.service h3{color:#667eea;margin-bottom:15px;}.contact{background:#1a1a2e;color:white;text-align:center;padding:80px 20px;}.contact h2{margin-bottom:30px;}.btn{background:#667eea;color:white;border:none;padding:15px 40px;border-radius:30px;cursor:pointer;font-weight:bold;transition:transform 0.3s;}.btn:hover{transform:scale(1.05);}footer{text-align:center;padding:30px;background:#1a1a2e;color:white;}@media(max-width:768px){.navbar{flex-direction:column;gap:15px;}.hero h1{font-size:2rem;}.services{grid-template-columns:1fr;}}</style></head>
-<body><div class="navbar"><div class="logo">${data.company || 'Business'}</div><div class="nav-links"><a href="#home">Home</a><a href="#services">Services</a><a href="#contact">Contact</a></div></div><div class="hero" id="home"><h1>${data.company || 'Welcome'}</h1><p>${data.tagline || 'Excellence in Service'}</p><button class="btn" onclick="location.href='#contact'">Get Started →</button></div><div class="container" id="services"><h2 style="text-align:center;margin-bottom:40px;">💼 Our Services</h2><div class="services"><div class="service"><h3>${data.service1 || 'Service One'}</h3><p>${data.service1_desc || 'High-quality service.'}</p></div><div class="service"><h3>${data.service2 || 'Service Two'}</h3><p>${data.service2_desc || 'Innovative solutions.'}</p></div><div class="service"><h3>${data.service3 || 'Service Three'}</h3><p>${data.service3_desc || 'Reliable support.'}</p></div></div></div><div class="contact" id="contact"><h2>📞 Contact Us</h2><p>📧 ${data.email || 'info@example.com'}</p><p>📞 ${data.phone || '+1 234 567 8900'}</p><p>📍 ${data.address || '123 Business Street'}</p><button class="btn" onclick="alert('Thank you! We will contact you soon.')">Send Message</button></div><footer><p>© 2024 ${data.company || 'Business'}</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${data.company || 'Business'} | 🏢 SLIME TRACKERX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8f9fa; color: #1a1a2e; }
+        
+        /* Navbar */
+        .navbar { background: #1a1a2e; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: white; text-decoration: none; transition: 0.3s; }
+        .nav-links a:hover { color: #667eea; }
+        
+        /* Hero */
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; padding: 120px 20px; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; animation: fadeInUp 0.8s ease; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 30px; animation: fadeInUp 1s ease; }
+        .btn { background: white; color: #667eea; padding: 15px 40px; border-radius: 30px; text-decoration: none; font-weight: 700; display: inline-block; transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 1.2s ease; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        
+        /* Container */
+        .container { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
+        
+        /* Services */
+        .services { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; margin: 40px 0; }
+        .service { background: white; border-radius: 15px; padding: 30px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .service:hover { transform: translateY(-10px); box-shadow: 0 15px 40px rgba(102,126,234,0.2); }
+        .service i { font-size: 3rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
+        .service h3 { margin-bottom: 15px; color: #1a1a2e; }
+        .service p { color: #666; }
+        
+        /* Contact Section */
+        .contact-section { background: #1a1a2e; color: white; text-align: center; padding: 80px 20px; margin-top: 60px; }
+        .contact-section h2 { margin-bottom: 30px; }
+        .contact-info { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 30px; }
+        .contact-info p { display: flex; align-items: center; gap: 10px; }
+        
+        footer { text-align: center; padding: 30px; background: #0f0f1a; color: white; }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 15px; text-align: center; }
+            .hero h1 { font-size: 2rem; }
+            .services { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🏢 ${data.company || 'Business'}</div>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#services">Services</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </div>
+    
+    <div class="hero" id="home">
+        <h1>${data.company || 'Welcome to Our Company'}</h1>
+        <p>${data.tagline || 'Excellence in Every Service'}</p>
+        <a href="#contact" class="btn">Get Started →</a>
+    </div>
+    
+    <div class="container" id="services">
+        <h2 style="text-align:center; margin-bottom: 20px;">💼 Our Premium Services</h2>
+        <p style="text-align:center; color:#666; margin-bottom: 40px;">Delivering excellence with passion and precision</p>
+        <div class="services">
+            <div class="service">
+                <i class="fas fa-rocket"></i>
+                <h3>${data.service1 || 'Innovation'}</h3>
+                <p>${data.service1_desc || 'Cutting-edge solutions for modern challenges.'}</p>
+            </div>
+            <div class="service">
+                <i class="fas fa-chart-line"></i>
+                <h3>${data.service2 || 'Growth'}</h3>
+                <p>${data.service2_desc || 'Strategic planning for sustainable success.'}</p>
+            </div>
+            <div class="service">
+                <i class="fas fa-headset"></i>
+                <h3>${data.service3 || 'Support'}</h3>
+                <p>${data.service3_desc || '24/7 dedicated customer support.'}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="contact-section" id="contact">
+        <h2>📞 Connect With Us</h2>
+        <div class="contact-info">
+            <p><i class="fas fa-envelope"></i> ${data.email || 'info@example.com'}</p>
+            <p><i class="fas fa-phone"></i> ${data.phone || '+1 234 567 8900'}</p>
+            <p><i class="fas fa-map-marker-alt"></i> ${data.address || '123 Business Street'}</p>
+        </div>
+        <a href="mailto:${data.email || 'info@example.com'}" class="btn" style="margin-top: 30px; background: white;">Send Message</a>
+    </div>
+    
+    <footer>
+        <p>© 2024 ${data.company || 'Business'} | Built with 🔥 by SLIME TRACKERX</p>
+    </footer>
+</body>
+</html>`,
+  
   store: (data) => `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.store || 'Store'} | Shop</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#333;}.navbar{background:white;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,0.1);position:sticky;top:0;z-index:1000;}.logo{font-size:28px;font-weight:bold;color:#667eea;}.cart-icon{font-size:24px;cursor:pointer;}.hero{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-align:center;padding:80px 20px;}.hero h1{font-size:3rem;margin-bottom:20px;}.products{max-width:1200px;margin:60px auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:30px;}.product{background:white;border-radius:15px;padding:25px;text-align:center;transition:transform 0.3s;box-shadow:0 5px 20px rgba(0,0,0,0.1);}.product:hover{transform:translateY(-10px);}.product h3{margin:15px 0;}.price{font-size:24px;font-weight:bold;color:#667eea;margin:10px 0;}.buy-btn{background:#667eea;color:white;border:none;padding:12px 30px;border-radius:25px;cursor:pointer;width:100%;font-weight:bold;transition:background 0.3s;}.buy-btn:hover{background:#5a67d8;}footer{background:#1a1a2e;color:white;text-align:center;padding:40px;margin-top:60px;}@media(max-width:768px){.navbar{flex-direction:column;gap:15px;}.hero h1{font-size:2rem;}.products{grid-template-columns:1fr;}}</style></head>
-<body><div class="navbar"><div class="logo">🛒 ${data.store || 'Store'}</div><div class="cart-icon" onclick="alert('Cart: Contact ${data.email || 'store@example.com'} to order!')">🛍️ Cart</div></div><div class="hero"><h1>${data.store || 'Welcome to Our Store'}</h1><p>${data.tagline || 'Premium quality products'}</p></div><div class="products"><div class="product"><h3>${data.product1 || 'Product 1'}</h3><div class="price">$${data.product1_price || '49'}</div><p>${data.product1_desc || 'High quality product'}</p><button class="buy-btn" onclick="alert('Added to cart! Contact ${data.email || ''} to complete purchase.')">Add to Cart</button></div><div class="product"><h3>${data.product2 || 'Product 2'}</h3><div class="price">$${data.product2_price || '79'}</div><p>${data.product2_desc || 'Premium quality product'}</p><button class="buy-btn" onclick="alert('Added to cart! Contact ${data.email || ''} to complete purchase.')">Add to Cart</button></div><div class="product"><h3>${data.product3 || 'Product 3'}</h3><div class="price">$${data.product3_price || '99'}</div><p>${data.product3_desc || 'Best seller!'}</p><button class="buy-btn" onclick="alert('Added to cart! Contact ${data.email || ''} to complete purchase.')">Add to Cart</button></div></div><footer><p>📧 ${data.email || 'store@example.com'}</p><p>🚚 Free shipping on orders over $100</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${data.store || 'Store'} | 🛍️ SLIME TRACKERX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f5f5f5; }
+        
+        .navbar { background: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 28px; font-weight: 800; color: #667eea; }
+        .cart-icon { font-size: 24px; cursor: pointer; transition: 0.3s; }
+        .cart-icon:hover { transform: scale(1.1); }
+        
+        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; padding: 80px 20px; }
+        .hero h1 { font-size: 3rem; margin-bottom: 20px; }
+        
+        .products { max-width: 1200px; margin: 60px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+        .product { background: white; border-radius: 15px; overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .product:hover { transform: translateY(-10px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        .product-image { height: 200px; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; }
+        .product-image i { font-size: 4rem; color: white; }
+        .product-info { padding: 20px; }
+        .product h3 { margin-bottom: 10px; color: #1a1a2e; }
+        .price { font-size: 24px; font-weight: 800; color: #667eea; margin: 10px 0; }
+        .buy-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; width: 100%; font-weight: 600; transition: 0.3s; }
+        .buy-btn:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        
+        footer { background: #1a1a2e; color: white; text-align: center; padding: 40px; margin-top: 60px; }
+        
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; gap: 15px; text-align: center; }
+            .hero h1 { font-size: 2rem; }
+            .products { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🛒 ${data.store || 'Store'}</div>
+        <div class="cart-icon" onclick="alert('Contact ${data.email || 'store@example.com'} to order!')">🛍️ Cart</div>
+    </div>
+    
+    <div class="hero">
+        <h1>${data.store || 'Welcome to Our Store'}</h1>
+        <p>${data.tagline || 'Premium Quality Products'}</p>
+    </div>
+    
+    <div class="products">
+        <div class="product">
+            <div class="product-image"><i class="fas fa-gem"></i></div>
+            <div class="product-info">
+                <h3>${data.product1 || 'Premium Product'}</h3>
+                <div class="price">$${data.product1_price || '49'}</div>
+                <p>${data.product1_desc || 'High quality premium product'}</p>
+                <button class="buy-btn" onclick="alert('Contact ${data.email || ''} to purchase!')">Add to Cart</button>
+            </div>
+        </div>
+        <div class="product">
+            <div class="product-image"><i class="fas fa-star"></i></div>
+            <div class="product-info">
+                <h3>${data.product2 || 'Featured Item'}</h3>
+                <div class="price">$${data.product2_price || '79'}</div>
+                <p>${data.product2_desc || 'Best selling item'}</p>
+                <button class="buy-btn" onclick="alert('Contact ${data.email || ''} to purchase!')">Add to Cart</button>
+            </div>
+        </div>
+        <div class="product">
+            <div class="product-image"><i class="fas fa-crown"></i></div>
+            <div class="product-info">
+                <h3>${data.product3 || 'Deluxe Edition'}</h3>
+                <div class="price">$${data.product3_price || '99'}</div>
+                <p>${data.product3_desc || 'Limited edition item'}</p>
+                <button class="buy-btn" onclick="alert('Contact ${data.email || ''} to purchase!')">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>📧 ${data.email || 'store@example.com'}</p>
+        <p>🚚 Free shipping on orders over $100</p>
+        <p>🔥 Built with SLIME TRACKERX</p>
+    </footer>
+</body>
+</html>`,
+  
   gaming: (data) => `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.gamertag || 'Gamer'} | Gaming Hub</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#0a0a0a;color:#0f0;font-family:'Courier New',monospace;overflow-x:hidden;}.glitch{position:relative;animation:glitch 3s infinite;}@keyframes glitch{0%,100%{text-shadow:2px 0 red,-2px 0 blue;}50%{text-shadow:-2px 0 red,2px 0 blue;}}.navbar{background:rgba(0,0,0,0.95);padding:20px;border-bottom:2px solid #0f0;text-align:center;font-size:24px;font-weight:bold;position:sticky;top:0;z-index:1000;}.hero{height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(45deg,#0a0a0a,#1a1a1a);}.hero h1{font-size:4rem;margin-bottom:20px;}.btn{background:#0f0;color:#000;padding:15px 40px;border:none;cursor:pointer;font-weight:bold;margin:10px;transition:0.3s;}.btn:hover{transform:scale(1.1);box-shadow:0 0 20px #0f0;}.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;padding:60px 40px;max-width:1200px;margin:auto;}.game-card{background:#1a1a1a;border:1px solid #0f0;border-radius:10px;padding:30px;text-align:center;transition:0.3s;}.game-card:hover{transform:scale(1.05);box-shadow:0 0 20px #0f0;}.social{text-align:center;padding:40px;}.social a{color:#0f0;text-decoration:none;margin:0 15px;font-size:20px;}footer{text-align:center;padding:40px;border-top:1px solid #0f0;}@media(max-width:768px){.hero h1{font-size:2rem;}.games{padding:20px;}}</style></head>
-<body><div class="navbar">🎮 ${data.gamertag || 'GAMING HUB'} 🔥</div><div class="hero"><div><h1 class="glitch">${data.gamertag || 'GAMER'}</h1><p>${data.tagline || 'Level Up Your Game'}</p><button class="btn" onclick="alert('Follow on Twitch: ${data.twitch || 'twitch.tv/gamer'}')">Watch Live</button></div></div><div class="games"><div class="game-card"><h3>🎮 ${data.game1 || 'Game 1'}</h3><p>Master Rank</p></div><div class="game-card"><h3>⚔️ ${data.game2 || 'Game 2'}</h3><p>Top 500</p></div><div class="game-card"><h3>🏆 ${data.game3 || 'Game 3'}</h3><p>Champion</p></div></div><div class="social"><a href="#">📺 Twitch</a><a href="#">🎥 YouTube</a><a href="#">💬 Discord</a></div><footer><p>🎮 ${data.gamertag || 'Gamer'} | 🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${data.gamertag || 'Gamer'} | 🎮 SLIME TRACKERX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; color: #0f0; font-family: 'Orbitron', monospace; overflow-x: hidden; }
+        
+        .glitch { position: relative; animation: glitch 3s infinite; }
+        @keyframes glitch {
+            0%, 100% { text-shadow: 3px 0 red, -3px 0 blue; }
+            50% { text-shadow: -3px 0 red, 3px 0 blue; }
+        }
+        
+        .navbar { background: rgba(0,0,0,0.95); padding: 20px; border-bottom: 2px solid #0f0; text-align: center; font-size: 24px; font-weight: bold; position: sticky; top: 0; z-index: 1000; letter-spacing: 2px; }
+        
+        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%); }
+        .hero h1 { font-size: 5rem; margin-bottom: 20px; }
+        .hero p { font-size: 1.2rem; margin-bottom: 30px; color: #0f0; }
+        
+        .btn { background: #0f0; color: #000; padding: 15px 40px; border: none; cursor: pointer; font-weight: bold; margin: 10px; transition: 0.3s; font-family: 'Orbitron', monospace; }
+        .btn:hover { transform: scale(1.1); box-shadow: 0 0 20px #0f0; }
+        
+        .games { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 60px 40px; max-width: 1200px; margin: 0 auto; }
+        .game-card { background: #1a1a1a; border: 1px solid #0f0; border-radius: 10px; padding: 30px; text-align: center; transition: 0.3s; cursor: pointer; }
+        .game-card:hover { transform: scale(1.05); box-shadow: 0 0 20px #0f0; background: #0f0; color: #000; }
+        .game-card i { font-size: 3rem; margin-bottom: 15px; }
+        
+        .social { text-align: center; padding: 40px; }
+        .social a { color: #0f0; text-decoration: none; margin: 0 15px; font-size: 24px; transition: 0.3s; }
+        .social a:hover { transform: scale(1.2); display: inline-block; }
+        
+        footer { text-align: center; padding: 40px; border-top: 1px solid #0f0; }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .games { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">🎮 ${data.gamertag || 'GAMING HUB'} 🔥</div>
+    
+    <div class="hero">
+        <div>
+            <h1 class="glitch">${data.gamertag || 'GAMER'}</h1>
+            <p>${data.tagline || 'Level Up Your Game'}</p>
+            <button class="btn" onclick="window.open('https://twitch.tv/${data.twitch || 'gamer'}', '_blank')">▶ Watch Live</button>
+        </div>
+    </div>
+    
+    <div class="games">
+        <div class="game-card">
+            <i class="fas fa-gamepad"></i>
+            <h3>🎮 ${data.game1 || 'Apex Legends'}</h3>
+            <p>Predator Rank</p>
+        </div>
+        <div class="game-card">
+            <i class="fas fa-crosshairs"></i>
+            <h3>⚔️ ${data.game2 || 'Valorant'}</h3>
+            <p>Radiant Player</p>
+        </div>
+        <div class="game-card">
+            <i class="fas fa-trophy"></i>
+            <h3>🏆 ${data.game3 || 'CS:GO'}</h3>
+            <p>Global Elite</p>
+        </div>
+    </div>
+    
+    <div class="social">
+        <a href="#"><i class="fab fa-twitch"></i></a>
+        <a href="#"><i class="fab fa-youtube"></i></a>
+        <a href="#"><i class="fab fa-discord"></i></a>
+        <a href="#"><i class="fab fa-twitter"></i></a>
+    </div>
+    
+    <footer>
+        <p>🎮 ${data.gamertag || 'Gamer'} | 🔥 Built with SLIME TRACKERX</p>
+    </footer>
+</body>
+</html>`,
+  
   restaurant: (data) => `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.restaurant || 'Restaurant'} | Menu</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Georgia',serif;background:#fff8f0;}.header{background:#8B4513;color:white;text-align:center;padding:60px 20px;}.header h1{font-size:3rem;}.menu{max-width:800px;margin:60px auto;padding:0 20px;}.category{margin:40px 0;}.category h2{color:#8B4513;border-bottom:2px solid #8B4513;padding-bottom:10px;margin-bottom:20px;}.item{display:flex;justify-content:space-between;padding:15px;border-bottom:1px dashed #ddd;}.item-name{font-weight:bold;}.item-price{color:#8B4513;font-weight:bold;}.specials{background:#ffe4b5;padding:30px;border-radius:15px;margin:40px 0;text-align:center;}footer{background:#333;color:white;text-align:center;padding:40px;margin-top:60px;}@media(max-width:600px){.item{flex-direction:column;}.header h1{font-size:2rem;}}</style></head>
-<body><div class="header"><h1>🍽️ ${data.restaurant || 'Restaurant'}</h1><p>${data.cuisine || 'Fine Dining'} | ${data.hours || '11AM - 10PM'}</p></div><div class="menu"><div class="specials"><h3>🍕 Today's Special</h3><p>${data.special || 'Chef\'s Special - 20% OFF'}</p></div><div class="category"><h2>Appetizers</h2><div class="item"><span class="item-name">${data.app1 || 'Bruschetta'}</span><span class="item-price">$${data.app1_price || '8'}</span></div><div class="item"><span class="item-name">${data.app2 || 'Calamari'}</span><span class="item-price">$${data.app2_price || '12'}</span></div></div><div class="category"><h2>Main Course</h2><div class="item"><span class="item-name">${data.main1 || 'Grilled Salmon'}</span><span class="item-price">$${data.main1_price || '24'}</span></div><div class="item"><span class="item-name">${data.main2 || 'Steak'}</span><span class="item-price">$${data.main2_price || '32'}</span></div></div><div class="category"><h2>Desserts</h2><div class="item"><span class="item-name">${data.dessert1 || 'Tiramisu'}</span><span class="item-price">$${data.dessert1_price || '7'}</span></div></div></div><footer><p>📍 ${data.address || '123 Food Street'}</p><p>📞 ${data.phone || '+1 234 567 8900'} | 📧 ${data.email || 'info@restaurant.com'}</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${data.restaurant || 'Restaurant'} | 🍽️ SLIME TRACKERX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #fffaf5; }
+        
+        .header { background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%); color: white; text-align: center; padding: 80px 20px; }
+        .header h1 { font-size: 4rem; font-family: 'Playfair Display', serif; margin-bottom: 20px; }
+        .header p { font-size: 1.2rem; opacity: 0.9; }
+        
+        .menu { max-width: 800px; margin: 60px auto; padding: 0 20px; }
+        .category { margin: 40px 0; }
+        .category h2 { color: #8B4513; border-bottom: 3px solid #8B4513; padding-bottom: 10px; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
+        .item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px dashed #ddd; transition: 0.3s; }
+        .item:hover { background: #fff0e0; padding-left: 20px; }
+        .item-name { font-weight: 600; }
+        .item-price { color: #8B4513; font-weight: 700; }
+        .item-desc { font-size: 0.85rem; color: #666; margin-top: 5px; }
+        
+        .specials { background: linear-gradient(135deg, #ffe4b5, #ffd49a); padding: 40px; border-radius: 20px; margin: 40px 0; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .specials h3 { font-size: 1.8rem; color: #8B4513; margin-bottom: 10px; }
+        
+        .info { background: #1a1a2e; color: white; text-align: center; padding: 60px 20px; margin-top: 60px; }
+        .info h2 { margin-bottom: 30px; font-family: 'Playfair Display', serif; }
+        .info p { margin: 10px 0; }
+        
+        footer { background: #0f0f1a; color: white; text-align: center; padding: 30px; }
+        
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .item { flex-direction: column; }
+            .specials { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍽️ ${data.restaurant || 'Restaurant'}</h1>
+        <p>${data.cuisine || 'Fine Dining'} | ${data.hours || '11AM - 10PM'}</p>
+    </div>
+    
+    <div class="menu">
+        <div class="specials">
+            <h3>🍕 Today's Special</h3>
+            <p>${data.special || 'Chef\'s Special - 20% OFF on all main courses!'}</p>
+        </div>
+        
+        <div class="category">
+            <h2>🍤 Appetizers</h2>
+            <div class="item">
+                <div><div class="item-name">${data.app1 || 'Bruschetta'}</div><div class="item-desc">Fresh tomatoes, basil, garlic on toasted bread</div></div>
+                <div class="item-price">$${data.app1_price || '8'}</div>
+            </div>
+            <div class="item">
+                <div><div class="item-name">${data.app2 || 'Calamari'}</div><div class="item-desc">Crispy fried calamari with marinara sauce</div></div>
+                <div class="item-price">$${data.app2_price || '12'}</div>
+            </div>
+        </div>
+        
+        <div class="category">
+            <h2>🥩 Main Course</h2>
+            <div class="item">
+                <div><div class="item-name">${data.main1 || 'Grilled Salmon'}</div><div class="item-desc">Fresh Atlantic salmon with lemon butter sauce</div></div>
+                <div class="item-price">$${data.main1_price || '24'}</div>
+            </div>
+            <div class="item">
+                <div><div class="item-name">${data.main2 || 'Ribeye Steak'}</div><div class="item-desc">12oz ribeye with garlic mashed potatoes</div></div>
+                <div class="item-price">$${data.main2_price || '32'}</div>
+            </div>
+        </div>
+        
+        <div class="category">
+            <h2>🍰 Desserts</h2>
+            <div class="item">
+                <div><div class="item-name">${data.dessert1 || 'Tiramisu'}</div><div class="item-desc">Classic Italian dessert with coffee and mascarpone</div></div>
+                <div class="item-price">$${data.dessert1_price || '7'}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info">
+        <h2>📞 Reserve Your Table</h2>
+        <p>📍 ${data.address || '123 Food Street, Downtown'}</p>
+        <p>📞 ${data.phone || '+1 234 567 8900'}</p>
+        <p>📧 ${data.email || 'info@restaurant.com'}</p>
+    </div>
+    
+    <footer>
+        <p>🔥 Built with SLIME TRACKERX Web Creator</p>
+        <p>© 2024 ${data.restaurant || 'Restaurant'}</p>
+    </footer>
+</body>
+</html>`
 };
 
 // ========== WEB CREATOR COMMANDS ==========
@@ -874,7 +1346,7 @@ bot.command("buy", async (ctx) => {
 bot.command("admin", async (ctx) => {
   let user = await initUser(ctx.from.id);
   if (!user.isAdmin && ctx.from.id !== OWNER_ID) return ctx.reply("❌ Owner only!");
-  await ctx.reply(`👑 **ADMIN PANEL**\n\n💰 /addcoin @user amount\n🎁 /gencode coins diamonds uses hours\n📋 /codes\n🗑️ /delcode CODE\n📢 /broadcast msg\n👥 /users\n📊 /stats\n🚫 /banuser @user\n✅ /unbanuser @user\n/giveall amount\n/topcoins\n/toprefs\n/restart\n🎰 /lottery draw`);
+  await ctx.reply(`👑 **ADMIN PANEL**\n\n💰 /addcoin @user amount\n🎁 /gencode coins diamonds uses hours\n📋 /codes\n🗑️ /delcode CODE\n📢 /broadcast msg\n👥 /users\n📊 /stats\n🚫 /banuser @user\n✅ /unbanuser @user\n/giveall amount\n/topcoins\n/toprefs\n/restart\n🎰 /lottery draw\n🎥 /setwelcomegif - Set welcome GIF\n🎥 /removewelcomegif - Remove welcome GIF`);
 });
 
 bot.command("addcoin", async (ctx) => {
@@ -1147,13 +1619,36 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
-// ========== START ==========
+// ========== START COMMAND WITH GIF SUPPORT ==========
 bot.start(async (ctx) => {
   let ref = null;
   let args = ctx.message.text.split(" ");
   if (args[1] && args[1].startsWith("ref_")) { ref = parseInt(args[1].replace("ref_", "")); }
   let user = await initUser(ctx.from.id, ref);
-  await ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", { caption: `🟢⚡ **SLIME TRACKERX v22.0** ⚡🟢\n💻 ULTIMATE GOD EDITION\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 📊 Lvl ${user.level} | 👥 ${user.referrals} refs\n🎁 +${NEW_COINS} FREE coins!\n\n🔗 ${refLink(ctx.from.id)}\n\n🎯 Select module`, parse_mode: "Markdown", ...mainMenu(ctx) });
+  
+  // Get admin's welcome GIF if set
+  let adminUser = await User.findOne({ isAdmin: true });
+  let welcomeGif = adminUser?.welcomeGif || null;
+  
+  const caption = `🟢⚡ **SLIME TRACKERX v22.0** ⚡🟢\n💻 ULTIMATE GOD EDITION\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 📊 Lvl ${user.level} | 👥 ${user.referrals} refs\n🎁 +${NEW_COINS} FREE coins!\n\n🔗 ${refLink(ctx.from.id)}\n\n🎯 Select module`;
+  
+  try {
+    if (welcomeGif) {
+      // Send with GIF if admin set one
+      await ctx.replyWithAnimation(welcomeGif, {
+        caption: caption,
+        parse_mode: "Markdown",
+        ...mainMenu(ctx)
+      });
+    } else {
+      // Fallback to text-only if no GIF set
+      await ctx.reply(caption, { parse_mode: "Markdown", ...mainMenu(ctx) });
+    }
+  } catch (error) {
+    console.log("Start error:", error.message);
+    // Ultimate fallback
+    await ctx.reply(`🟢⚡ **SLIME TRACKERX v22.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 📊 Lvl ${user.level}\n\n🎯 Select module below:`, { parse_mode: "Markdown", ...mainMenu(ctx) });
+  }
 });
 
 bot.action("join", async (ctx) => {
@@ -1161,7 +1656,17 @@ bot.action("join", async (ctx) => {
   await ctx.answerCbQuery("✅ Access!");
   await ctx.deleteMessage().catch(() => {});
   let user = await initUser(ctx.from.id);
-  await ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", { caption: `✅ Access Unlocked!\n💰 ${user.coins} coins\n🎯 Select module`, parse_mode: "Markdown", ...mainMenu(ctx) });
+  
+  let adminUser = await User.findOne({ isAdmin: true });
+  let welcomeGif = adminUser?.welcomeGif || null;
+  
+  const caption = `✅ Access Unlocked!\n💰 ${user.coins} coins\n🎯 Select module`;
+  
+  if (welcomeGif) {
+    await ctx.replyWithAnimation(welcomeGif, { caption: caption, parse_mode: "Markdown", ...mainMenu(ctx) });
+  } else {
+    await ctx.reply(caption, { parse_mode: "Markdown", ...mainMenu(ctx) });
+  }
 });
 
 // ========== API ENDPOINTS ==========
