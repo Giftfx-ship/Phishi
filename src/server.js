@@ -1313,4 +1313,4 @@ loadData().then(async () => {
 });
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));   Make this bot to be more dipe and beautiful and best of all tg bots and the web it creates should be dipe nice style pls all codes dope
+process.once("SIGTERM", () => bot.stop("SIGTERM"));  
