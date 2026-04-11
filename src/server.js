@@ -1810,20 +1810,20 @@ loadData().then(async () => {
     console.log("✅ Webhook cleared");
   } catch(e) {}
   
-  setTimeout(() => {
-    bot.launch().then(() => {
-      console.log(`🤖 SLIME TRACKERX v20.0 COMPLETE GOD EDITION LIVE!`);
-    }).catch(err => {
-      console.log("Bot launch error:", err.message);
-    });
-  }, 2000);
-});
+// Find this section in your code:
+setTimeout(() => {
+  bot.launch().then(() => {
+    console.log(`🤖 SLIME TRACKERX v20.0 COMPLETE GOD EDITION LIVE!`);
+  }).catch(err => {
+    console.log("Bot launch error:", err.message);
+  });
+}, 2000);
 
-process.once("SIGINT", () => {
-  bot.stop("SIGINT");
-  setTimeout(() => process.exit(0), 1000);
-});
-process.once("SIGTERM", () => {
-  bot.stop("SIGTERM");
-  setTimeout(() => process.exit(0), 1000);
-});
+// REPLACE with:
+setTimeout(async () => {
+  try {
+    // Forcefully delete any existing webhook
+    await bot.telegram.deleteWebhook();
+    console.log("✅ Webhook deleted");
+    
+    // Wait a moment
