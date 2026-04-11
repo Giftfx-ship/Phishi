@@ -877,17 +877,25 @@ bot.start(async (ctx) => {
   }
   let user = await initUser(ctx.from.id, ref);
   
-  await ctx.reply(
-    `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n` +
-    `✨ Welcome ${ctx.from.first_name}!\n` +
-    `💰 ${user.coins} coins | 💎 ${user.diamonds}\n` +
-    `📊 Level ${user.level} | 👥 ${user.referrals} referrals\n` +
-    `🏆 Word Wins: ${user.wordWins} | 🎮 Games: ${user.wins}W/${user.losses}L\n\n` +
-    `⬇️ **CLICK BUTTONS BELOW** ⬇️`,
-    { parse_mode: "Markdown", ...getMainMenu() }
-  );
+  // YOUR IMAGE URL - Replace with your actual image link
+  const menuImage = "https://iili.io/BMbTnup.jpg";
+  
+  try {
+    // Send with image
+    await ctx.replyWithPhoto(menuImage, {
+      caption: `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins} | 🎮 Games: ${user.wins}W/${user.losses}L\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
+      parse_mode: "Markdown",
+      ...getMainMenu()
+    });
+  } catch (error) {
+    // If image fails, send text only
+    console.log("Image error:", error.message);
+    await ctx.reply(
+      `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins} | 🎮 Games: ${user.wins}W/${user.losses}L\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
+      { parse_mode: "Markdown", ...getMainMenu() }
+    );
+  }
 });
-
 // ========== WEB CREATOR ==========
 bot.command("web", async (ctx) => {
   await ctx.reply(`🌐 **DOPE WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n✨ Get INSTANT LIVE LINK on Netlify!\n🎨 Modern, beautiful templates\n\n**Templates:** portfolio, business, store\n\n**How to use:** /createweb portfolio`);
