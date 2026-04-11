@@ -142,6 +142,7 @@ let bannedUsers = new Set();
 let workCD = new Map();
 let wordChallenges = new Map();
 let tokens = new Map();
+let processedMessages = new Set();
 
 // ========== DATABASE FUNCTIONS ==========
 async function loadData() {
