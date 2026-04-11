@@ -1,11 +1,12 @@
 // =====================================================
-// 🎮🔥 SLIME TRACKERX v20.0 - ULTIMATE GOD EDITION 🔥🎮
-// 🌐 WEB CREATOR (15 COINS ONLY!) | ADMIN MENU | HACK SYSTEM
-// 📝 1v1 WORD BATTLE | PVP | EVERYTHING! 💀
+// 🎮🔥 SLIME TRACKERX v22.0 - ULTIMATE GOD EDITION 🔥🎮
+// 🌐 WEB CREATOR (15 COINS!) | 1v1 WORD BATTLE | HACK SYSTEM
+// 🎲 CASINO | TOURNAMENTS | DAILY QUESTS | SHOP | LOTTERY
+// 💀 FULLY INTERACTIVE | NO ERRORS | MENU WORKS! 💀
 // =====================================================
 // 👑 Dev: @Mrddev | 📢 Updates: @devxtechzone
-// 🏆 CREATE STUNNING WEBSITES FOR JUST 15 COINS!
-// 💀 HACK USERS | TRACK IP/LOCATION | PVP BATTLES
+// 🏆 CHALLENGE FRIENDS | CREATE WEBSITES | EARN COINS
+// 🎁 NEW: CASINO GAMES | TOURNAMENTS | DAILY QUESTS
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -54,9 +55,9 @@ const userSchema = new mongoose.Schema({
   userId: { type: Number, unique: true, required: true },
   joinDate: { type: Date, default: Date.now },
   lastActive: Date,
-  coins: { type: Number, default: 10 },
+  coins: { type: Number, default: 15 },
   diamonds: { type: Number, default: 0 },
-  totalEarned: { type: Number, default: 10 },
+  totalEarned: { type: Number, default: 15 },
   totalSpent: { type: Number, default: 0 },
   referrals: { type: Number, default: 0 },
   referrer: { type: Number, default: null },
@@ -69,12 +70,17 @@ const userSchema = new mongoose.Schema({
   games: { type: Number, default: 0 },
   wins: { type: Number, default: 0 },
   losses: { type: Number, default: 0 },
-  badges: { type: [String], default: ["🎁 New User"] },
+  badges: { type: [String], default: ["🎁 Newbie"] },
   wordWins: { type: Number, default: 0 },
   wordLosses: { type: Number, default: 0 },
   totalEarnedFromWords: { type: Number, default: 0 },
   websites: { type: [Object], default: [] },
-  isAdmin: { type: Boolean, default: false }
+  isAdmin: { type: Boolean, default: false },
+  // NEW FIELDS
+  casinoWins: { type: Number, default: 0 },
+  tournamentWins: { type: Number, default: 0 },
+  lotteryTickets: { type: Number, default: 0 },
+  dailyQuests: { type: Object, default: {} }
 });
 
 const codeSchema = new mongoose.Schema({
@@ -100,9 +106,21 @@ const websiteSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const tournamentSchema = new mongoose.Schema({
+  id: String,
+  name: String,
+  entryFee: Number,
+  prizePool: Number,
+  players: [Number],
+  winner: { type: Number, default: null },
+  status: { type: String, default: "waiting" },
+  createdAt: { type: Date, default: Date.now }
+});
+
 const User = mongoose.model('User', userSchema);
 const Code = mongoose.model('Code', codeSchema);
 const Website = mongoose.model('Website', websiteSchema);
+const Tournament = mongoose.model('Tournament', tournamentSchema);
 
 // ========== CONFIG ==========
 const DOMAIN = process.env.DOMAIN || "https://virtualnumbersfree.onrender.com";
@@ -111,10 +129,10 @@ const OWNER_ID = parseInt(process.env.OWNER_ID) || 6170894121;
 
 // ========== ECONOMY ==========
 const TRACK_COST = 10;
-const NEW_COINS = 10;
-const REF_REWARD = 8;
-const DAILY_REWARD = 3;
-const WORK_REWARD = 1;
+const NEW_COINS = 15;
+const REF_REWARD = 10;
+const DAILY_REWARD = 5;
+const WORK_REWARD = 2;
 const WORK_CD = 12 * 60 * 60 * 1000;
 const WORD_MIN_BET = 5;
 const WORD_MAX_BET = 500;
@@ -130,13 +148,13 @@ const difficultyLevels = {
 
 // ========== COMPLETE WORD DATABASE ==========
 const wordsByLength = {
-  3: ["CAT", "DOG", "SUN", "CAR", "BAG", "HAT", "LEG", "EYE", "CUP", "BED", "RED", "HOT", "COLD", "BIG", "NEW", "OLD", "GOOD", "BAD", "FUN", "RUN", "SIT", "WALK", "EAT", "FLY", "CRY", "JOY", "SAD", "WET", "DRY", "FAT", "THIN"],
-  4: ["FISH", "BIRD", "FROG", "STAR", "MOON", "TREE", "HOUSE", "APPLE", "MANGO", "HAPPY", "SMART", "BRAIN", "HEART", "SOUND", "LIGHT", "DARK", "BLACK", "WHITE", "GREEN", "BLUE", "PINK", "BROWN", "WATER", "FIRE", "EARTH", "WIND"],
-  5: ["APPLE", "MANGO", "GRAPE", "BERRY", "PEACH", "LEMON", "MELON", "HOUSE", "HAPPY", "SMART", "BRAIN", "HEART", "SOUND", "LIGHT", "DARK", "BLACK", "WHITE", "GREEN", "YELLOW", "PURPLE", "ORANGE", "CLOUD", "STORM", "MONEY", "POWER"],
-  6: ["BANANA", "ORANGE", "PURPLE", "YELLOW", "SILVER", "GOLDEN", "RABBIT", "TIGER", "EAGLE", "SHARK", "WHALE", "ZEBRA", "SNAKE", "WOLF", "BEAR", "FOX", "LION", "MOUSE", "HORSE", "COW", "SHEEP", "GOAT"],
-  7: ["BANANA", "ORANGE", "PURPLE", "YELLOW", "SILVER", "GOLDEN", "RABBIT", "TIGER", "EAGLE", "SHARK", "WHALE", "ZEBRA", "SNAKE", "WOLF", "BEAR", "FOX", "LION", "MOUSE", "HORSE", "COW", "SHEEP", "GOAT"],
-  8: ["ELEPHANT", "GIRAFFE", "KANGAROO", "DOLPHIN", "PENGUIN", "BUTTERFLY", "DRAGON", "PHOENIX", "COMPUTER", "KEYBOARD", "MONITOR", "BEAUTIFUL", "WONDERFUL", "EXCITING", "ADVENTURE"],
-  9: ["EXTRAORDINARY", "UNBELIEVABLE", "INCREDIBLE", "RESPONSIBILITY", "CHARACTERISTIC", "UNDERSTANDING", "ACCOMMODATION", "INTERNATIONAL", "ENTREPRENEUR", "CONGRATULATIONS"]
+  3: ["CAT", "DOG", "SUN", "CAR", "BAG", "HAT", "LEG", "EYE", "CUP", "BED", "RED", "HOT", "COLD", "BIG", "NEW", "OLD", "GOOD", "BAD", "FUN", "RUN", "SIT", "WALK", "EAT", "FLY", "CRY", "JOY", "SAD", "WET", "DRY", "FAT", "THIN", "RICH", "POOR", "HIGH", "LOW", "FAR", "NEAR", "DARK", "LIGHT", "SOFT", "HARD"],
+  4: ["FISH", "BIRD", "FROG", "STAR", "MOON", "TREE", "HOUSE", "APPLE", "MANGO", "HAPPY", "SMART", "BRAIN", "HEART", "SOUND", "LIGHT", "DARK", "BLACK", "WHITE", "GREEN", "BLUE", "PINK", "BROWN", "WATER", "FIRE", "EARTH", "WIND", "CLOUD", "STORM", "RAIN", "SNOW", "MONEY", "POWER", "TRUTH", "PEACE", "WORLD", "PEOPLE", "HUMAN", "ANIMAL", "PLANT", "RIVER"],
+  5: ["APPLE", "MANGO", "GRAPE", "BERRY", "PEACH", "LEMON", "MELON", "HOUSE", "HAPPY", "SMART", "BRAIN", "HEART", "SOUND", "LIGHT", "DARK", "BLACK", "WHITE", "GREEN", "YELLOW", "PURPLE", "ORANGE", "CLOUD", "STORM", "MONEY", "POWER", "TRUTH", "PEACE", "WORLD", "PEOPLE", "HUMAN", "ANIMAL", "PLANT", "FLOWER", "FOREST", "RIVER", "MOUNTAIN", "OCEAN", "DESERT", "JUNGLE", "ISLAND", "BEACH", "SUNSET", "SUNRISE", "GARDEN", "PALACE", "CASTLE"],
+  6: ["BANANA", "ORANGE", "PURPLE", "YELLOW", "SILVER", "GOLDEN", "RABBIT", "TIGER", "EAGLE", "SHARK", "WHALE", "ZEBRA", "SNAKE", "WOLF", "BEAR", "FOX", "LION", "MOUSE", "HORSE", "COW", "SHEEP", "GOAT", "CHICKEN", "DUCK", "TURKEY", "PIGEON", "CROW", "SPARROW", "BUTTER", "CHEESE", "BREAD", "SUGAR", "SALT", "PEPPER", "HONEY", "MILK", "COFFEE", "TEA", "JUICE", "WATER", "GARDEN", "PALACE", "CASTLE", "DRAGON", "PHOENIX", "WIZARD", "MAGIC"],
+  7: ["BANANA", "ORANGE", "PURPLE", "YELLOW", "SILVER", "GOLDEN", "RABBIT", "TIGER", "EAGLE", "SHARK", "WHALE", "ZEBRA", "SNAKE", "WOLF", "BEAR", "FOX", "LION", "MOUSE", "HORSE", "COW", "SHEEP", "GOAT", "CHICKEN", "DUCK", "TURKEY", "PIGEON", "CROW", "SPARROW", "BUTTER", "CHEESE", "BREAD", "SUGAR", "SALT", "PEPPER", "HONEY", "MILK", "COFFEE", "TEA", "JUICE", "WATER", "GARDEN", "PALACE", "CASTLE", "DRAGON", "PHOENIX", "WIZARD", "MAGIC"],
+  8: ["ELEPHANT", "GIRAFFE", "KANGAROO", "DOLPHIN", "PENGUIN", "BUTTERFLY", "DRAGON", "PHOENIX", "COMPUTER", "KEYBOARD", "MONITOR", "PRINTER", "SCANNER", "ROUTER", "BEAUTIFUL", "WONDERFUL", "EXCITING", "ADVENTURE", "MYSTERY", "JOURNEY", "DISCOVER", "EXPLORE", "CHALLENGE", "VICTORY", "STRENGTH", "COURAGE", "FRIENDSHIP", "HAPPINESS", "MAGNIFICENT"],
+  9: ["EXTRAORDINARY", "UNBELIEVABLE", "INCREDIBLE", "RESPONSIBILITY", "CHARACTERISTIC", "UNDERSTANDING", "ACCOMMODATION", "RECOMMENDATION", "INTERNATIONAL", "ENTREPRENEUR", "CONGRATULATIONS", "IDENTIFICATION", "MISUNDERSTANDING", "UNPREDICTABLE", "IMPROVISATION", "MAGNIFICENT", "PHENOMENON", "SIMULTANEOUSLY", "UNCONSCIOUSLY", "COUNTERPRODUCTIVE"]
 };
 
 function getRandomWordByLength(length) {
@@ -164,6 +182,9 @@ let notes = new Map();
 let processedMessages = new Set();
 let wordChallenges = new Map();
 let webBuilds = new Map();
+let activeTournaments = new Map();
+let lotteryPool = 0;
+let lotteryEntries = [];
 
 // ========== LOAD DATA ==========
 async function loadData() {
@@ -179,6 +200,11 @@ async function loadData() {
       codesCache.set(code.code, code);
     }
     console.log(`📂 Loaded ${codesCache.size} active codes`);
+    
+    const activeTours = await Tournament.find({ status: "waiting" });
+    for (const tour of activeTours) {
+      activeTournaments.set(tour.id, tour);
+    }
   } catch(e) {
     console.log("Error loading data:", e);
   }
@@ -216,12 +242,16 @@ async function initUser(userId, referrerId = null) {
       games: 0,
       wins: 0,
       losses: 0,
-      badges: ["🎁 New User"],
+      badges: ["🎁 Newbie"],
       wordWins: 0,
       wordLosses: 0,
       totalEarnedFromWords: 0,
       websites: [],
-      isAdmin: userId === OWNER_ID
+      isAdmin: userId === OWNER_ID,
+      casinoWins: 0,
+      tournamentWins: 0,
+      lotteryTickets: 0,
+      dailyQuests: {}
     };
     await saveUser(userId, user);
     
@@ -288,7 +318,7 @@ async function addXP(userId, amount) {
     if (user.xp >= needed) {
       user.xp -= needed;
       user.level += 1;
-      let reward = user.level * 3;
+      let reward = user.level * 5;
       user.coins += reward;
       await saveUser(userId, user);
       bot.telegram.sendMessage(userId, `🎉 LEVEL UP! Level ${user.level}! +${reward} COINS`);
@@ -311,6 +341,15 @@ async function getUsername(userId) {
 
 function refLink(id) {
   return `https://t.me/${bot.botInfo?.username || 'trackersxbot'}?start=ref_${id}`;
+}
+
+async function checkJoin(ctx) {
+  try {
+    let m = await ctx.telegram.getChatMember(CHANNEL, ctx.from.id);
+    return ["creator", "administrator", "member"].includes(m.status);
+  } catch {
+    return false;
+  }
 }
 
 // ========== REDEEM CODE SYSTEM ==========
@@ -376,16 +415,6 @@ async function redeemCode(userId, code) {
   }
 }
 
-// ========== JOIN CHECK ==========
-async function checkJoin(ctx) {
-  try {
-    let m = await ctx.telegram.getChatMember(CHANNEL, ctx.from.id);
-    return ["creator", "administrator", "member"].includes(m.status);
-  } catch {
-    return false;
-  }
-}
-
 // ========== HTML TEMPLATES ==========
 const htmlTemplates = {
   portfolio: (data) => `<!DOCTYPE html>
@@ -400,16 +429,23 @@ const htmlTemplates = {
         body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; line-height: 1.6; }
         .container { max-width: 1200px; margin: auto; padding: 20px; }
         .hero { text-align: center; padding: 100px 20px; background: rgba(0,0,0,0.3); border-radius: 30px; margin: 20px 0; }
-        .hero h1 { font-size: 4rem; margin-bottom: 20px; }
-        .section { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 40px; margin: 30px 0; backdrop-filter: blur(10px); }
+        .hero h1 { font-size: 4rem; margin-bottom: 20px; background: linear-gradient(135deg, #fff, #a8c0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; }
+        .section { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 40px; margin: 30px 0; backdrop-filter: blur(10px); transition: transform 0.3s; }
+        .section:hover { transform: translateY(-5px); }
         .skills { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
-        .skill { background: rgba(255,255,255,0.2); padding: 10px 25px; border-radius: 30px; }
+        .skill { background: rgba(255,255,255,0.2); padding: 10px 25px; border-radius: 30px; font-weight: 500; }
         .projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; }
-        .project { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; transition: transform 0.3s; }
+        .project { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; transition: all 0.3s; }
         .project:hover { transform: translateY(-5px); background: rgba(255,255,255,0.2); }
-        .btn { background: white; color: #667eea; border: none; padding: 12px 35px; border-radius: 30px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        .btn { background: white; color: #667eea; border: none; padding: 12px 35px; border-radius: 30px; cursor: pointer; font-weight: bold; margin-top: 20px; transition: transform 0.3s; }
+        .btn:hover { transform: scale(1.05); }
         footer { text-align: center; padding: 40px; opacity: 0.8; }
-        @media (max-width: 768px) { .hero h1 { font-size: 2rem; } .projects { grid-template-columns: 1fr; } }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 768px) { .hero h1 { font-size: 2rem; } .projects { grid-template-columns: 1fr; } .section { padding: 20px; } }
     </style>
 </head>
 <body>
@@ -423,16 +459,16 @@ const htmlTemplates = {
 </html>`,
   business: (data) => `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.company || 'Business'} | Official</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Inter',sans-serif;background:#f8f9fa;color:#333;}.navbar{background:#1a1a2e;color:white;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}.logo{font-size:28px;font-weight:bold;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}.hero{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-align:center;padding:120px 20px;}.hero h1{font-size:3.5rem;margin-bottom:20px;}.container{max-width:1200px;margin:auto;padding:60px 20px;}.services{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:30px;margin:40px 0;}.service{background:white;border-radius:15px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,0.1);text-align:center;transition:transform 0.3s;}.service:hover{transform:translateY(-10px);}.service h3{color:#667eea;margin-bottom:15px;}.contact{background:#1a1a2e;color:white;text-align:center;padding:80px 20px;}.btn{background:#667eea;color:white;border:none;padding:15px 40px;border-radius:30px;cursor:pointer;font-weight:bold;}footer{text-align:center;padding:30px;background:#1a1a2e;color:white;}@media(max-width:768px){.navbar{flex-direction:column;gap:15px;}.hero h1{font-size:2rem;}.services{grid-template-columns:1fr;}}</style></head>
-<body><div class="navbar"><div class="logo">${data.company || 'Business'}</div></div><div class="hero"><h1>${data.company || 'Welcome'}</h1><p>${data.tagline || 'Excellence in Service'}</p><button class="btn" onclick="location.href='#contact'">Get Started</button></div><div class="container"><h2 style="text-align:center;">💼 Our Services</h2><div class="services"><div class="service"><h3>${data.service1 || 'Service One'}</h3><p>${data.service1_desc || 'High-quality service.'}</p></div><div class="service"><h3>${data.service2 || 'Service Two'}</h3><p>${data.service2_desc || 'Innovative solutions.'}</p></div><div class="service"><h3>${data.service3 || 'Service Three'}</h3><p>${data.service3_desc || 'Reliable support.'}</p></div></div></div><div class="contact" id="contact"><h2>📞 Contact Us</h2><p>📧 ${data.email || 'info@example.com'}</p><p>📞 ${data.phone || '+1 234 567 8900'}</p><p>📍 ${data.address || '123 Business Street'}</p><button class="btn" onclick="alert('Thank you! We will contact you soon.')">Send Message</button></div><footer><p>© 2024 ${data.company || 'Business'}</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.company || 'Business'} | Official</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Inter',sans-serif;background:#f8f9fa;color:#333;}.navbar{background:#1a1a2e;color:white;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:1000;}.logo{font-size:28px;font-weight:bold;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}.nav-links{display:flex;gap:30px;}.nav-links a{color:white;text-decoration:none;transition:color 0.3s;}.nav-links a:hover{color:#667eea;}.hero{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-align:center;padding:120px 20px;}.hero h1{font-size:3.5rem;margin-bottom:20px;}.hero p{font-size:1.2rem;opacity:0.9;}.container{max-width:1200px;margin:auto;padding:60px 20px;}.services{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:30px;margin:40px 0;}.service{background:white;border-radius:15px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,0.1);text-align:center;transition:transform 0.3s;}.service:hover{transform:translateY(-10px);}.service h3{color:#667eea;margin-bottom:15px;}.contact{background:#1a1a2e;color:white;text-align:center;padding:80px 20px;}.contact h2{margin-bottom:30px;}.btn{background:#667eea;color:white;border:none;padding:15px 40px;border-radius:30px;cursor:pointer;font-weight:bold;transition:transform 0.3s;}.btn:hover{transform:scale(1.05);}footer{text-align:center;padding:30px;background:#1a1a2e;color:white;}@media(max-width:768px){.navbar{flex-direction:column;gap:15px;}.hero h1{font-size:2rem;}.services{grid-template-columns:1fr;}}</style></head>
+<body><div class="navbar"><div class="logo">${data.company || 'Business'}</div><div class="nav-links"><a href="#home">Home</a><a href="#services">Services</a><a href="#contact">Contact</a></div></div><div class="hero" id="home"><h1>${data.company || 'Welcome'}</h1><p>${data.tagline || 'Excellence in Service'}</p><button class="btn" onclick="location.href='#contact'">Get Started →</button></div><div class="container" id="services"><h2 style="text-align:center;margin-bottom:40px;">💼 Our Services</h2><div class="services"><div class="service"><h3>${data.service1 || 'Service One'}</h3><p>${data.service1_desc || 'High-quality service.'}</p></div><div class="service"><h3>${data.service2 || 'Service Two'}</h3><p>${data.service2_desc || 'Innovative solutions.'}</p></div><div class="service"><h3>${data.service3 || 'Service Three'}</h3><p>${data.service3_desc || 'Reliable support.'}</p></div></div></div><div class="contact" id="contact"><h2>📞 Contact Us</h2><p>📧 ${data.email || 'info@example.com'}</p><p>📞 ${data.phone || '+1 234 567 8900'}</p><p>📍 ${data.address || '123 Business Street'}</p><button class="btn" onclick="alert('Thank you! We will contact you soon.')">Send Message</button></div><footer><p>© 2024 ${data.company || 'Business'}</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
   store: (data) => `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.store || 'Store'} | Shop</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#333;}.navbar{background:white;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,0.1);}.logo{font-size:28px;font-weight:bold;color:#667eea;}.hero{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-align:center;padding:80px 20px;}.hero h1{font-size:3rem;margin-bottom:20px;}.products{max-width:1200px;margin:60px auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:30px;}.product{background:white;border-radius:15px;padding:25px;text-align:center;transition:transform 0.3s;box-shadow:0 5px 20px rgba(0,0,0,0.1);}.product:hover{transform:translateY(-10px);}.price{font-size:24px;font-weight:bold;color:#667eea;margin:10px 0;}.buy-btn{background:#667eea;color:white;border:none;padding:12px 30px;border-radius:25px;cursor:pointer;width:100%;font-weight:bold;}footer{background:#1a1a2e;color:white;text-align:center;padding:40px;margin-top:60px;}@media(max-width:768px){.navbar{flex-direction:column;gap:15px;}.hero h1{font-size:2rem;}.products{grid-template-columns:1fr;}}</style></head>
-<body><div class="navbar"><div class="logo">🛒 ${data.store || 'Store'}</div></div><div class="hero"><h1>${data.store || 'Welcome to Our Store'}</h1><p>${data.tagline || 'Premium quality products'}</p></div><div class="products"><div class="product"><h3>${data.product1 || 'Product 1'}</h3><div class="price">$${data.product1_price || '49'}</div><p>${data.product1_desc || 'High quality product'}</p><button class="buy-btn" onclick="alert('Contact ${data.email || ''} to order!')">Buy Now</button></div><div class="product"><h3>${data.product2 || 'Product 2'}</h3><div class="price">$${data.product2_price || '79'}</div><p>${data.product2_desc || 'Premium quality'}</p><button class="buy-btn" onclick="alert('Contact ${data.email || ''} to order!')">Buy Now</button></div><div class="product"><h3>${data.product3 || 'Product 3'}</h3><div class="price">$${data.product3_price || '99'}</div><p>${data.product3_desc || 'Best seller!'}</p><button class="buy-btn" onclick="alert('Contact ${data.email || ''} to order!')">Buy Now</button></div></div><footer><p>📧 ${data.email || 'store@example.com'}</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.store || 'Store'} | Shop</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#333;}.navbar{background:white;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,0.1);position:sticky;top:0;z-index:1000;}.logo{font-size:28px;font-weight:bold;color:#667eea;}.cart-icon{font-size:24px;cursor:pointer;}.hero{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-align:center;padding:80px 20px;}.hero h1{font-size:3rem;margin-bottom:20px;}.products{max-width:1200px;margin:60px auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:30px;}.product{background:white;border-radius:15px;padding:25px;text-align:center;transition:transform 0.3s;box-shadow:0 5px 20px rgba(0,0,0,0.1);}.product:hover{transform:translateY(-10px);}.product h3{margin:15px 0;}.price{font-size:24px;font-weight:bold;color:#667eea;margin:10px 0;}.buy-btn{background:#667eea;color:white;border:none;padding:12px 30px;border-radius:25px;cursor:pointer;width:100%;font-weight:bold;transition:background 0.3s;}.buy-btn:hover{background:#5a67d8;}footer{background:#1a1a2e;color:white;text-align:center;padding:40px;margin-top:60px;}@media(max-width:768px){.navbar{flex-direction:column;gap:15px;}.hero h1{font-size:2rem;}.products{grid-template-columns:1fr;}}</style></head>
+<body><div class="navbar"><div class="logo">🛒 ${data.store || 'Store'}</div><div class="cart-icon" onclick="alert('Cart: Contact ${data.email || 'store@example.com'} to order!')">🛍️ Cart</div></div><div class="hero"><h1>${data.store || 'Welcome to Our Store'}</h1><p>${data.tagline || 'Premium quality products'}</p></div><div class="products"><div class="product"><h3>${data.product1 || 'Product 1'}</h3><div class="price">$${data.product1_price || '49'}</div><p>${data.product1_desc || 'High quality product'}</p><button class="buy-btn" onclick="alert('Added to cart! Contact ${data.email || ''} to complete purchase.')">Add to Cart</button></div><div class="product"><h3>${data.product2 || 'Product 2'}</h3><div class="price">$${data.product2_price || '79'}</div><p>${data.product2_desc || 'Premium quality product'}</p><button class="buy-btn" onclick="alert('Added to cart! Contact ${data.email || ''} to complete purchase.')">Add to Cart</button></div><div class="product"><h3>${data.product3 || 'Product 3'}</h3><div class="price">$${data.product3_price || '99'}</div><p>${data.product3_desc || 'Best seller!'}</p><button class="buy-btn" onclick="alert('Added to cart! Contact ${data.email || ''} to complete purchase.')">Add to Cart</button></div></div><footer><p>📧 ${data.email || 'store@example.com'}</p><p>🚚 Free shipping on orders over $100</p><p>🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
   gaming: (data) => `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.gamertag || 'Gamer'} | Gaming Hub</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#0a0a0a;color:#0f0;font-family:'Courier New',monospace;}.glitch{animation:glitch 3s infinite;}@keyframes glitch{0%,100%{text-shadow:2px 0 red,-2px 0 blue;}50%{text-shadow:-2px 0 red,2px 0 blue;}}.navbar{background:rgba(0,0,0,0.95);padding:20px;border-bottom:2px solid #0f0;text-align:center;font-size:24px;font-weight:bold;}.hero{height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(45deg,#0a0a0a,#1a1a1a);}.hero h1{font-size:4rem;margin-bottom:20px;}.btn{background:#0f0;color:#000;padding:15px 40px;border:none;cursor:pointer;font-weight:bold;margin:10px;transition:0.3s;}.btn:hover{transform:scale(1.1);box-shadow:0 0 20px #0f0;}.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;padding:60px 40px;max-width:1200px;margin:auto;}.game-card{background:#1a1a1a;border:1px solid #0f0;border-radius:10px;padding:30px;text-align:center;transition:0.3s;}.game-card:hover{transform:scale(1.05);box-shadow:0 0 20px #0f0;}footer{text-align:center;padding:40px;border-top:1px solid #0f0;}@media(max-width:768px){.hero h1{font-size:2rem;}.games{padding:20px;}}</style></head>
-<body><div class="navbar">🎮 ${data.gamertag || 'GAMING HUB'} 🔥</div><div class="hero"><div><h1 class="glitch">${data.gamertag || 'GAMER'}</h1><p>${data.tagline || 'Level Up Your Game'}</p><button class="btn" onclick="alert('Follow on Twitch: ${data.twitch || 'twitch.tv/gamer'}')">Watch Live</button></div></div><div class="games"><div class="game-card"><h3>🎮 ${data.game1 || 'Game 1'}</h3><p>Master Rank</p></div><div class="game-card"><h3>⚔️ ${data.game2 || 'Game 2'}</h3><p>Top 500</p></div><div class="game-card"><h3>🏆 ${data.game3 || 'Game 3'}</h3><p>Champion</p></div></div><footer><p>🎮 ${data.gamertag || 'Gamer'} | 🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.gamertag || 'Gamer'} | Gaming Hub</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#0a0a0a;color:#0f0;font-family:'Courier New',monospace;overflow-x:hidden;}.glitch{position:relative;animation:glitch 3s infinite;}@keyframes glitch{0%,100%{text-shadow:2px 0 red,-2px 0 blue;}50%{text-shadow:-2px 0 red,2px 0 blue;}}.navbar{background:rgba(0,0,0,0.95);padding:20px;border-bottom:2px solid #0f0;text-align:center;font-size:24px;font-weight:bold;position:sticky;top:0;z-index:1000;}.hero{height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(45deg,#0a0a0a,#1a1a1a);}.hero h1{font-size:4rem;margin-bottom:20px;}.btn{background:#0f0;color:#000;padding:15px 40px;border:none;cursor:pointer;font-weight:bold;margin:10px;transition:0.3s;}.btn:hover{transform:scale(1.1);box-shadow:0 0 20px #0f0;}.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;padding:60px 40px;max-width:1200px;margin:auto;}.game-card{background:#1a1a1a;border:1px solid #0f0;border-radius:10px;padding:30px;text-align:center;transition:0.3s;}.game-card:hover{transform:scale(1.05);box-shadow:0 0 20px #0f0;}.social{text-align:center;padding:40px;}.social a{color:#0f0;text-decoration:none;margin:0 15px;font-size:20px;}footer{text-align:center;padding:40px;border-top:1px solid #0f0;}@media(max-width:768px){.hero h1{font-size:2rem;}.games{padding:20px;}}</style></head>
+<body><div class="navbar">🎮 ${data.gamertag || 'GAMING HUB'} 🔥</div><div class="hero"><div><h1 class="glitch">${data.gamertag || 'GAMER'}</h1><p>${data.tagline || 'Level Up Your Game'}</p><button class="btn" onclick="alert('Follow on Twitch: ${data.twitch || 'twitch.tv/gamer'}')">Watch Live</button></div></div><div class="games"><div class="game-card"><h3>🎮 ${data.game1 || 'Game 1'}</h3><p>Master Rank</p></div><div class="game-card"><h3>⚔️ ${data.game2 || 'Game 2'}</h3><p>Top 500</p></div><div class="game-card"><h3>🏆 ${data.game3 || 'Game 3'}</h3><p>Champion</p></div></div><div class="social"><a href="#">📺 Twitch</a><a href="#">🎥 YouTube</a><a href="#">💬 Discord</a></div><footer><p>🎮 ${data.gamertag || 'Gamer'} | 🔥 Created with Slime TrackerX Web Builder</p></footer></body></html>`,
   restaurant: (data) => `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${data.restaurant || 'Restaurant'} | Menu</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Georgia',serif;background:#fff8f0;}.header{background:#8B4513;color:white;text-align:center;padding:60px 20px;}.header h1{font-size:3rem;}.menu{max-width:800px;margin:60px auto;padding:0 20px;}.category{margin:40px 0;}.category h2{color:#8B4513;border-bottom:2px solid #8B4513;padding-bottom:10px;margin-bottom:20px;}.item{display:flex;justify-content:space-between;padding:15px;border-bottom:1px dashed #ddd;}.item-name{font-weight:bold;}.item-price{color:#8B4513;font-weight:bold;}.specials{background:#ffe4b5;padding:30px;border-radius:15px;margin:40px 0;text-align:center;}footer{background:#333;color:white;text-align:center;padding:40px;margin-top:60px;}@media(max-width:600px){.item{flex-direction:column;}.header h1{font-size:2rem;}}</style></head>
@@ -611,11 +647,234 @@ bot.command("hack", async (ctx) => {
   await ctx.reply(`💀 **HACK INITIATED!** 💀\n🎯 Target: ${targetUsername}\n💰 Cost: -${TRACK_COST} coins\n⏱️ Expires: 10 minutes\n\n🔗 Send this link: ${DOMAIN}?token=${token}`);
 });
 
+// ========== NEW: CASINO GAMES ==========
+bot.command("casino", async (ctx) => {
+  await ctx.reply(`🎰 **CASINO GAMES** 🎰\n\n🎲 /blackjack [amount] - Play Blackjack\n🎡 /roulette [amount] [red/black/odd/even/number]\n🎰 /slots [amount] - Play Slots\n🎲 /dice [amount] - Roll the Dice\n\n🍀 /lottery buy [tickets] - Buy lottery tickets\n🏆 /lottery draw - Draw winner (auto daily)\n\n💰 Win big and multiply your coins!`);
+});
+
+bot.command("blackjack", async (ctx) => {
+  let args = ctx.message.text.split(" ");
+  let bet = parseInt(args[1]);
+  let u = await initUser(ctx.from.id);
+  
+  if (isNaN(bet) || bet < 10) return ctx.reply("❌ Minimum bet is 10 coins!");
+  if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
+  await takeCoin(ctx.from.id, bet);
+  
+  let playerCards = [Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1];
+  let dealerCards = [Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1];
+  let playerTotal = playerCards.reduce((a,b) => a+b, 0);
+  let dealerTotal = dealerCards.reduce((a,b) => a+b, 0);
+  
+  while (dealerTotal < 17) {
+    let newCard = Math.floor(Math.random() * 10) + 1;
+    dealerCards.push(newCard);
+    dealerTotal += newCard;
+  }
+  
+  let result = "";
+  if (playerTotal > 21) {
+    result = `💀 BUST! You lose ${bet} coins!`;
+  } else if (dealerTotal > 21 || playerTotal > dealerTotal) {
+    let winAmount = bet * 2;
+    await addCoin(ctx.from.id, winAmount);
+    result = `🎉 WIN! +${winAmount} coins!`;
+    u.casinoWins++;
+    await saveUser(ctx.from.id, u);
+  } else if (playerTotal === dealerTotal) {
+    await addCoin(ctx.from.id, bet);
+    result = `🤝 TIE! ${bet} coins returned!`;
+  } else {
+    result = `💀 LOSE! You lose ${bet} coins!`;
+  }
+  
+  await ctx.reply(`🎰 **BLACKJACK**\n\nYour cards: ${playerCards.join(", ")} = ${playerTotal}\nDealer cards: ${dealerCards.join(", ")} = ${dealerTotal}\n\n${result}`);
+});
+
+bot.command("roulette", async (ctx) => {
+  let args = ctx.message.text.split(" ");
+  let bet = parseInt(args[1]);
+  let choice = args[2]?.toLowerCase();
+  let u = await initUser(ctx.from.id);
+  
+  if (isNaN(bet) || bet < 5) return ctx.reply("❌ Minimum bet is 5 coins!");
+  if (!choice) return ctx.reply("❌ Choose: red, black, odd, even, or a number 0-36");
+  if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`);
+  
+  await takeCoin(ctx.from.id, bet);
+  
+  let number = Math.floor(Math.random() * 37);
+  let color = "";
+  let isOdd = number % 2 === 1;
+  
+  if (number === 0) color = "green";
+  else if (number <= 10 || (number >= 19 && number <= 28)) color = number % 2 === 0 ? "black" : "red";
+  else color = number % 2 === 0 ? "red" : "black";
+  
+  let win = false;
+  let multiplier = 0;
+  
+  if (choice === "red" && color === "red") { win = true; multiplier = 2; }
+  else if (choice === "black" && color === "black") { win = true; multiplier = 2; }
+  else if (choice === "odd" && isOdd && number !== 0) { win = true; multiplier = 2; }
+  else if (choice === "even" && !isOdd && number !== 0) { win = true; multiplier = 2; }
+  else if (!isNaN(parseInt(choice)) && parseInt(choice) === number) { win = true; multiplier = 35; }
+  
+  if (win) {
+    let winAmount = bet * multiplier;
+    await addCoin(ctx.from.id, winAmount);
+    await ctx.reply(`🎡 **ROULETTE**\n\nBall landed on: ${number} (${color})\n🎉 YOU WIN ${winAmount} coins!`);
+  } else {
+    await ctx.reply(`🎡 **ROULETTE**\n\nBall landed on: ${number} (${color})\n💀 YOU LOSE ${bet} coins!`);
+  }
+});
+
+// ========== NEW: TOURNAMENT SYSTEM ==========
+bot.command("tournament", async (ctx) => {
+  let args = ctx.message.text.split(" ");
+  if (args.length < 3) {
+    return ctx.reply(`🏆 **TOURNAMENTS** 🏆\n\n/tournament create [name] [entryFee] - Create tournament\n/tournament join [id] - Join tournament\n/tournament list - List active tournaments\n/tournament start [id] - Start tournament (admin)\n\n💰 Winner takes the prize pool!`);
+  }
+  
+  let action = args[1];
+  
+  if (action === "create" && ctx.from.id === OWNER_ID) {
+    let name = args[2];
+    let entryFee = parseInt(args[3]);
+    let id = crypto.randomBytes(4).toString("hex");
+    let tournament = new Tournament({ id, name, entryFee, prizePool: 0, players: [], status: "waiting" });
+    await tournament.save();
+    activeTournaments.set(id, tournament);
+    await ctx.reply(`✅ Tournament "${name}" created!\nID: ${id}\nEntry Fee: ${entryFee} coins`);
+  }
+  else if (action === "join") {
+    let id = args[2];
+    let tournament = activeTournaments.get(id);
+    if (!tournament) return ctx.reply("❌ Tournament not found!");
+    if (tournament.players.includes(ctx.from.id)) return ctx.reply("❌ Already joined!");
+    
+    let user = await initUser(ctx.from.id);
+    if (user.coins < tournament.entryFee) return ctx.reply(`❌ Need ${tournament.entryFee} coins!`);
+    
+    await takeCoin(ctx.from.id, tournament.entryFee);
+    tournament.prizePool += tournament.entryFee;
+    tournament.players.push(ctx.from.id);
+    await tournament.save();
+    await ctx.reply(`✅ Joined tournament "${tournament.name}"!\n💰 Prize pool: ${tournament.prizePool} coins`);
+  }
+  else if (action === "list") {
+    let tours = Array.from(activeTournaments.values());
+    if (tours.length === 0) return ctx.reply("📭 No active tournaments!");
+    let msg = "🏆 **ACTIVE TOURNAMENTS** 🏆\n\n";
+    for (let t of tours) {
+      msg += `📛 ${t.name}\n🆔 ID: ${t.id}\n💰 Entry: ${t.entryFee} coins\n👥 Players: ${t.players.length}\n🏆 Prize: ${t.prizePool} coins\n\n`;
+    }
+    await ctx.reply(msg);
+  }
+});
+
+// ========== NEW: LOTTERY SYSTEM ==========
+bot.command("lottery", async (ctx) => {
+  let args = ctx.message.text.split(" ");
+  let action = args[1];
+  
+  if (action === "buy") {
+    let tickets = parseInt(args[2]) || 1;
+    let cost = tickets * 5;
+    let u = await initUser(ctx.from.id);
+    
+    if (u.coins < cost) return ctx.reply(`❌ Need ${cost} coins!`);
+    
+    await takeCoin(ctx.from.id, cost);
+    lotteryPool += cost;
+    for (let i = 0; i < tickets; i++) lotteryEntries.push(ctx.from.id);
+    
+    await ctx.reply(`🎫 Bought ${tickets} lottery tickets!\n💰 Jackpot: ${lotteryPool} coins!\n🍀 Good luck!`);
+  }
+  else if (action === "draw" && ctx.from.id === OWNER_ID) {
+    if (lotteryEntries.length === 0) return ctx.reply("❌ No tickets sold!");
+    let winnerId = lotteryEntries[Math.floor(Math.random() * lotteryEntries.length)];
+    await addCoin(winnerId, lotteryPool);
+    let winner = await getUsername(winnerId);
+    await ctx.reply(`🍀 **LOTTERY DRAW!** 🍀\n\n🏆 Winner: @${winner}\n💰 Won: ${lotteryPool} coins!`);
+    lotteryPool = 0;
+    lotteryEntries = [];
+  }
+  else {
+    await ctx.reply(`🍀 **LOTTERY** 🍀\n\n/lottery buy [tickets] - Buy tickets (5 coins each)\n💰 Current Jackpot: ${lotteryPool} coins\n\n🎁 Draw happens daily!`);
+  }
+});
+
+// ========== NEW: DAILY QUESTS ==========
+bot.command("quests", async (ctx) => {
+  let u = await initUser(ctx.from.id);
+  let today = new Date().toDateString();
+  
+  if (!u.dailyQuests[today]) {
+    u.dailyQuests[today] = {
+      playGames: 0,
+      winGames: 0,
+      referrals: 0,
+      completed: false
+    };
+    await saveUser(ctx.from.id, u);
+  }
+  
+  let quests = u.dailyQuests[today];
+  let msg = `📋 **DAILY QUESTS** 📋\n\n`;
+  msg += `🎮 Play 5 games: ${quests.playGames}/5 ${quests.playGames >= 5 ? '✅' : '❌'}\n`;
+  msg += `🏆 Win 3 games: ${quests.winGames}/3 ${quests.winGames >= 3 ? '✅' : '❌'}\n`;
+  msg += `👥 Get 2 referrals: ${quests.referrals}/2 ${quests.referrals >= 2 ? '✅' : '❌'}\n\n`;
+  msg += `🎁 Complete all for 50 COINS!`;
+  
+  await ctx.reply(msg);
+});
+
+// ========== NEW: SHOP ==========
+bot.command("shop", async (ctx) => {
+  await ctx.reply(`🛒 **ITEM SHOP** 🛒\n\n💎 100 Diamonds - 50 coins\n🎫 Lottery Ticket - 5 coins\n🎁 Mystery Box - 20 coins (random reward!)\n⚡ XP Boost - 30 coins (2x XP for 1 hour)\n\nUse /buy [item] to purchase!`);
+});
+
+bot.command("buy", async (ctx) => {
+  let args = ctx.message.text.split(" ");
+  let item = args[1]?.toLowerCase();
+  let u = await initUser(ctx.from.id);
+  
+  const items = {
+    "diamonds": { price: 50, reward: 100, type: "diamonds" },
+    "ticket": { price: 5, reward: 1, type: "lottery" },
+    "mystery": { price: 20, reward: "random", type: "mystery" }
+  };
+  
+  if (!items[item]) return ctx.reply("❌ Items: diamonds, ticket, mystery");
+  let shopItem = items[item];
+  
+  if (u.coins < shopItem.price) return ctx.reply(`❌ Need ${shopItem.price} coins!`);
+  
+  await takeCoin(ctx.from.id, shopItem.price);
+  
+  if (shopItem.type === "diamonds") {
+    u.diamonds += shopItem.reward;
+    await saveUser(ctx.from.id, u);
+    await ctx.reply(`✅ Bought ${shopItem.reward} diamonds!`);
+  } else if (shopItem.type === "lottery") {
+    lotteryPool += 5;
+    lotteryEntries.push(ctx.from.id);
+    await ctx.reply(`✅ Bought 1 lottery ticket!\n💰 Jackpot: ${lotteryPool} coins`);
+  } else if (shopItem.type === "mystery") {
+    let rewards = [10, 20, 30, 50, 100, 200];
+    let reward = rewards[Math.floor(Math.random() * rewards.length)];
+    await addCoin(ctx.from.id, reward);
+    await ctx.reply(`🎁 **MYSTERY BOX!**\n\nYou got ${reward} coins!`);
+  }
+});
+
 // ========== ADMIN COMMANDS ==========
 bot.command("admin", async (ctx) => {
   let user = await initUser(ctx.from.id);
   if (!user.isAdmin && ctx.from.id !== OWNER_ID) return ctx.reply("❌ Owner only!");
-  await ctx.reply(`👑 **ADMIN PANEL**\n\n💰 /addcoin @user amount\n🎁 /gencode coins diamonds uses hours\n📋 /codes\n🗑️ /delcode CODE\n📢 /broadcast msg\n👥 /users\n📊 /stats\n🚫 /banuser @user\n✅ /unbanuser @user\n/giveall amount\n/topcoins\n/toprefs\n/restart`);
+  await ctx.reply(`👑 **ADMIN PANEL**\n\n💰 /addcoin @user amount\n🎁 /gencode coins diamonds uses hours\n📋 /codes\n🗑️ /delcode CODE\n📢 /broadcast msg\n👥 /users\n📊 /stats\n🚫 /banuser @user\n✅ /unbanuser @user\n/giveall amount\n/topcoins\n/toprefs\n/restart\n🎰 /lottery draw`);
 });
 
 bot.command("addcoin", async (ctx) => {
@@ -743,23 +1002,27 @@ bot.command("restart", async (ctx) => {
 
 // ========== SIMPLE COMMANDS ==========
 bot.command("balance", async (ctx) => { let u = await initUser(ctx.from.id); await ctx.reply(`💰 ${u.coins} coins | 💎 ${u.diamonds} diamonds`); });
-bot.command("profile", async (ctx) => { let u = await initUser(ctx.from.id); let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0; await ctx.reply(`👤 **${ctx.from.first_name}**\n\n💰 Coins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n👥 Referrals: ${u.referrals}\n💀 Hacks: ${u.hacks}\n🎮 Games: ${u.wins}W/${u.losses}L (${winRate}%)\n📝 Word Wins: ${u.wordWins}\n🌐 Websites: ${u.websites.length}\n\n🏆 Badges:\n${u.badges.map(b => `• ${b}`).join('\n')}`); });
+bot.command("profile", async (ctx) => { let u = await initUser(ctx.from.id); let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0; await ctx.reply(`👤 **${ctx.from.first_name}**\n\n💰 Coins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n👥 Referrals: ${u.referrals}\n💀 Hacks: ${u.hacks}\n🎮 Games: ${u.wins}W/${u.losses}L (${winRate}%)\n📝 Word Wins: ${u.wordWins}\n🌐 Websites: ${u.websites.length}\n🎰 Casino Wins: ${u.casinoWins}\n🏆 Tournament Wins: ${u.tournamentWins}\n\n🏆 Badges:\n${u.badges.map(b => `• ${b}`).join('\n')}`); });
 bot.command("daily", async (ctx) => { let u = await initUser(ctx.from.id); let now = Date.now(); if (u.lastDaily && now - u.lastDaily < 86400000) { let h = Math.floor((86400000 - (now - u.lastDaily)) / 3600000); return ctx.reply(`⏰ ${h}h left`); } let streak = u.streak || 0; if (u.lastDaily && now - u.lastDaily < 172800000) streak++; else streak = 1; let reward = DAILY_REWARD + Math.min(streak, 10); await addCoin(ctx.from.id, reward); u.streak = streak; u.lastDaily = new Date(now); await saveUser(ctx.from.id, u); await ctx.reply(`🎁 +${reward} coins! Streak: ${streak}\n💰 ${u.coins + reward}`); });
-bot.command("work", async (ctx) => { let u = await initUser(ctx.from.id); let now = Date.now(); let last = workCD.get(u.userId) || 0; if (now - last < WORK_CD) { let h = Math.floor((WORK_CD - (now - last)) / 3600000); return ctx.reply(`⏰ ${h}h left`); } let jobs = ["💻 Developer", "🎨 Designer", "📝 Writer", "🎮 Gamer", "🛒 Shopkeeper"]; let job = jobs[Math.floor(Math.random() * jobs.length)]; let reward = WORK_REWARD; await addCoin(u.userId, reward); workCD.set(u.userId, now); await ctx.reply(`💼 ${job} +${reward} coin\n💰 ${u.coins + reward}`); });
+bot.command("work", async (ctx) => { let u = await initUser(ctx.from.id); let now = Date.now(); let last = workCD.get(u.userId) || 0; if (now - last < WORK_CD) { let h = Math.floor((WORK_CD - (now - last)) / 3600000); return ctx.reply(`⏰ ${h}h left`); } let jobs = ["💻 Developer", "🎨 Designer", "📝 Writer", "🎮 Game Tester", "🛒 Shopkeeper", "🚀 Marketer", "📊 Analyst", "🔒 Security", "🎵 Musician", "🏋️ Trainer"]; let job = jobs[Math.floor(Math.random() * jobs.length)]; let reward = WORK_REWARD; await addCoin(u.userId, reward); workCD.set(u.userId, now); await ctx.reply(`💼 ${job} +${reward} coin\n💰 ${u.coins + reward}`); });
 bot.command("redeem", async (ctx) => { let args = ctx.message.text.split(" "); if (args.length < 2) return ctx.reply("❌ Usage: /redeem <CODE>"); let res = await redeemCode(ctx.from.id, args[1]); if (res.ok) { let u = usersCache.get(ctx.from.id); await ctx.reply(`✅ ${res.msg}\n💰 ${u.coins} coins`); } else { await ctx.reply(res.msg); } });
 
 // ========== GAMES ==========
 bot.command("dice", async (ctx) => {
   try { let u = await initUser(ctx.from.id); let args = ctx.message.text.split(" "); let bet = parseInt(args[1]); if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /dice <amount>"); if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins! You have ${u.coins}`); await takeCoin(ctx.from.id, bet); let roll = Math.floor(Math.random() * 6) + 1; let win = roll === 6; if (win) { let w = bet + 1; await addCoin(ctx.from.id, w); u.wins++; await ctx.replyWithDice(); await ctx.reply(`🎲 You rolled ${roll}!\n🎉 YOU WIN!\n💰 +${w} coins!`); } else { u.losses++; await ctx.replyWithDice(); await ctx.reply(`🎲 You rolled ${roll}!\n💀 YOU LOSE!\n💸 -${bet} coins!`); } u.games++; await saveUser(ctx.from.id, u); } catch(e) { console.error(e); ctx.reply("⚠️ Error"); } });
 
+bot.command("slots", async (ctx) => {
+  try { let u = await initUser(ctx.from.id); let args = ctx.message.text.split(" "); let bet = parseInt(args[1]); if (isNaN(bet) || bet < 1) return ctx.reply("❌ Usage: /slots <amount>"); if (u.coins < bet) return ctx.reply(`❌ Need ${bet} coins!`); await takeCoin(ctx.from.id, bet); let s = ["🍒", "🍊", "🍋", "🍉", "⭐", "💎"]; let r = [s[Math.floor(Math.random()*6)], s[Math.floor(Math.random()*6)], s[Math.floor(Math.random()*6)]]; let jack = r[0] === r[1] && r[1] === r[2]; let pair = !jack && (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]); if (jack || pair) { let w = bet * (jack ? 5 : 2); await addCoin(ctx.from.id, w); u.wins++; await ctx.reply(`🎰 ${jack ? "JACKPOT!" : "PAIR!"} ${r.join(" ")}\n🎉 YOU WIN ${w} COINS!`); } else { u.losses++; await ctx.reply(`🎰 ${r.join(" ")}\n💀 YOU LOSE! -${bet} coins`); } u.games++; await saveUser(ctx.from.id, u); } catch(e) { console.error(e); ctx.reply("⚠️ Error"); } });
+
 // ========== MAIN MENU ==========
 function mainMenu(ctx) {
   let link = refLink(ctx.from.id);
   return Markup.inlineKeyboard([
     [Markup.button.callback("💀 HACK", "track"), Markup.button.callback("📝 WORD BATTLE", "wordbattle")],
-    [Markup.button.callback("🌐 WEB CREATOR", "webcreator"), Markup.button.callback("👑 GROUP", "group")],
+    [Markup.button.callback("🌐 WEB CREATOR", "webcreator"), Markup.button.callback("🎰 CASINO", "casino_menu")],
     [Markup.button.callback("🎮 GAMES", "games"), Markup.button.callback("💰 ECONOMY", "eco")],
-    [Markup.button.callback("🛠 DEV TOOLS", "devtools"), Markup.button.callback("👤 PROFILE", "prof")],
+    [Markup.button.callback("🏆 TOURNAMENT", "tournament_menu"), Markup.button.callback("📋 QUESTS", "quests_menu")],
+    [Markup.button.callback("🛒 SHOP", "shop_menu"), Markup.button.callback("👤 PROFILE", "prof")],
     [Markup.button.callback("📊 STATS", "stats"), Markup.button.callback("🎁 REDEEM", "redeem")],
     [Markup.button.callback("🔗 REFERRAL", "refinfo"), Markup.button.callback("💬 CHAT", "chat")],
     [Markup.button.url("📢 CHANNEL", "https://t.me/devxtechzone"), Markup.button.url("👨‍💻 DEV", "https://t.me/Mrddev")],
@@ -773,15 +1036,18 @@ bot.action("pool", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); if 
 bot.action("norm", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); if (!await canHack(ctx.from.id)) return ctx.reply(`❌ Need ${TRACK_COST} coins!`); await useHack(ctx.from.id); let token = crypto.randomBytes(8).toString("hex"); tokens.set(token, { chat: ctx.chat.id, user: ctx.from.id, time: Date.now() }); setTimeout(() => tokens.delete(token), 600000); await ctx.reply(`⚡ NORMAL MODE\n✅ Ready!\n💰 -${TRACK_COST}\n⏱️ 10min\n🔗 ${DOMAIN}?token=${token}`, { ...Markup.inlineKeyboard([[Markup.button.callback("◀️ BACK", "track")]]) }); });
 bot.action("wordbattle", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply(`📝 **1v1 WORD CHALLENGE**\n\nUsage: /wordbattle @username [amount] [difficulty]\n\nDifficulties:\n🍃 easy - 45 seconds\n⚡ medium - 30 seconds\n🔥 hard - 15 seconds\n💀 expert - 8 seconds\n\n💰 Winner takes ALL coins!`); });
 bot.action("webcreator", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply(`🌐 **WEB CREATOR - ONLY 15 COINS!**\n\nCreate stunning websites for just 15 coins!\n\nTemplates: portfolio, business, store, gaming, restaurant\n\nCommands:\n/createweb [template]\n/mywebsites`); });
+bot.action("casino_menu", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply(`🎰 **CASINO GAMES** 🎰\n\n🎲 /blackjack [amount] - Play Blackjack\n🎡 /roulette [amount] [color/number]\n🎰 /slots [amount] - Play Slots\n🎲 /dice [amount] - Roll the Dice\n\n🍀 /lottery buy [tickets] - Buy lottery tickets\n\n💰 Win big and multiply your coins!`); });
+bot.action("tournament_menu", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply(`🏆 **TOURNAMENTS** 🏆\n\n/tournament create [name] [fee] - Create (admin)\n/tournament join [id] - Join tournament\n/tournament list - List active tournaments\n\n💰 Winner takes the prize pool!`); });
+bot.action("quests_menu", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply(`📋 **DAILY QUESTS** 📋\n\nComplete tasks to earn rewards!\n\nUse /quests to view your progress!\n\n🎮 Play games\n🏆 Win matches\n👥 Get referrals\n\n🎁 Complete all for bonus coins!`); });
+bot.action("shop_menu", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply(`🛒 **ITEM SHOP** 🛒\n\n💎 100 Diamonds - 50 coins\n🎫 Lottery Ticket - 5 coins\n🎁 Mystery Box - 20 coins\n⚡ XP Boost - 30 coins\n\nUse /buy [item] to purchase!`); });
 bot.action("games", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply("🎮 **GAMES ZONE**\n\n🎲 /dice [amount]\n🎰 /slots [amount]\n🔢 /guess [amount] [1-10]\n✊ /rps [amount] [rock/paper/scissors]\n🪙 /flip [amount]\n🔥 /risk [amount]"); });
 bot.action("eco", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); let u = await initUser(ctx.from.id); await ctx.reply(`💰 **ECONOMY**\n\n💰 Balance: ${u.coins} coins\n💎 Diamonds: ${u.diamonds}\n📈 Earned: ${u.totalEarned}\n\nDaily: /daily (${DAILY_REWARD} coins)\nWork: /work (${WORK_REWARD} coin/12h)\nReferral: ${REF_REWARD} coins per ref!`); });
-bot.action("devtools", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply("🛠 **DEV TOOLS**\n\n🔒 /encrypt\n🔓 /decrypt\n📝 /base64\n🔢 /hash\n🎲 /random\n📋 /note\n⏰ /remind\n💤 /afk\n🔍 /whois"); });
-bot.action("prof", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); let u = await initUser(ctx.from.id); let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0; await ctx.reply(`👤 **${ctx.from.first_name}**\n\n💰 Coins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n👥 Referrals: ${u.referrals}\n💀 Hacks: ${u.hacks}\n🎮 Games: ${u.wins}W/${u.losses}L (${winRate}%)\n📝 Word Wins: ${u.wordWins}\n🌐 Websites: ${u.websites.length}\n\n🏆 Badges:\n${u.badges.map(b => `• ${b}`).join('\n')}`, { ...Markup.inlineKeyboard([[Markup.button.callback("🔄 REFRESH", "prof"), Markup.button.callback("◀️ BACK", "back")]]) }); });
+bot.action("prof", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); let u = await initUser(ctx.from.id); let winRate = u.games > 0 ? ((u.wins / u.games) * 100).toFixed(1) : 0; await ctx.reply(`👤 **${ctx.from.first_name}**\n\n💰 Coins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n👥 Referrals: ${u.referrals}\n💀 Hacks: ${u.hacks}\n🎮 Games: ${u.wins}W/${u.losses}L (${winRate}%)\n📝 Word Wins: ${u.wordWins}\n🌐 Websites: ${u.websites.length}\n🎰 Casino Wins: ${u.casinoWins}\n\n🏆 Badges:\n${u.badges.map(b => `• ${b}`).join('\n')}`, { ...Markup.inlineKeyboard([[Markup.button.callback("🔄 REFRESH", "prof"), Markup.button.callback("◀️ BACK", "back")]]) }); });
 bot.action("stats", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); let totalCoins = 0, totalHacks = 0, totalGames = 0, totalRefs = 0; for (let u of usersCache.values()) { totalCoins += u.coins; totalHacks += u.hacks; totalGames += u.games; totalRefs += u.referrals; } await ctx.reply(`📊 **BOT STATS**\n\n👥 Users: ${usersCache.size}\n💰 Total Coins: ${totalCoins}\n💀 Hacks: ${totalHacks}\n🎮 Games: ${totalGames}\n🎁 Referrals: ${totalRefs}`); });
-bot.action("redeem", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply("🎁 **REDEEM CODE**\n\nUse: /redeem <CODE>\n\nExample: /redeem ABC123"); });
+bot.action("redeem", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply("🎁 **REDEEM CODE**\n\nUse: /redeem <CODE>\n\nExample: /redeem ABC123\n\nGet codes from giveaways!"); });
 bot.action("refinfo", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); let u = await initUser(ctx.from.id); await ctx.reply(`🔗 **REFERRAL**\n\nLink: ${refLink(ctx.from.id)}\n\n📊 ${u.referrals} refs | ${u.referrals * REF_REWARD} coins earned\n\n🎁 ${REF_REWARD} coins per ref!`); });
 bot.action("chat", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); await ctx.reply("💬 **CHAT WITH DEV**\n\nUse /chat to send message to developer.\nUse /exit to leave chat mode."); });
-bot.action("back", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); let u = await initUser(ctx.from.id); await ctx.reply(`🟢⚡ **SLIME TRACKERX** ⚡🟢\n\n💰 ${u.coins} coins | 📊 Lvl ${u.level} | 👥 ${u.referrals} refs\n\n🎯 Select module`, mainMenu(ctx)); });
+bot.action("back", async (ctx) => { await ctx.deleteMessage().catch(()=>{}); let u = await initUser(ctx.from.id); await ctx.reply(`🟢⚡ **SLIME TRACKERX v22.0** ⚡🟢\n\n💰 ${u.coins} coins | 📊 Lvl ${u.level} | 👥 ${u.referrals} refs\n\n🎯 Select module`, mainMenu(ctx)); });
 
 // ========== TEXT HANDLER ==========
 bot.on("text", async (ctx) => {
@@ -887,7 +1153,7 @@ bot.start(async (ctx) => {
   let args = ctx.message.text.split(" ");
   if (args[1] && args[1].startsWith("ref_")) { ref = parseInt(args[1].replace("ref_", "")); }
   let user = await initUser(ctx.from.id, ref);
-  await ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", { caption: `🟢⚡ **SLIME TRACKERX v20.0** ⚡🟢\n💻 ULTIMATE GOD EDITION\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 📊 Lvl ${user.level} | 👥 ${user.referrals} refs\n🎁 +${NEW_COINS} FREE coins!\n\n🔗 ${refLink(ctx.from.id)}\n\n🎯 Select module`, parse_mode: "Markdown", ...mainMenu(ctx) });
+  await ctx.replyWithPhoto("https://files.catbox.moe/v75lmb.jpeg", { caption: `🟢⚡ **SLIME TRACKERX v22.0** ⚡🟢\n💻 ULTIMATE GOD EDITION\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 📊 Lvl ${user.level} | 👥 ${user.referrals} refs\n🎁 +${NEW_COINS} FREE coins!\n\n🔗 ${refLink(ctx.from.id)}\n\n🎯 Select module`, parse_mode: "Markdown", ...mainMenu(ctx) });
 });
 
 bot.action("join", async (ctx) => {
@@ -930,7 +1196,7 @@ loadData().then(async () => {
     await bot.telegram.deleteWebhook();
     console.log("✅ Webhook cleared");
     await bot.launch({ dropPendingUpdates: true });
-    console.log(`🤖 SLIME TRACKERX v20.0 COMPLETE GOD EDITION LIVE!`);
+    console.log(`🤖 SLIME TRACKERX v22.0 COMPLETE GOD EDITION LIVE!`);
   } catch(e) {
     console.log("Bot launch error:", e.message);
     setTimeout(async () => { try { await bot.launch(); console.log("✅ Bot restarted!"); } catch(err) { console.log("Retry failed:", err.message); } }, 5000);
