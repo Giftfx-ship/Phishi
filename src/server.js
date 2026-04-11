@@ -287,17 +287,36 @@ async function redeemCode(userId, code) {
 }
 
 // ========== NETLIFY DEPLOY ==========
+// ========== WORKING NETLIFY DEPLOY ==========
 async function deployToNetlify(htmlContent, siteName) {
   try {
-    if (!NETLIFY_TOKEN) {
-      return { success: false, error: "Netlify token missing" };
+    // Generate unique site name (prevents conflicts)
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 8);
+    let cleanName = siteName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 15);
+    
+    if (!cleanName || cleanName.length < 3) {
+      cleanName = `my-site`;
     }
-
-    const tempDir = path.join(__dirname, "exports", `site_${Date.now()}`);
+    
+    const finalSiteName = `${cleanName}-${timestamp}-${randomId}`;
+    
+    console.log(`🚀 Deploying: ${finalSiteName}`);
+    
+    // Create temp directory
+    const tempDir = path.join(__dirname, "exports", finalSiteName);
     await fs.ensureDir(tempDir);
+    
+    // Write index.html
     await fs.writeFile(path.join(tempDir, "index.html"), htmlContent);
     
-    const zipPath = path.join(__dirname, "exports", `${siteName}_${Date.now()}.zip`);
+    // Create zip file
+    const zipPath = path.join(__dirname, "exports", `${finalSiteName}.zip`);
     const output = fs.createWriteStream(zipPath);
     const archive = archiver("zip", { zlib: { level: 9 } });
     
@@ -309,31 +328,72 @@ async function deployToNetlify(htmlContent, siteName) {
       archive.finalize();
     });
     
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(zipPath));
-    formData.append("name", siteName.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 40));
-    
-    const response = await axios.post(`${NETLIFY_API}/sites`, formData, {
-      headers: { "Authorization": `Bearer ${NETLIFY_TOKEN}`, ...formData.getHeaders() },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-      timeout: 60000
-    });
-    
-    await fs.remove(tempDir);
-    await fs.remove(zipPath);
-    
-    return {
-      success: true,
-      url: response.data.url,
-      siteName: response.data.name
-    };
-  } catch (error) {
-    console.error("Deploy error:", error.message);
-    return { success: false, error: error.message };
+    // Deploy to netlify
+    // ========== NETLIFY DEPLOY - NO FALLBACK ==========
+// ========== NETLIFY DEPLOY - NO FALLBACK ==========
+async function deployToNetlify(htmlContent, siteName) {
+  // Generate unique site name
+  const timestamp = Date.now();
+  const randomId = Math.random().toString(36).substring(2, 8);
+  let cleanName = siteName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 15);
+  
+  if (!cleanName || cleanName.length < 3) {
+    cleanName = `site`;
   }
+  
+  const finalSiteName = `${cleanName}-${timestamp}-${randomId}`;
+  
+  console.log(`🚀 Deploying: ${finalSiteName}`);
+  
+  // Create temp directory
+  const tempDir = path.join(__dirname, "exports", finalSiteName);
+  await fs.ensureDir(tempDir);
+  await fs.writeFile(path.join(tempDir, "index.html"), htmlContent);
+  
+  // Create zip file
+  const zipPath = path.join(__dirname, "exports", `${finalSiteName}.zip`);
+  const output = fs.createWriteStream(zipPath);
+  const archive = archiver("zip", { zlib: { level: 9 } });
+  
+  await new Promise((resolve, reject) => {
+    output.on("close", resolve);
+    archive.on("error", reject);
+    archive.pipe(output);
+    archive.directory(tempDir, false);
+    archive.finalize();
+  });
+  
+  // Deploy to Netlify
+  const formData = new FormData();
+  formData.append("file", fs.createReadStream(zipPath));
+  
+  const response = await axios.post("https://api.netlify.com/api/v1/sites", formData, {
+    headers: {
+      "Authorization": `Bearer ${NETLIFY_TOKEN}`,
+      ...formData.getHeaders()
+    },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+    timeout: 60000
+  });
+  
+  console.log(`✅ Deployed: ${response.data.url}`);
+  
+  // Cleanup
+  await fs.remove(tempDir).catch(() => {});
+  await fs.remove(zipPath).catch(() => {});
+  
+  return {
+    success: true,
+    url: response.data.url,
+    siteName: response.data.name
+  };
 }
-
 // ========== DOPE HTML TEMPLATES ==========
 const htmlTemplates = {
   portfolio: (data) => `<!DOCTYPE html>
