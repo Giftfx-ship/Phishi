@@ -286,11 +286,10 @@ async function redeemCode(userId, code) {
   return { ok: true, msg: `✅ +${c.coins} coins!${c.diamonds > 0 ? ` +${c.diamonds}💎` : ''}` };
 }
 
-// ========== NETLIFY DEPLOY ==========
-// ========== WORKING NETLIFY DEPLOY ==========
+// ========== NETLIFY DEPLOY - WORKING VERSION (Replace the broken one) ==========
 async function deployToNetlify(htmlContent, siteName) {
   try {
-    // Generate unique site name (prevents conflicts)
+    // Generate unique site name
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 8);
     let cleanName = siteName
@@ -301,7 +300,7 @@ async function deployToNetlify(htmlContent, siteName) {
       .substring(0, 15);
     
     if (!cleanName || cleanName.length < 3) {
-      cleanName = `my-site`;
+      cleanName = `site`;
     }
     
     const finalSiteName = `${cleanName}-${timestamp}-${randomId}`;
@@ -311,8 +310,6 @@ async function deployToNetlify(htmlContent, siteName) {
     // Create temp directory
     const tempDir = path.join(__dirname, "exports", finalSiteName);
     await fs.ensureDir(tempDir);
-    
-    // Write index.html
     await fs.writeFile(path.join(tempDir, "index.html"), htmlContent);
     
     // Create zip file
@@ -328,71 +325,39 @@ async function deployToNetlify(htmlContent, siteName) {
       archive.finalize();
     });
     
-    // Deploy to netlify
-    // ========== NETLIFY DEPLOY - NO FALLBACK ==========
-// ========== NETLIFY DEPLOY - NO FALLBACK ==========
-async function deployToNetlify(htmlContent, siteName) {
-  // Generate unique site name
-  const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(2, 8);
-  let cleanName = siteName
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 15);
-  
-  if (!cleanName || cleanName.length < 3) {
-    cleanName = `site`;
+    // Deploy to Netlify
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(zipPath));
+    
+    const response = await axios.post("https://api.netlify.com/api/v1/sites", formData, {
+      headers: {
+        "Authorization": `Bearer ${NETLIFY_TOKEN}`,
+        ...formData.getHeaders()
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      timeout: 60000
+    });
+    
+    console.log(`✅ Deployed: ${response.data.url}`);
+    
+    // Cleanup
+    await fs.remove(tempDir).catch(() => {});
+    await fs.remove(zipPath).catch(() => {});
+    
+    return {
+      success: true,
+      url: response.data.url,
+      siteName: response.data.name
+    };
+    
+  } catch (error) {
+    console.error("❌ Netlify Error:", error.response?.data || error.message);
+    return {
+      success: false,
+      error: error.response?.data?.message || "Deployment failed"
+    };
   }
-  
-  const finalSiteName = `${cleanName}-${timestamp}-${randomId}`;
-  
-  console.log(`🚀 Deploying: ${finalSiteName}`);
-  
-  // Create temp directory
-  const tempDir = path.join(__dirname, "exports", finalSiteName);
-  await fs.ensureDir(tempDir);
-  await fs.writeFile(path.join(tempDir, "index.html"), htmlContent);
-  
-  // Create zip file
-  const zipPath = path.join(__dirname, "exports", `${finalSiteName}.zip`);
-  const output = fs.createWriteStream(zipPath);
-  const archive = archiver("zip", { zlib: { level: 9 } });
-  
-  await new Promise((resolve, reject) => {
-    output.on("close", resolve);
-    archive.on("error", reject);
-    archive.pipe(output);
-    archive.directory(tempDir, false);
-    archive.finalize();
-  });
-  
-  // Deploy to Netlify
-  const formData = new FormData();
-  formData.append("file", fs.createReadStream(zipPath));
-  
-  const response = await axios.post("https://api.netlify.com/api/v1/sites", formData, {
-    headers: {
-      "Authorization": `Bearer ${NETLIFY_TOKEN}`,
-      ...formData.getHeaders()
-    },
-    maxContentLength: Infinity,
-    maxBodyLength: Infinity,
-    timeout: 60000
-  });
-  
-  console.log(`✅ Deployed: ${response.data.url}`);
-  
-  // Cleanup
-  await fs.remove(tempDir).catch(() => {});
-  await fs.remove(zipPath).catch(() => {});
-  
-  return {
-    success: true,
-    url: response.data.url,
-    siteName: response.data.name
-  };
 }
 // ========== DOPE HTML TEMPLATES ==========
 const htmlTemplates = {
