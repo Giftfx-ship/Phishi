@@ -581,47 +581,163 @@ bot.command("hack", async (ctx) => {
 });
 
 // WORD BATTLE
+// ========== WORD BATTLE COMMAND ==========
 bot.command("wordbattle", async (ctx) => {
   let args = ctx.message.text.split(" ");
   if (args.length < 4) {
-    return ctx.reply(`📝 **WORD CHALLENGE**\n\n/wordbattle @username amount difficulty\n\nDifficulties: easy(3), medium(5), hard(7), expert(9)\n💰 Min bet: ${WORD_MIN_BET}`);
+    return ctx.reply(
+      `📝 **WORD BATTLE - 1v1 CHALLENGE** 📝\n\n` +
+      `┌─────────────────────────────────┐\n` +
+      `│  ⚔️ CHALLENGE A FRIEND! ⚔️     │\n` +
+      `└─────────────────────────────────┘\n\n` +
+      `📌 **Usage:**\n` +
+      `/wordbattle @username amount difficulty\n\n` +
+      `📝 **Example:**\n` +
+      `/wordbattle @john 50 hard\n\n` +
+      `⚡ **Difficulties:**\n` +
+      `🍃 easy - 45 seconds, 3 letters (1x)\n` +
+      `⚡ medium - 30 seconds, 5 letters (2x)\n` +
+      `🔥 hard - 15 seconds, 7 letters (3x)\n` +
+      `💀 expert - 8 seconds, 9 letters (5x)\n\n` +
+      `💰 **Bet Range:** ${WORD_MIN_BET} - ${WORD_MAX_BET} coins\n` +
+      `🏆 **Winner takes ALL coins!**\n\n` +
+      `🎮 **How to play:**\n` +
+      `1️⃣ Challenge someone with /wordbattle\n` +
+      `2️⃣ They accept with /acceptword\n` +
+      `3️⃣ You type a word with correct letters\n` +
+      `4️⃣ Win = Double your bet + XP!\n\n` +
+      `💡 **Example words:**\n` +
+      `• easy (3): CAT, DOG, SUN, CAR\n` +
+      `• medium (5): APPLE, MANGO, HOUSE\n` +
+      `• hard (7): FREEDOM, JUSTICE\n` +
+      `• expert (9): INCREDIBLE\n\n` +
+      `Ready to battle? Challenge someone now! ⚔️`
+    );
   }
   
   let targetUsername = args[1];
   let betAmount = parseInt(args[2]);
   let difficulty = args[3].toLowerCase();
   
-  if (!difficulties[difficulty]) return ctx.reply("❌ Invalid difficulty!");
-  if (isNaN(betAmount) || betAmount < WORD_MIN_BET) return ctx.reply(`❌ Min bet ${WORD_MIN_BET}!`);
-  if (betAmount > WORD_MAX_BET) return ctx.reply(`❌ Max bet ${WORD_MAX_BET}!`);
+  // Validate difficulty
+  if (!difficulties[difficulty]) {
+    return ctx.reply(
+      `❌ **Invalid difficulty!**\n\n` +
+      `Use: easy, medium, hard, or expert\n\n` +
+      `🍃 easy - 3 letters, 45 seconds\n` +
+      `⚡ medium - 5 letters, 30 seconds\n` +
+      `🔥 hard - 7 letters, 15 seconds\n` +
+      `💀 expert - 9 letters, 8 seconds`
+    );
+  }
   
+  // Validate bet amount
+  if (isNaN(betAmount) || betAmount < WORD_MIN_BET) {
+    return ctx.reply(`❌ **Minimum bet is ${WORD_MIN_BET} coins!**\n\nExample: /wordbattle @user 50 easy`);
+  }
+  
+  if (betAmount > WORD_MAX_BET) {
+    return ctx.reply(`❌ **Maximum bet is ${WORD_MAX_BET} coins!**\n\nExample: /wordbattle @user 100 hard`);
+  }
+  
+  // Find target user
   let targetId = null;
   for (let [id] of usersCache) {
-    try { let c = await ctx.telegram.getChat(id); if (c.username === targetUsername.replace("@", "")) { targetId = id; break; } } catch(e) {}
+    try {
+      let c = await ctx.telegram.getChat(id);
+      if (c.username === targetUsername.replace("@", "")) {
+        targetId = id;
+        break;
+      }
+    } catch(e) {}
   }
-  if (!targetId) return ctx.reply("❌ User not found!");
-  if (targetId === ctx.from.id) return ctx.reply("❌ Cannot battle yourself!");
   
+  if (!targetId) {
+    return ctx.reply(`❌ **User @${targetUsername.replace("@", "")} not found!**\n\nMake sure the username is correct.`);
+  }
+  
+  if (targetId === ctx.from.id) {
+    return ctx.reply(`❌ **You cannot battle yourself!**\n\nChallenge someone else.`);
+  }
+  
+  // Check if challenger has enough coins
   let user = await initUser(ctx.from.id);
-  if (user.coins < betAmount) return ctx.reply(`❌ Need ${betAmount} coins!`);
+  if (user.coins < betAmount) {
+    return ctx.reply(`❌ **You need ${betAmount} coins!**\n\nYou have ${user.coins} coins.\n\nEarn more: /daily, /work, /dice, /slots`);
+  }
   
   let diff = difficulties[difficulty];
-  wordChallenges.set(targetId, { from: ctx.from.id, bet: betAmount, difficulty, letterCount: diff.letters, status: "waiting", timer: diff.timer });
-  setTimeout(() => { if (wordChallenges.get(targetId)?.status === "waiting") wordChallenges.delete(targetId); }, 60000);
   
-  await ctx.reply(`✅ Challenge sent to ${targetUsername}!\n💰 Bet: ${betAmount} coins\n${diff.name}\n📏 Need a ${diff.letters}-letter word\n⏱️ ${diff.timer} seconds`);
-  await ctx.telegram.sendMessage(targetId, `📝 **WORD CHALLENGE!**\n\n@${ctx.from.username} challenges you!\n💰 Bet: ${betAmount} coins\n📏 Need a **${diff.letters}-letter word**\n⏱️ ${diff.timer} seconds\n\nType /acceptword to accept!`);
+  // Store challenge
+  wordChallenges.set(targetId, { 
+    from: ctx.from.id, 
+    bet: betAmount, 
+    difficulty, 
+    letterCount: diff.letters, 
+    status: "waiting",
+    timer: diff.timer
+  });
+  
+  // Auto-delete after 60 seconds
+  setTimeout(() => { 
+    if (wordChallenges.get(targetId)?.status === "waiting") {
+      wordChallenges.delete(targetId);
+    }
+  }, 60000);
+  
+  // Send challenge to both users
+  await ctx.reply(
+    `✅ **CHALLENGE SENT!** ✅\n\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│  🎯 Target: ${targetUsername}    │\n` +
+    `│  💰 Bet: ${betAmount} coins      │\n` +
+    `│  ⚡ Difficulty: ${diff.name}     │\n` +
+    `│  📏 Need: ${diff.letters} letters│\n` +
+    `│  ⏱️ Time: ${diff.timer} seconds  │\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `⏳ Waiting for ${targetUsername} to accept...\n` +
+    `⏰ Challenge expires in 60 seconds.`
+  );
+  
+  await ctx.telegram.sendMessage(
+    targetId, 
+    `📝 **⚠️ WORD CHALLENGE! ⚠️** 📝\n\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│  👤 Challenger: @${ctx.from.username} │\n` +
+    `│  💰 Bet: ${betAmount} coins          │\n` +
+    `│  ⚡ Difficulty: ${diff.name}         │\n` +
+    `│  📏 Need: ${diff.letters} letters    │\n` +
+    `│  ⏱️ Time: ${diff.timer} seconds      │\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `💰 **Winner takes ${betAmount * 2} coins!**\n\n` +
+    `✅ Type /acceptword to accept this challenge!\n` +
+    `⏰ Challenge expires in 60 seconds.`
+  );
 });
 
-// ACCEPT WORD
+// ========== ACCEPT WORD COMMAND ==========
 bot.command("acceptword", async (ctx) => {
   let challenge = wordChallenges.get(ctx.from.id);
-  if (!challenge) return ctx.reply("❌ No challenge found!");
-  if (challenge.status !== "waiting") return ctx.reply("❌ Already accepted!");
   
+  if (!challenge) {
+    return ctx.reply(
+      `❌ **No challenge found!**\n\n` +
+      `Ask someone to challenge you first:\n` +
+      `/wordbattle @username amount difficulty`
+    );
+  }
+  
+  if (challenge.status !== "waiting") {
+    return ctx.reply(`❌ **This challenge is already accepted or expired!**`);
+  }
+  
+  // Check if accepter has enough coins
   let accepter = await initUser(ctx.from.id);
-  if (accepter.coins < challenge.bet) return ctx.reply(`❌ Need ${challenge.bet} coins!`);
+  if (accepter.coins < challenge.bet) {
+    return ctx.reply(`❌ **You need ${challenge.bet} coins to accept!**\n\nYou have ${accepter.coins} coins.\n\nEarn more: /daily, /work, /dice, /slots`);
+  }
   
+  // Take coins from both players
   await takeCoin(challenge.from, challenge.bet);
   await takeCoin(ctx.from.id, challenge.bet);
   
@@ -630,21 +746,60 @@ bot.command("acceptword", async (ctx) => {
   challenge.currentTurn = "challenger";
   wordChallenges.set(ctx.from.id, challenge);
   
-  await ctx.telegram.sendMessage(challenge.from, `📝 **YOUR TURN!**\n\nGive a **${challenge.letterCount}-letter word**\n⏱️ ${diff.timer} seconds!\n💰 Pot: ${challenge.bet * 2} coins`);
+  // Notify challenger
+  await ctx.telegram.sendMessage(
+    challenge.from, 
+    `📝 **🎯 YOUR TURN! 🎯** 📝\n\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│  ⚡ Difficulty: ${diff.name}     │\n` +
+    `│  📏 Need: ${challenge.letterCount} letters│\n` +
+    `│  ⏱️ Time: ${diff.timer} seconds  │\n` +
+    `│  💰 Pot: ${challenge.bet * 2} coins│\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `✏️ **Type a ${challenge.letterCount}-letter word NOW!**\n\n` +
+    `⚠️ You have ${diff.timer} seconds!`
+  );
   
+  // Set timer for response
   setTimeout(async () => {
     let game = wordChallenges.get(ctx.from.id);
     if (game && game.status === "active" && game.currentTurn === "challenger") {
       game.status = "completed";
       wordChallenges.delete(ctx.from.id);
+      
+      // Challenger timed out - opponent wins
       await addCoin(ctx.from.id, challenge.bet * 2);
       await addXP(ctx.from.id, 10);
-      await ctx.telegram.sendMessage(ctx.from.id, `🎉 **YOU WIN!**\n💰 Won ${challenge.bet * 2} coins! +10 XP`);
-      await ctx.telegram.sendMessage(challenge.from, `💀 **YOU LOSE!**\n💸 Lost ${challenge.bet} coins`);
+      
+      let winner = await initUser(ctx.from.id);
+      winner.wordWins++;
+      await saveUser(ctx.from.id, winner);
+      
+      await ctx.telegram.sendMessage(
+        ctx.from.id, 
+        `🎉 **YOU WIN BY DEFAULT!** 🎉\n\n` +
+        `💰 Won ${challenge.bet * 2} coins! +10 XP\n\n` +
+        `⏰ Opponent didn't answer in time!`
+      );
+      
+      await ctx.telegram.sendMessage(
+        challenge.from, 
+        `💀 **YOU LOSE!** 💀\n\n` +
+        `⏰ Time's up! You took too long.\n` +
+        `💸 Lost ${challenge.bet} coins`
+      );
     }
   }, diff.timer * 1000);
   
-  await ctx.reply(`✅ Accepted! Challenger's turn!\n⏱️ ${diff.timer} seconds!`);
+  await ctx.reply(
+    `✅ **CHALLENGE ACCEPTED!** ✅\n\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│  ⚔️ Battle Started! ⚔️          │\n` +
+    `│  💰 Pot: ${challenge.bet * 2} coins│\n` +
+    `│  ⏱️ Timer: ${diff.timer} seconds  │\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `⏳ Waiting for @${(await getUsername(challenge.from))} to type a ${challenge.letterCount}-letter word...`
+  );
 });
 
 // LEADERBOARD
@@ -674,25 +829,162 @@ bot.command("topwords", async (ctx) => {
 bot.command("balance", async (ctx) => { let u = await initUser(ctx.from.id); await ctx.reply(`💰 **BALANCE**\n\nCoins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n⭐ XP: ${u.xp}/${u.level * 100}`); });
 
 // PROFILE
-bot.command("profile", async (ctx) => { let u = await initUser(ctx.from.id); await ctx.reply(`👤 **${ctx.from.first_name}**\n\n💰 ${u.coins} coins\n💎 ${u.diamonds}\n📊 Level ${u.level}\n👥 ${u.referrals} referrals\n💀 ${u.hacks} hacks\n🎮 ${u.wins}W/${u.losses}L\n📝 Word Wins: ${u.wordWins}\n🌐 ${u.websites.length} websites`); });
+// ========== DOPE PROFILE COMMAND ==========
+bot.command("profile", async (ctx) => {
+  let u = await initUser(ctx.from.id);
+  
+  // Calculate next level progress
+  let currentLevelXP = u.xp;
+  let neededXP = u.level * 100;
+  let progressPercent = Math.floor((currentLevelXP / neededXP) * 100);
+  let progressBar = "";
+  for (let i = 0; i < 10; i++) {
+    progressBar += i < progressPercent / 10 ? "█" : "░";
+  }
+  
+  // Get user rank
+  let sorted = Array.from(usersCache.values()).sort((a, b) => b.coins - a.coins);
+  let rank = sorted.findIndex(user => user.userId === ctx.from.id) + 1;
+  let rankEmoji = rank === 1 ? "👑" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "📌";
+  
+  // Get user badge
+  let badge = "";
+  if (u.hacks >= 100) badge = "💀 LEGENDARY HACKER 💀";
+  else if (u.hacks >= 50) badge = "🔥 ELITE HACKER 🔥";
+  else if (u.hacks >= 25) badge = "⚡ PRO HACKER ⚡";
+  else if (u.hacks >= 10) badge = "💀 HACKER 💀";
+  else if (u.wordWins >= 50) badge = "📝 WORD MASTER 📝";
+  else if (u.wordWins >= 25) badge = "⚔️ BATTLE WARRIOR ⚔️";
+  else if (u.level >= 10) badge = "🌟 VETERAN 🌟";
+  else if (u.level >= 5) badge = "⭐ RISING STAR ⭐";
+  else badge = "🎁 NEWBIE 🎁";
+  
+  // Get win rate
+  let totalGames = u.wins + u.losses;
+  let winRate = totalGames > 0 ? Math.floor((u.wins / totalGames) * 100) : 0;
+  
+  await ctx.reply(
+    `┌─────────────────────────────────┐\n` +
+    `│      👤 **PROFILE CARD** 👤      │\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `🎯 **${ctx.from.first_name}** ${ctx.from.username ? `(@${ctx.from.username})` : ''}\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│ 💰 **BALANCE**                   │\n` +
+    `│    Coins: ${u.coins.toLocaleString()} 🪙\n` +
+    `│    Diamonds: ${u.diamonds} 💎\n` +
+    `├─────────────────────────────────┤\n` +
+    `│ 📊 **PROGRESS**                  │\n` +
+    `│    Level: ${u.level} 🎯\n` +
+    `│    XP: ${currentLevelXP}/${neededXP}\n` +
+    `│    [${progressBar}] ${progressPercent}%\n` +
+    `├─────────────────────────────────┤\n` +
+    `│ 🎮 **GAME STATS**                │\n` +
+    `│    Wins: ${u.wins} 🏆 | Losses: ${u.losses} 💀\n` +
+    `│    Win Rate: ${winRate}%\n` +
+    `│    Word Wins: ${u.wordWins} 📝\n` +
+    `├─────────────────────────────────┤\n` +
+    `│ 💀 **HACKER STATS**              │\n` +
+    `│    Total Hacks: ${u.hacks} 🔥\n` +
+    `│    Referrals: ${u.referrals} 👥\n` +
+    `│    Websites: ${u.websites.length} 🌐\n` +
+    `├─────────────────────────────────┤\n` +
+    `│ 🏆 **ACHIEVEMENTS**              │\n` +
+    `│    Rank: ${rankEmoji} #${rank}\n` +
+    `│    Badge: ${badge}\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `⚡ **NEXT LEVEL:** ${neededXP - currentLevelXP} XP needed\n` +
+    `💡 **TIP:** Play games and do /daily to level up!`,
+    { parse_mode: "Markdown" }
+  );
+});
 
 // DAILY
+// ========== DOPE DAILY COMMAND ==========
 bot.command("daily", async (ctx) => { 
   let u = await initUser(ctx.from.id); 
   let now = Date.now(); 
+  
+  // Check if already claimed
   if (u.lastDaily && now - u.lastDaily < 86400000) { 
-    let h = Math.floor((86400000 - (now - u.lastDaily)) / 3600000); 
-    let m = Math.floor(((86400000 - (now - u.lastDaily)) % 3600000) / 60000);
-    return ctx.reply(`⏰ ${h}h ${m}m left until next daily!`); 
+    let remaining = 86400000 - (now - u.lastDaily);
+    let h = Math.floor(remaining / 3600000); 
+    let m = Math.floor((remaining % 3600000) / 60000);
+    let s = Math.floor((remaining % 60000) / 1000);
+    
+    // Progress bar for cooldown
+    let progressPercent = Math.floor(((86400000 - remaining) / 86400000) * 100);
+    let progressBar = "";
+    for (let i = 0; i < 10; i++) {
+      progressBar += i < progressPercent / 10 ? "█" : "░";
+    }
+    
+    return ctx.reply(
+      `┌─────────────────────────────────┐\n` +
+      `│      ⏰ **DAILY COOLDOWN** ⏰     │\n` +
+      `└─────────────────────────────────┘\n\n` +
+      `🎁 **Next reward available in:**\n` +
+      `⏰ ${h}h ${m}m ${s}s\n\n` +
+      `📊 **Cooldown Progress:**\n` +
+      `[${progressBar}] ${progressPercent}%\n\n` +
+      `💡 **Tip:** Come back tomorrow for more coins!\n` +
+      `🔥 **Current Streak:** ${u.streak}/7 days`
+    ); 
   } 
-  let reward = DAILY_REWARD + (u.streak * 1);
+  
+  // Calculate reward with streak bonus
+  let streakBonus = u.streak * 1;
+  let reward = DAILY_REWARD + streakBonus;
+  let oldStreak = u.streak;
+  
+  // Give reward
   await addCoin(ctx.from.id, reward);
   u.lastDaily = new Date(now);
   u.streak = (u.streak % 7) + 1;
   await saveUser(ctx.from.id, u);
-  await ctx.reply(`🎁 **DAILY REWARD!**\n+${reward} coins\n🔥 Streak: ${u.streak}/7 days`); 
+  
+  // Streak messages
+  let streakMessage = "";
+  let streakEmoji = "";
+  if (u.streak === 1) {
+    streakMessage = "🔥 You started a new streak!";
+    streakEmoji = "🌱";
+  } else if (u.streak === 7) {
+    streakMessage = "🎉 MAX STREAK! You're on fire! 🔥";
+    streakEmoji = "👑";
+  } else if (u.streak >= 5) {
+    streakMessage = "⚡ Almost at max streak! Keep going!";
+    streakEmoji = "⚡";
+  } else {
+    streakMessage = "🎯 Keep logging in daily to increase streak!";
+    streakEmoji = "🎯";
+  }
+  
+  // Next reward preview
+  let nextBonus = u.streak;
+  let nextReward = DAILY_REWARD + nextBonus;
+  
+  await ctx.reply(
+    `┌─────────────────────────────────┐\n` +
+    `│      🎁 **DAILY REWARD** 🎁      │\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `✨ **+${reward} COINS!** ✨\n\n` +
+    `┌─────────────────────────────────┐\n` +
+    `│ 🔥 **STREAK SYSTEM**            │\n` +
+    `│    Day ${oldStreak} → Day ${u.streak}/7\n` +
+    `│    ${streakEmoji} ${streakMessage}\n` +
+    `├─────────────────────────────────┤\n` +
+    `│ 📊 **REWARD BREAKDOWN**          │\n` +
+    `│    Base Reward: ${DAILY_REWARD} coins\n` +
+    `│    Streak Bonus: +${streakBonus} coins\n` +
+    `│    Total: ${reward} coins\n` +
+    `├─────────────────────────────────┤\n` +
+    `│ 🎯 **NEXT REWARD**               │\n` +
+    `│    Tomorrow's Reward: ${nextReward} coins\n` +
+    `│    (${DAILY_REWARD} base + ${nextBonus} streak)\n` +
+    `└─────────────────────────────────┘\n\n` +
+    `💪 **Keep the streak alive! Come back tomorrow!**`
+  );
 });
-
 // WORK
 bot.command("work", async (ctx) => { 
   let u = await initUser(ctx.from.id); 
