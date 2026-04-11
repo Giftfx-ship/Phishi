@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: phishi-app
+    runtime: image
+    buildCommand: |
+      echo "nameserver 8.8.8.8" > /etc/resolv.conf
+      echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+      curl -L https://github.com/Giftfx-ship/Phishi/archive/main.tar.gz | tar xz
+      mv Phishi-main src
+      cd src
+      npm install
+    startCommand: |
+      cd src
+      npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18
