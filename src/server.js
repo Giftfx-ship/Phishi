@@ -24,7 +24,7 @@ const NETLIFY_API = "https://api.netlify.com/api/v1";
 // ========== BOT CONFIG ==========
 const DOMAIN = "https://virtualnumbersfree.onrender.com";
 const CHANNEL = "@devxtechzone";
-const OWNER_ID = 6170894121;
+const OWNER_ID = 7271063368;
 
 // ========== ECONOMY ==========
 const WEB_PRICE = 15;
@@ -900,6 +900,10 @@ bot.start(async (ctx) => {
 bot.command("web", async (ctx) => {
   await ctx.reply(`🌐 **DOPE WEB CREATOR** 🌐\n\n💰 Cost: ${WEB_PRICE} coins\n✨ Get INSTANT LIVE LINK on Netlify!\n🎨 Modern, beautiful templates\n\n**Templates:** portfolio, business, store\n\n**How to use:** /createweb portfolio`);
 });
+// Add this anywhere before bot.launch()
+bot.command("myid", async (ctx) => {
+  await ctx.reply(`🔑 Your Telegram ID: \`${ctx.from.id}\``, { parse_mode: "Markdown" });
+});
 
 bot.command("createweb", async (ctx) => {
   let args = ctx.message.text.split(" ");
@@ -1306,11 +1310,19 @@ bot.command("buy", async (ctx) => {
 });
 
 // ========== ADMIN COMMANDS ==========
+// ========== ADMIN COMMANDS ==========
+
+// Check if user is owner
+function isOwner(userId) {
+  return userId === OWNER_ID;
+}
+
 bot.command("admin", async (ctx) => {
-  let user = await initUser(ctx.from.id);
-  if (!user.isAdmin && ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) {
+    return ctx.reply("❌ You are not the owner!");
+  }
   
-  await ctx.reply(`👑 **ADMIN PANEL** 👑
+  await ctx.reply(`👑 **OWNER PANEL** 👑
 
 📊 **Commands:**
 • /addcoin @user amount - Add coins
@@ -1319,26 +1331,30 @@ bot.command("admin", async (ctx) => {
 • /users - Show user count
 • /stats - Bot statistics
 • /banuser @user - Ban user
+• /unban @user - Unban user
 • /giveall amount - Give coins to all
-• /leaderboard - Top coins
-• /topwords - Top word winners
-• /setadmin @user - Make admin`);
+• /setadmin @user - Make someone admin
+• /resetuser @user - Reset user data
+• /myid - Show your Telegram ID`);
 });
 
 bot.command("addcoin", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) return;
+  
   let args = ctx.message.text.split(" ");
   let user = args[1]?.replace("@", "");
   let amt = parseInt(args[2]);
+  
   if (!user || isNaN(amt)) return ctx.reply("Usage: /addcoin @username amount");
   
   for (let [id, u] of usersCache) {
     try { 
       let c = await ctx.telegram.getChat(id); 
       if (c.username === user) { 
-        await addCoin(id, amt);
-        await ctx.reply(`✅ +${amt} coins to @${user}\n💰 New balance: ${u.coins + amt}`); 
-        await bot.telegram.sendMessage(id, `👑 Admin gave you +${amt} coins!`);
+        u.coins += amt;
+        await saveUser(id, u);
+        await ctx.reply(`✅ +${amt} coins to @${user}\n💰 New balance: ${u.coins}`); 
+        await bot.telegram.sendMessage(id, `👑 Owner gave you +${amt} coins!`);
         return; 
       } 
     } catch(e) {}
@@ -1347,7 +1363,8 @@ bot.command("addcoin", async (ctx) => {
 });
 
 bot.command("gencode", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) return;
+  
   let args = ctx.message.text.split(" ");
   let coins = parseInt(args[1]) || 50;
   let diamonds = parseInt(args[2]) || 0;
@@ -1359,48 +1376,55 @@ bot.command("gencode", async (ctx) => {
 });
 
 bot.command("broadcast", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) return;
+  
   let msg = ctx.message.text.split(" ").slice(1).join(" ");
   if (!msg) return ctx.reply("Usage: /broadcast message");
   
   let sent = 0;
+  let failed = 0;
+  
   for (let [id] of usersCache) {
     try { 
-      await ctx.telegram.sendMessage(id, `📢 **ANNOUNCEMENT**\n\n${msg}`); 
+      await ctx.telegram.sendMessage(id, `📢 **ANNOUNCEMENT FROM OWNER**\n\n${msg}`); 
       sent++; 
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 50));
+    } catch(e) { 
+      failed++; 
+    }
+    await new Promise(r => setTimeout(r, 100));
   }
-  await ctx.reply(`✅ Sent to ${sent} users`);
+  await ctx.reply(`✅ Sent to ${sent} users\n❌ Failed: ${failed}`);
 });
 
 bot.command("users", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
-  await ctx.reply(`📊 **USERS**\n\nTotal: ${usersCache.size}\nActive today: ${Array.from(usersCache.values()).filter(u => u.lastActive && new Date() - u.lastActive < 86400000).length}`);
+  if (!isOwner(ctx.from.id)) return;
+  
+  let activeToday = 0;
+  for (let u of usersCache.values()) {
+    if (u.lastActive && new Date() - u.lastActive < 86400000) activeToday++;
+  }
+  
+  await ctx.reply(`📊 **USERS STATISTICS**\n\n👥 Total Users: ${usersCache.size}\n🟢 Active Today: ${activeToday}\n💰 Total Coins: ${Array.from(usersCache.values()).reduce((a,b) => a + b.coins, 0)}`);
 });
 
 bot.command("stats", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) return;
+  
   let totalCoins = 0;
   let totalWebsites = await Website.countDocuments();
   let totalWordWins = 0;
   
   for (let u of usersCache.values()) {
     totalCoins += u.coins;
-    totalWordWins += u.wordWins;
+    totalWordWins += u.wordWins || 0;
   }
   
-  await ctx.reply(`📊 **BOT STATISTICS**
-
-👥 Users: ${usersCache.size}
-💰 Total Coins: ${totalCoins}
-🌐 Websites Created: ${totalWebsites}
-📝 Total Word Wins: ${totalWordWins}
-👑 Owner: @Mrddev`);
+  await ctx.reply(`📊 **BOT STATISTICS**\n\n👥 Users: ${usersCache.size}\n💰 Total Coins: ${totalCoins}\n🌐 Websites: ${totalWebsites}\n📝 Word Wins: ${totalWordWins}\n👑 Owner ID: ${OWNER_ID}`);
 });
 
 bot.command("banuser", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) return;
+  
   let args = ctx.message.text.split(" ");
   let user = args[1]?.replace("@", "");
   if (!user) return ctx.reply("Usage: /banuser @username");
@@ -1411,7 +1435,28 @@ bot.command("banuser", async (ctx) => {
       if (c.username === user) { 
         bannedUsers.add(id); 
         await ctx.reply(`🚫 Banned @${user}`);
-        await bot.telegram.sendMessage(id, "🚫 You have been banned from the bot!");
+        await bot.telegram.sendMessage(id, "🚫 You have been banned from this bot!");
+        return; 
+      } 
+    } catch(e) {}
+  }
+  ctx.reply("❌ User not found");
+});
+
+bot.command("unban", async (ctx) => {
+  if (!isOwner(ctx.from.id)) return;
+  
+  let args = ctx.message.text.split(" ");
+  let user = args[1]?.replace("@", "");
+  if (!user) return ctx.reply("Usage: /unban @username");
+  
+  for (let [id] of usersCache) {
+    try { 
+      let c = await ctx.telegram.getChat(id); 
+      if (c.username === user) { 
+        bannedUsers.delete(id); 
+        await ctx.reply(`✅ Unbanned @${user}`);
+        await bot.telegram.sendMessage(id, "✅ You have been unbanned!");
         return; 
       } 
     } catch(e) {}
@@ -1420,7 +1465,8 @@ bot.command("banuser", async (ctx) => {
 });
 
 bot.command("giveall", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) return;
+  
   let args = ctx.message.text.split(" ");
   let amount = parseInt(args[1]);
   if (isNaN(amount)) return ctx.reply("Usage: /giveall amount");
@@ -1430,12 +1476,14 @@ bot.command("giveall", async (ctx) => {
     u.coins += amount; 
     await saveUser(id, u); 
     count++;
+    if (count % 10 === 0) await new Promise(r => setTimeout(r, 50));
   }
   await ctx.reply(`✅ Added ${amount} coins to ${count} users`);
 });
 
 bot.command("setadmin", async (ctx) => {
-  if (ctx.from.id !== OWNER_ID) return;
+  if (!isOwner(ctx.from.id)) return;
+  
   let args = ctx.message.text.split(" ");
   let user = args[1]?.replace("@", "");
   if (!user) return ctx.reply("Usage: /setadmin @username");
@@ -1452,8 +1500,12 @@ bot.command("setadmin", async (ctx) => {
       } 
     } catch(e) {}
   }
+  ctx.reply("❌ User not found");
 });
 
+bot.command("myid", async (ctx) => {
+  await ctx.reply(`🔑 **Your Telegram ID:** \`${ctx.from.id}\``, { parse_mode: "Markdown" });
+});
 // ========== BUTTON HANDLERS ==========
 bot.action("menu_hack", async (ctx) => {
   await ctx.answerCbQuery();
