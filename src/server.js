@@ -124,7 +124,7 @@ let webBuilds = new Map();
 let bannedUsers = new Set();
 let workCD = new Map();
 let wordChallenges = new Map();
-let hackTokens = new Map(); // token -> { userId, username, label, time, expiresAt }
+let hackTokens = new Map();
 let processedMessages = new Set();
 
 // ========== DATABASE FUNCTIONS ==========
@@ -230,11 +230,19 @@ function refLink(id) {
   return `https://t.me/${bot.botInfo?.username || 'SlimeTrackerXBot'}?start=ref_${id}`;
 }
 
+// ========== FIXED FORCE JOIN FUNCTION ==========
 async function checkJoin(ctx) {
   try {
-    let m = await ctx.telegram.getChatMember(CHANNEL, ctx.from.id);
-    return ["creator", "administrator", "member"].includes(m.status);
-  } catch {
+    let chatMember = await ctx.telegram.getChatMember(CHANNEL, ctx.from.id);
+    let allowedStatuses = ["creator", "administrator", "member", "restricted"];
+    let isMember = allowedStatuses.includes(chatMember.status);
+    
+    // Debug log (remove in production)
+    console.log(`🔍 User ${ctx.from.id} (${ctx.from.first_name}): Status = ${chatMember.status}, Member = ${isMember}`);
+    
+    return isMember;
+  } catch (error) {
+    console.log(`❌ CheckJoin error for ${ctx.from.id}:`, error.message);
     return false;
   }
 }
@@ -279,100 +287,292 @@ async function redeemCode(userId, code) {
   return { ok: true, msg: `✅ +${c.coins} coins!${c.diamonds > 0 ? ` +${c.diamonds}💎` : ''}` };
 }
 
-// ========== NO API - JUST SEND HTML FILE ==========
-async function generateWebsite(htmlContent, siteName) {
-  return {
-    success: true,
-    html: htmlContent,
-    siteName: siteName
-  };
-}
-
-// ========== DOPE HTML TEMPLATES ==========
+// ========== DOPE HTML TEMPLATES (ULTRA MODERN) ==========
 const htmlTemplates = {
   portfolio: (data) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.name || 'Portfolio'} | Dope Website</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>${data.name || 'Portfolio'} | Dope AF 🔥</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: white; min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; flex-wrap: wrap; gap: 20px; }
-        .logo { font-size: 28px; font-weight: 800; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-links { display: flex; gap: 30px; }
-        .nav-links a { color: #fff; text-decoration: none; transition: 0.3s; }
-        .nav-links a:hover { color: #4ECDC4; }
-        .hero { text-align: center; padding: 80px 0; }
-        .hero h1 { font-size: 56px; margin-bottom: 20px; background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 20px; opacity: 0.9; margin-bottom: 30px; }
-        .btn { display: inline-block; background: linear-gradient(45deg, #FF6B6B, #4ECDC4); color: white; padding: 12px 30px; border-radius: 30px; text-decoration: none; font-weight: 600; transition: 0.3s; }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .section { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 40px; margin: 40px 0; backdrop-filter: blur(10px); }
-        .section h2 { margin-bottom: 20px; font-size: 32px; }
-        .skills { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
-        .skill { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; }
-        .projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 30px; }
-        .project-card { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; transition: 0.3s; }
-        .project-card:hover { transform: translateY(-5px); border: 1px solid rgba(78,205,196,0.3); }
-        footer { text-align: center; padding: 40px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 60px; }
-        .social-links { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
-        .social-links a { color: white; font-size: 24px; transition: 0.3s; }
-        .social-links a:hover { color: #4ECDC4; transform: translateY(-3px); }
-        @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .hero h1 { font-size: 32px; } .nav-links { justify-content: center; } }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .cursor { width: 20px; height: 20px; border: 2px solid #00ff88; border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: 0.1s; }
+        .cursor-follower { width: 40px; height: 40px; border: 1px solid rgba(0,255,136,0.5); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: 0.2s; }
+        .noise::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-radial-gradient(circle, #000, #000 2px, transparent 2px, transparent 4px);
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 9997;
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,255,136,0.2);
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ff88, #00bfff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 30px;
+            transition: 0.3s;
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: #00ff88;
+            transition: 0.3s;
+        }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-links a:hover { color: #00ff88; }
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0,255,136,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .hero-content {
+            z-index: 1;
+            animation: fadeInUp 1s ease;
+        }
+        .hero h1 {
+            font-size: 80px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, #00ff88, #00bfff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            font-size: 24px;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #00ff88, #00bfff);
+            color: #0a0a0a;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        .btn:hover::before { left: 100%; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,255,136,0.3); }
+        .section {
+            padding: 100px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-title {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 60px;
+            background: linear-gradient(135deg, #fff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .skills {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .skill {
+            background: rgba(0,255,136,0.1);
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: 1px solid rgba(0,255,136,0.3);
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+        }
+        .skill:hover {
+            transform: translateY(-5px);
+            background: rgba(0,255,136,0.2);
+            box-shadow: 0 5px 20px rgba(0,255,136,0.2);
+        }
+        .projects {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .project-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .project-card:hover {
+            transform: translateY(-10px);
+            border-color: #00ff88;
+            box-shadow: 0 10px 30px rgba(0,255,136,0.2);
+        }
+        .project-card i { font-size: 50px; color: #00ff88; margin-bottom: 20px; }
+        footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 40px; }
+            nav { flex-direction: column; gap: 20px; }
+            .nav-links a { margin: 0 15px; }
+            .section { padding: 60px 20px; }
+            .section-title { font-size: 32px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="navbar">
-            <div class="logo"><i class="fas fa-code"></i> ${data.name || 'Portfolio'}</div>
-            <div class="nav-links">
-                <a href="#">Home</a>
-                <a href="#">About</a>
-                <a href="#">Projects</a>
-                <a href="#">Contact</a>
-            </div>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="noise"></div>
+    
+    <nav>
+        <div class="logo">${data.name || 'PORTFOLIO'}</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Work</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
         </div>
-        <div class="hero">
-            <h1>${data.name || 'Welcome to My Portfolio'}</h1>
-            <p>${data.title || 'Creative Developer & UI/UX Designer'}</p>
-            <a href="#" class="btn"><i class="fas fa-paper-plane"></i> Hire Me</a>
+    </nav>
+    
+    <div class="hero">
+        <div class="hero-content">
+            <h1>${data.name || 'Creative Developer'}</h1>
+            <p>${data.title || 'Building the future, one line at a time'}</p>
+            <a href="#" class="btn">View Work <i class="fas fa-arrow-right"></i></a>
         </div>
-        <div class="section">
-            <h2><i class="fas fa-user-astronaut"></i> About Me</h2>
-            <p>${data.bio || 'Passionate creator building amazing web experiences. I love turning ideas into reality through code and design.'}</p>
-            <div class="skills">
-                <span class="skill"><i class="fab fa-js"></i> ${data.skill1 || 'JavaScript'}</span>
-                <span class="skill"><i class="fab fa-react"></i> ${data.skill2 || 'React.js'}</span>
-                <span class="skill"><i class="fab fa-node"></i> ${data.skill3 || 'Node.js'}</span>
-            </div>
-        </div>
-        <div class="section">
-            <h2><i class="fas fa-rocket"></i> Featured Projects</h2>
-            <div class="projects">
-                <div class="project-card"><i class="fas fa-globe" style="font-size: 40px; color: #4ECDC4;"></i><h3>Project Alpha</h3><p>Revolutionary web application</p></div>
-                <div class="project-card"><i class="fas fa-mobile-alt" style="font-size: 40px; color: #FF6B6B;"></i><h3>Project Beta</h3><p>Mobile-first design</p></div>
-                <div class="project-card"><i class="fas fa-brain" style="font-size: 40px; color: #45B7D1;"></i><h3>Project Gamma</h3><p>AI-powered solution</p></div>
-            </div>
-        </div>
-        <div class="section">
-            <h2><i class="fas fa-envelope"></i> Get In Touch</h2>
-            <p>📧 ${data.email || 'hello@example.com'}</p>
-            <div class="social-links">
-                <a href="#"><i class="fab fa-github"></i></a>
-                <a href="#"><i class="fab fa-linkedin"></i></a>
-                <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-instagram"></i></a>
-            </div>
-        </div>
-        <footer>
-            <p>© 2024 ${data.name || 'Portfolio'} | Built with <i class="fas fa-heart" style="color: #FF6B6B;"></i> by SlimeTrackerX</p>
-        </footer>
     </div>
+    
+    <div class="section">
+        <h2 class="section-title">⚡ Skills & Expertise</h2>
+        <div class="skills">
+            <div class="skill"><i class="fab fa-js"></i> ${data.skill1 || 'JavaScript'}</div>
+            <div class="skill"><i class="fab fa-react"></i> ${data.skill2 || 'React.js'}</div>
+            <div class="skill"><i class="fab fa-node"></i> ${data.skill3 || 'Node.js'}</div>
+            <div class="skill"><i class="fab fa-python"></i> Python</div>
+            <div class="skill"><i class="fas fa-database"></i> MongoDB</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">🔥 Featured Projects</h2>
+        <div class="projects">
+            <div class="project-card">
+                <i class="fas fa-globe"></i>
+                <h3>Project Nebula</h3>
+                <p>Revolutionary web3 platform</p>
+            </div>
+            <div class="project-card">
+                <i class="fas fa-mobile-alt"></i>
+                <h3>Project Aurora</h3>
+                <p>AI-powered mobile app</p>
+            </div>
+            <div class="project-card">
+                <i class="fas fa-brain"></i>
+                <h3>Project Quantum</h3>
+                <p>Machine learning solution</p>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>📧 ${data.email || 'hello@example.com'}</p>
+        <div style="margin-top: 20px;">
+            <i class="fab fa-github"></i> &nbsp;&nbsp;
+            <i class="fab fa-linkedin"></i> &nbsp;&nbsp;
+            <i class="fab fa-twitter"></i> &nbsp;&nbsp;
+            <i class="fab fa-instagram"></i>
+        </div>
+        <p style="margin-top: 20px;">© 2024 ${data.name || 'Portfolio'} | Built with 🔥</p>
+    </footer>
+    
+    <script>
+        let cursor = document.querySelector('.cursor');
+        let cursorFollower = document.querySelector('.cursor-follower');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            cursorFollower.style.left = e.clientX - 20 + 'px';
+            cursorFollower.style.top = e.clientY - 20 + 'px';
+        });
+    </script>
 </body>
 </html>`,
   
@@ -381,74 +581,230 @@ const htmlTemplates = {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.company || 'Business'} | Dope Website</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>${data.company || 'Business'} | Premium Solutions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background: #0a0a0a; color: #fff; }
-        .navbar { background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; flex-wrap: wrap; gap: 20px; }
-        .logo { font-size: 28px; font-weight: 800; background: linear-gradient(45deg, #FFD700, #FF6347); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-links a { color: #fff; text-decoration: none; margin-left: 30px; transition: 0.3s; }
-        .nav-links a:hover { color: #FFD700; }
-        .hero { background: linear-gradient(135deg, #1a1a2e, #16213e); text-align: center; padding: 120px 20px; position: relative; overflow: hidden; }
-        .hero::before { content: ''; position: absolute; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%); animation: rotate 20s linear infinite; }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .hero h1 { font-size: 56px; margin-bottom: 20px; position: relative; z-index: 1; }
-        .hero p { font-size: 20px; opacity: 0.9; margin-bottom: 30px; position: relative; z-index: 1; }
-        .btn { background: linear-gradient(45deg, #FFD700, #FF6347); color: #1a1a2e; padding: 15px 40px; border-radius: 40px; text-decoration: none; font-weight: 600; display: inline-block; transition: 0.3s; position: relative; z-index: 1; }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,215,0,0.3); }
-        .container { max-width: 1200px; margin: 0 auto; padding: 80px 20px; }
-        .section-title { text-align: center; font-size: 36px; margin-bottom: 50px; }
-        .services { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        .service-card { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 40px 30px; text-align: center; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
-        .service-card:hover { transform: translateY(-10px); border-color: #FFD700; }
-        .service-card i { font-size: 50px; color: #FFD700; margin-bottom: 20px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin: 60px 0; text-align: center; }
-        .stat-number { font-size: 48px; font-weight: 800; color: #FFD700; }
-        .contact-section { background: linear-gradient(135deg, #1a1a2e, #16213e); text-align: center; padding: 80px 20px; border-radius: 30px; margin-top: 60px; }
-        footer { text-align: center; padding: 40px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 60px; }
-        @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .hero h1 { font-size: 32px; } .nav-links a { margin: 0 15px; } }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 50px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+        .logo span { color: #ff3366; }
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 40px;
+            transition: 0.3s;
+        }
+        .nav-links a:hover { color: #ff3366; }
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .hero h1 {
+            font-size: 80px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, #ff3366, #ff6633);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 24px;
+            opacity: 0.8;
+            margin-bottom: 40px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #ff3366;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255,51,102,0.4);
+        }
+        .services {
+            padding: 100px 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .services h2 {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .service-card {
+            background: rgba(255,255,255,0.05);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .service-card:hover {
+            transform: translateY(-10px);
+            border-color: #ff3366;
+        }
+        .service-card i {
+            font-size: 50px;
+            color: #ff3366;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 900px;
+            margin: 80px auto;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #ff3366;
+        }
+        footer {
+            text-align: center;
+            padding: 60px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 40px; }
+            nav { flex-direction: column; gap: 20px; }
+            .nav-links a { margin: 0 15px; }
+            .stats { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="logo"><i class="fas fa-chart-line"></i> ${data.company || 'Business'}</div>
-        <div class="nav-links">
-            <a href="#">Home</a>
-            <a href="#">Services</a>
-            <a href="#">About</a>
-            <a href="#">Contact</a>
+    <canvas id="matrix"></canvas>
+    <div class="content">
+        <nav>
+            <div class="logo"><span>${data.company?.charAt(0) || 'X'}</span>${data.company?.slice(1) || 'Enterprise'}</div>
+            <div class="nav-links">
+                <a href="#">Home</a>
+                <a href="#">Services</a>
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+            </div>
+        </nav>
+        
+        <div class="hero">
+            <div>
+                <h1>${data.company || 'Future-Ready Solutions'}</h1>
+                <p>${data.tagline || 'Transforming businesses with cutting-edge technology'}</p>
+                <a href="#" class="btn">Get Started <i class="fas fa-arrow-right"></i></a>
+            </div>
         </div>
-    </div>
-    <div class="hero">
-        <h1>${data.company || 'Welcome to Our Business'}</h1>
-        <p>${data.tagline || 'Delivering Excellence Since 2024'}</p>
-        <a href="#" class="btn">Get Started <i class="fas fa-arrow-right"></i></a>
-    </div>
-    <div class="container">
-        <h2 class="section-title">💼 Our Premium Services</h2>
+        
         <div class="services">
-            <div class="service-card"><i class="fas fa-rocket"></i><h3>${data.service1 || 'Innovation'}</h3><p>${data.service1_desc || 'Cutting-edge solutions for modern business challenges'}</p></div>
-            <div class="service-card"><i class="fas fa-chart-line"></i><h3>${data.service2 || 'Growth'}</h3><p>${data.service2_desc || 'Strategic planning and exponential growth'}</p></div>
-            <div class="service-card"><i class="fas fa-headset"></i><h3>${data.service3 || 'Support'}</h3><p>${data.service3_desc || '24/7 dedicated customer support'}</p></div>
+            <h2>💼 Premium Services</h2>
+            <div class="service-grid">
+                <div class="service-card">
+                    <i class="fas fa-rocket"></i>
+                    <h3>${data.service1 || 'Innovation'}</h3>
+                    <p>${data.service1_desc || 'Cutting-edge solutions'}</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>${data.service2 || 'Growth'}</h3>
+                    <p>${data.service2_desc || 'Scale your business'}</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-headset"></i>
+                    <h3>${data.service3 || 'Support'}</h3>
+                    <p>${data.service3_desc || '24/7 dedicated team'}</p>
+                </div>
+            </div>
         </div>
+        
         <div class="stats">
             <div><div class="stat-number">500+</div><div>Projects</div></div>
             <div><div class="stat-number">200+</div><div>Clients</div></div>
             <div><div class="stat-number">98%</div><div>Satisfaction</div></div>
         </div>
+        
+        <footer>
+            <p>📧 ${data.email || 'hello@example.com'}</p>
+            <p>📞 ${data.phone || '+1 234 567 8900'}</p>
+            <p>📍 ${data.address || 'Global Headquarters'}</p>
+            <p style="margin-top: 20px;">© 2024 ${data.company || 'Business'} | All rights reserved</p>
+        </footer>
     </div>
-    <div class="contact-section">
-        <h2><i class="fas fa-envelope"></i> Contact Us</h2>
-        <p style="margin: 20px 0;">📧 ${data.email || 'info@example.com'}</p>
-        <p style="margin: 10px 0;">📞 ${data.phone || '+1 234 567 8900'}</p>
-        <p>📍 ${data.address || '123 Business Street, New York'}</p>
-    </div>
-    <footer>
-        <p>🔥 Built with SlimeTrackerX Business Suite</p>
-        <p>© 2024 ${data.company || 'Business'}. All rights reserved.</p>
-    </footer>
+    
+    <script>
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+        const columns = canvas.width / 20;
+        const drops = [];
+        for(let i = 0; i < columns; i++) drops[i] = 1;
+        function draw() {
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = '#ff3366';
+            ctx.font = '15px monospace';
+            for(let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i*20, drops[i]*20);
+                if(drops[i]*20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(draw, 50);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
 </body>
 </html>`,
   
@@ -457,48 +813,140 @@ const htmlTemplates = {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.store || 'Store'} | Dope Website</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>${data.store || 'Store'} | Premium Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f8f9fa; }
-        .navbar { background: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 20px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; flex-wrap: wrap; gap: 20px; }
-        .logo { font-size: 28px; font-weight: 800; background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .cart-icon { position: relative; cursor: pointer; }
-        .cart-count { position: absolute; top: -10px; right: -15px; background: #667eea; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; }
-        .hero { background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-align: center; padding: 80px 20px; }
-        .hero h1 { font-size: 48px; margin-bottom: 20px; }
-        .products { max-width: 1200px; margin: 60px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        .product-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1); transition: 0.3s; cursor: pointer; }
-        .product-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .product-image { height: 250px; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 50px;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -15px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            text-align: center;
+            padding: 100px 20px;
+        }
+        .hero h1 {
+            font-size: 56px;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        .products {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .product-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: 0.3s;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .product-card:hover {
+            transform: translateY(-10px);
+            border-color: #ff6b6b;
+            box-shadow: 0 10px 30px rgba(255,107,107,0.2);
+        }
+        .product-image {
+            height: 250px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .product-image i { font-size: 80px; color: white; }
         .product-info { padding: 20px; }
-        .product-title { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
-        .product-price { font-size: 24px; font-weight: 800; color: #667eea; margin: 10px 0; }
-        .add-to-cart { background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; transition: 0.3s; }
+        .product-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+        .product-price { font-size: 28px; font-weight: 800; color: #ff6b6b; margin: 10px 0; }
+        .add-to-cart {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: 0.3s;
+        }
         .add-to-cart:hover { opacity: 0.9; transform: scale(0.98); }
-        footer { background: #1a1a2e; color: white; text-align: center; padding: 40px; margin-top: 60px; }
-        @media (max-width: 768px) { .navbar { flex-direction: column; text-align: center; } .hero h1 { font-size: 32px; } }
+        footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 60px;
+        }
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 32px; }
+            nav { flex-direction: column; gap: 20px; }
+        }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="logo"><i class="fas fa-store"></i> ${data.store || 'Store'}</div>
-        <div class="cart-icon"><i class="fas fa-shopping-cart" style="font-size: 24px;"></i><span class="cart-count">0</span></div>
-    </div>
+    <nav>
+        <div class="logo"><i class="fas fa-store"></i> ${data.store || 'STORE'}</div>
+        <div class="cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-count">0</span>
+        </div>
+    </nav>
+    
     <div class="hero">
         <h1>${data.store || 'Welcome to Our Store'}</h1>
-        <p>${data.tagline || 'Premium Products at Best Prices'}</p>
+        <p>${data.tagline || 'Premium products at unbeatable prices'}</p>
     </div>
+    
     <div class="products">
         <div class="product-card">
             <div class="product-image"><i class="fas fa-laptop-code"></i></div>
             <div class="product-info">
                 <div class="product-title">${data.product1 || 'Premium Product'}</div>
                 <div class="product-price">$${data.product1_price || '49'}</div>
-                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart <i class="fas fa-shopping-cart"></i></button>
+                <button class="add-to-cart" onclick="addToCart('${data.product1 || 'Product 1'}', ${data.product1_price || 49})">Add to Cart</button>
             </div>
         </div>
         <div class="product-card">
@@ -506,7 +954,7 @@ const htmlTemplates = {
             <div class="product-info">
                 <div class="product-title">${data.product2 || 'Featured Item'}</div>
                 <div class="product-price">$${data.product2_price || '79'}</div>
-                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart <i class="fas fa-shopping-cart"></i></button>
+                <button class="add-to-cart" onclick="addToCart('${data.product2 || 'Product 2'}', ${data.product2_price || 79})">Add to Cart</button>
             </div>
         </div>
         <div class="product-card">
@@ -514,15 +962,24 @@ const htmlTemplates = {
             <div class="product-info">
                 <div class="product-title">${data.product3 || 'Deluxe Edition'}</div>
                 <div class="product-price">$${data.product3_price || '99'}</div>
-                <button class="add-to-cart" onclick="alert('Added to cart!')">Add to Cart <i class="fas fa-shopping-cart"></i></button>
+                <button class="add-to-cart" onclick="addToCart('${data.product3 || 'Product 3'}', ${data.product3_price || 99})">Add to Cart</button>
             </div>
         </div>
     </div>
+    
     <footer>
         <p>📧 ${data.email || 'store@example.com'}</p>
-        <p>🔥 Built with SlimeTrackerX Store Builder</p>
+        <p style="margin-top: 10px;">© 2024 ${data.store || 'Store'} | All rights reserved</p>
     </footer>
-    <script>let cart=[];function addToCart(name,price){cart.push({name,price});document.querySelector('.cart-count').textContent=cart.length;alert(name+' added to cart!');}</script>
+    
+    <script>
+        let cart = [];
+        function addToCart(name, price) {
+            cart.push({name, price});
+            document.querySelector('.cart-count').textContent = cart.length;
+            alert(name + ' added to cart! Total items: ' + cart.length);
+        }
+    </script>
 </body>
 </html>`
 };
@@ -547,6 +1004,20 @@ function getMainMenu() {
 // ========== COMMANDS ==========
 
 bot.start(async (ctx) => {
+  // Check channel membership first
+  let joined = await checkJoin(ctx);
+  if (!joined && ctx.from.id !== OWNER_ID) {
+    return ctx.reply(`🚫 **JOIN OUR CHANNEL FIRST!** 🚫\n\nClick below to join @devxtechzone then click /start again`, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "📢 JOIN CHANNEL", url: "https://t.me/devxtechzone" }],
+          [{ text: "✅ I JOINED", callback_data: "check_join" }]
+        ]
+      }
+    });
+  }
+  
   let ref = null;
   let args = ctx.message.text.split(" ");
   if (args[1] && args[1].startsWith("ref_")) { ref = parseInt(args[1].replace("ref_", "")); }
@@ -556,6 +1027,22 @@ bot.start(async (ctx) => {
     `🟢⚡ **SLIME TRACKERX v40.1** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
     { parse_mode: "Markdown", ...getMainMenu() }
   );
+});
+
+// Add the "I JOINED" button handler
+bot.action("check_join", async (ctx) => {
+  let joined = await checkJoin(ctx);
+  if (joined) {
+    await ctx.answerCbQuery("✅ Verified! You can use the bot now.");
+    let user = await initUser(ctx.from.id);
+    await ctx.reply(
+      `✅ **THANKS FOR JOINING!** ✅\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n\n⬇️ **USE THE MENU BELOW** ⬇️`,
+      { parse_mode: "Markdown", ...getMainMenu() }
+    );
+  } else {
+    await ctx.answerCbQuery("❌ Still not joined!", true);
+    await ctx.reply(`❌ **YOU HAVEN'T JOINED YET!** ❌\n\nPlease join @devxtechzone first, then click "I JOINED" again.`);
+  }
 });
 
 // HACK command with 1-hour expiry
@@ -878,7 +1365,6 @@ bot.command("topwords", async (ctx) => {
 // BALANCE
 bot.command("balance", async (ctx) => { let u = await initUser(ctx.from.id); await ctx.reply(`💰 **BALANCE**\n\nCoins: ${u.coins}\n💎 Diamonds: ${u.diamonds}\n📊 Level: ${u.level}\n⭐ XP: ${u.xp}/${u.level * 100}`); });
 
-// PROFILE
 // ========== DOPE PROFILE COMMAND ==========
 bot.command("profile", async (ctx) => {
   let u = await initUser(ctx.from.id);
@@ -1150,7 +1636,7 @@ bot.command("createweb", async (ctx) => {
   
   const templates = ["portfolio", "business", "store"];
   const questions = {
-    portfolio: ["name", "title", "bio", "email", "skill1", "skill2", "skill3"],
+    portfolio: ["name", "title", "skill1", "skill2", "skill3", "email"],
     business: ["company", "tagline", "service1", "service1_desc", "service2", "service2_desc", "service3", "service3_desc", "email", "phone", "address"],
     store: ["store", "tagline", "product1", "product1_price", "product2", "product2_price", "product3", "product3_price", "email"]
   };
@@ -1303,7 +1789,7 @@ bot.action("menu_web", async (ctx) => {
   await ctx.reply(
     `🌐 **DOPE WEB CREATOR** 🌐\n\n` +
     `💰 Cost: ${WEB_PRICE} coins\n` +
-    `⚡ Auto-Deploy to Vercel!\n\n` +
+    `⚡ Auto-Deploy to Netlify!\n\n` +
     `/createweb portfolio\n` +
     `/createweb business\n` +
     `/createweb store\n\n` +
@@ -1405,18 +1891,34 @@ bot.on("text", async (ctx) => {
   await addXP(ctx.from.id, 1);
 });
 
-// ========== MIDDLEWARE ==========
+// ========== MIDDLEWARE WITH FIXED FORCE JOIN ==========
 bot.use(async (ctx, next) => {
   if (!ctx.from) return next();
   if (bannedUsers.has(ctx.from.id)) return ctx.reply("🚫 You are banned!");
+  
   let user = usersCache.get(ctx.from.id);
-  if (user) { user.lastActive = new Date(); await saveUser(ctx.from.id, user); }
+  if (user) { 
+    user.lastActive = new Date(); 
+    await saveUser(ctx.from.id, user); 
+  }
+  
+  // Skip channel check for owner and during start command
+  if (ctx.from.id === OWNER_ID) return next();
+  if (ctx.message?.text === "/start") return next();
+  
   let joined = await checkJoin(ctx);
-  if (!joined && ctx.from.id !== OWNER_ID) {
-    return ctx.reply(`🚫 **JOIN CHANNEL**\n\nJoin @devxtechzone to use this bot!`, {
-      reply_markup: { inline_keyboard: [[{ text: "📢 JOIN", url: "https://t.me/devxtechzone" }]] }
+  if (!joined) {
+    return ctx.reply(`🚫 **JOIN OUR CHANNEL FIRST!** 🚫\n\nClick below to join @devxtechzone then click /start again`, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "📢 JOIN CHANNEL", url: "https://t.me/devxtechzone" }],
+          [{ text: "✅ I JOINED", callback_data: "check_join" }]
+        ]
+      }
     });
   }
+  
   return next();
 });
 
@@ -1513,9 +2015,9 @@ loadData().then(async () => {
     await bot.launch({ dropPendingUpdates: true });
     console.log(`🤖 SLIME TRACKERX v40.1 LIVE!`);
     console.log(`✅ All commands working!`);
-    console.log(`✅ Web creator ready!`);
+    console.log(`✅ Web creator ready with DOPE templates!`);
     console.log(`✅ Hack system ready with 1-HOUR EXPIRY!`);
-    console.log(`✅ /mylinks command added!`);
+    console.log(`✅ Force join channel FIXED!`);
   } catch(e) { console.log("Error:", e.message); }
 });
 
