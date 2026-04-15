@@ -1,5 +1,5 @@
 // =====================================================
-// 🎮🔥 SLIME TRACKERX v40.1 - WITH FORCE JOIN FIX 🔥🎮
+// 🎮🔥 SLIME TRACKERX v40.1 - FORCE JOIN ALWAYS ON 🔥🎮
 // =====================================================
 
 const { Telegraf, Markup } = require("telegraf");
@@ -230,14 +230,14 @@ function refLink(id) {
   return `https://t.me/${bot.botInfo?.username || 'SlimeTrackerXBot'}?start=ref_${id}`;
 }
 
-// ========== FIXED FORCE JOIN FUNCTION ==========
-async function checkJoin(ctx) {
+// ========== FORCE JOIN FUNCTION ==========
+async function checkJoin(userId) {
   try {
-    const chatMember = await ctx.telegram.getChatMember(CHANNEL, ctx.from.id);
+    const chatMember = await bot.telegram.getChatMember(CHANNEL, userId);
     const allowed = ["creator", "administrator", "member", "restricted"];
     return allowed.includes(chatMember.status);
   } catch (error) {
-    console.log(`⚠️ CheckJoin failed for ${ctx.from.id}:`, error.message);
+    console.log(`⚠️ CheckJoin failed for ${userId}:`, error.message);
     return false;
   }
 }
@@ -538,13 +538,102 @@ function getMainMenu() {
   };
 }
 
+// ========== MIDDLEWARE - CHECKS EVERY SINGLE COMMAND ==========
+bot.use(async (ctx, next) => {
+  if (!ctx.from) return next();
+  if (bannedUsers.has(ctx.from.id)) return ctx.reply("🚫 You are banned!");
+  
+  // Update user activity
+  let user = usersCache.get(ctx.from.id);
+  if (user) { 
+    user.lastActive = new Date(); 
+    await saveUser(ctx.from.id, user); 
+  }
+  
+  // OWNER BYPASS - no channel check for owner
+  if (ctx.from.id === OWNER_ID) return next();
+  
+  // SPECIAL: Allow the "I JOINED" button callback to process
+  if (ctx.callbackQuery && ctx.callbackQuery.data === "check_join") {
+    return next();
+  }
+  
+  // CHECK CHANNEL MEMBERSHIP FOR EVERY SINGLE MESSAGE/COMMAND
+  const isMember = await checkJoin(ctx.from.id);
+  
+  if (!isMember) {
+    // Block EVERYTHING - commands, messages, button clicks (except check_join)
+    const messageText = ctx.message?.text || "";
+    
+    // If it's a command or any message, block it
+    if (messageText.startsWith("/") || messageText.length > 0) {
+      return ctx.reply(
+        `🚫 **CHANNEL MEMBERSHIP REQUIRED** 🚫\n\n` +
+        `You are not a member of @devxtechzone.\n` +
+        `Join the channel to use this bot.\n\n` +
+        `⚠️ If you left the channel, you must rejoin!`,
+        {
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "📢 JOIN CHANNEL", url: "https://t.me/devxtechzone" }],
+              [{ text: "✅ I JOINED", callback_data: "check_join" }]
+            ]
+          }
+        }
+      );
+    }
+    
+    // Block any other interaction
+    if (ctx.callbackQuery) {
+      return ctx.answerCbQuery("❌ Join the channel first!", true);
+    }
+    
+    return;
+  }
+  
+  return next();
+});
+
+// ========== CHECK JOIN BUTTON HANDLER ==========
+bot.action("check_join", async (ctx) => {
+  const isMember = await checkJoin(ctx.from.id);
+  
+  if (isMember) {
+    await ctx.answerCbQuery("✅ Verified! You can use the bot now.");
+    
+    let user = await initUser(ctx.from.id);
+    await ctx.reply(
+      `✅ **VERIFIED!** ✅\n\n` +
+      `✨ Welcome ${ctx.from.first_name}!\n` +
+      `💰 ${user.coins} coins | 💎 ${user.diamonds}\n\n` +
+      `⬇️ **USE THE MENU BELOW** ⬇️`,
+      { parse_mode: "Markdown", ...getMainMenu() }
+    );
+  } else {
+    await ctx.answerCbQuery("❌ You still haven't joined the channel!", true);
+    await ctx.reply(
+      `❌ **NOT A MEMBER YET!** ❌\n\n` +
+      `Please join @devxtechzone first, then click "I JOINED" again.`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "📢 JOIN CHANNEL", url: "https://t.me/devxtechzone" }],
+            [{ text: "✅ I JOINED", callback_data: "check_join" }]
+          ]
+        }
+      }
+    );
+  }
+});
+
 // ========== COMMANDS ==========
 
 bot.start(async (ctx) => {
-  // FORCE JOIN CHECK - skip for owner
+  // Check if they're a member FIRST
   if (ctx.from.id !== OWNER_ID) {
-    const joined = await checkJoin(ctx);
-    if (!joined) {
+    const isMember = await checkJoin(ctx.from.id);
+    if (!isMember) {
       return ctx.reply(
         `🚫 **JOIN OUR CHANNEL FIRST!** 🚫\n\n` +
         `Click below to join @devxtechzone, then click "I JOINED".`,
@@ -563,29 +652,15 @@ bot.start(async (ctx) => {
 
   let ref = null;
   let args = ctx.message.text.split(" ");
-  if (args[1] && args[1].startsWith("ref_")) { ref = parseInt(args[1].replace("ref_", "")); }
+  if (args[1] && args[1].startsWith("ref_")) { 
+    ref = parseInt(args[1].replace("ref_", "")); 
+  }
   let user = await initUser(ctx.from.id, ref);
   
   await ctx.reply(
     `🟢⚡ **SLIME TRACKERX v40.1** ⚡🟢\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n📊 Level ${user.level} | 👥 ${user.referrals} referrals\n🏆 Word Wins: ${user.wordWins}\n\n⬇️ **CLICK BUTTONS BELOW** ⬇️`,
     { parse_mode: "Markdown", ...getMainMenu() }
   );
-});
-
-// CHECK JOIN BUTTON HANDLER
-bot.action("check_join", async (ctx) => {
-  const joined = await checkJoin(ctx);
-  if (joined) {
-    await ctx.answerCbQuery("✅ Verified! You can use the bot.");
-    let user = await initUser(ctx.from.id);
-    await ctx.reply(
-      `✅ **VERIFIED!** ✅\n\n✨ Welcome ${ctx.from.first_name}!\n💰 ${user.coins} coins | 💎 ${user.diamonds}\n\n⬇️ **USE THE MENU BELOW** ⬇️`,
-      { parse_mode: "Markdown", ...getMainMenu() }
-    );
-  } else {
-    await ctx.answerCbQuery("❌ You haven't joined the channel yet!", true);
-    await ctx.reply(`❌ **NOT JOINED YET!** ❌\n\nPlease join @devxtechzone first, then click "I JOINED" again.`);
-  }
 });
 
 // HACK command with 1-hour expiry
@@ -1335,34 +1410,6 @@ bot.on("text", async (ctx) => {
   await addXP(ctx.from.id, 1);
 });
 
-// ========== MIDDLEWARE ==========
-bot.use(async (ctx, next) => {
-  if (!ctx.from) return next();
-  if (bannedUsers.has(ctx.from.id)) return ctx.reply("🚫 You are banned!");
-  
-  let user = usersCache.get(ctx.from.id);
-  if (user) { 
-    user.lastActive = new Date(); 
-    await saveUser(ctx.from.id, user); 
-  }
-  
-  if (ctx.from.id === OWNER_ID) return next();
-  if (ctx.message?.text === "/start") return next();
-  
-  let joined = await checkJoin(ctx);
-  if (!joined) {
-    return ctx.reply(`🚫 **JOIN OUR CHANNEL FIRST!**\n\nJoin @devxtechzone then click /start`, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "📢 JOIN CHANNEL", url: "https://t.me/devxtechzone" }]
-        ]
-      }
-    });
-  }
-  
-  return next();
-});
-
 // ========== API ENDPOINTS ==========
 app.post("/api/capture", async (req, res) => {
   try {
@@ -1450,7 +1497,7 @@ loadData().then(async () => {
     await bot.telegram.deleteWebhook();
     await bot.launch({ dropPendingUpdates: true });
     console.log(`🤖 SLIME TRACKERX v40.1 LIVE!`);
-    console.log(`✅ Force join channel WORKING!`);
+    console.log(`✅ FORCE JOIN ALWAYS ON - Users must stay in channel!`);
     console.log(`✅ Hack system ready with 1-HOUR EXPIRY!`);
   } catch(e) { 
     console.log("Error:", e.message); 
