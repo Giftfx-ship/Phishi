@@ -21,7 +21,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
 // ========== 🔥 BOT CONFIG ==========
-const DOMAIN = "https://virtualnumbersfree.onrender.com";
+const DOMAIN = "https://metaverify.onrender.com";
 const CHANNEL = "@devxtechzone";
 const OWNER_ID = 7271063368;
 const MENU_IMAGE = "https://i.ibb.co/Txh7V7JL/IMG-3283.jpg";
