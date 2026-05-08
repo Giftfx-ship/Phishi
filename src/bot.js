@@ -645,13 +645,19 @@ bot.command("acceptword", async (ctx) => {
 // ========== OTHER COMMANDS ==========
 bot.command("leaderboard", async (ctx) => {
   let sorted = Array.from(usersCache.values()).sort((a, b) => b.coins - a.coins).slice(0, 15);
-  let message = "🏆 **TOP 15 RICHEST** 🏆\n\n";
+  let lines = ["🏆 TOP 15 RICHEST 🏆", ""];
+  
   for (let i = 0; i < sorted.length; i++) {
     let name = await getUsername(sorted[i].userId);
+    // Clean username: remove special chars and truncate if too long
+    name = name.replace(/[^a-zA-Z0-9_]/g, '').substring(0, 20);
+    
     let medal = i === 0 ? "👑" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
-    message += `${medal} ${i+1}. @${name} - ${sorted[i].coins} coins (Lvl ${sorted[i].level})\n`;
+    lines.push(`${medal} ${i+1}. @${name} | ${sorted[i].coins} coins | Lvl ${sorted[i].level}`);
   }
-  await sendDopeMessage(ctx, message);
+  
+  // Send with NO parse_mode to avoid Markdown errors
+  await ctx.reply(lines.join("\n"), { parse_mode: undefined });
 });
 
 bot.command("balance", async (ctx) => { 
@@ -810,7 +816,7 @@ bot.command("admin", async (ctx) => {
   if (!isOwner(ctx.from.id)) return;
   await sendDopeMessage(ctx, 
     `👑 **OWNER PANEL** 👑\n\n` +
-    `📊 /stats - Bot statistics\n` +
+    `📊 /stat and allwebsite dey too - Bot statistics\n` +
     `👥 /users - Total users\n` +
     `💰 /addcoin @user amount\n` +
     `🎫 /gencode coins diamonds uses hours\n` +
