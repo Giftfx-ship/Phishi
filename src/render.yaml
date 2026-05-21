@@ -17,10 +17,20 @@ services:
         value: "@devxtechzone"
       - key: PORT
         value: 3000
+      - key: DOMAIN
+        value: https://slime-trackerx-pro.onrender.com
     plan: free
     healthCheckPath: /
     autoDeploy: true
     disk:
       name: uploads
       mountPath: /opt/render/project/src/uploads
+      sizeGB: 1
+    disk:
+      name: public-avatars
+      mountPath: /opt/render/project/src/public/avatars
+      sizeGB: 1
+    disk:
+      name: exports
+      mountPath: /opt/render/project/src/exports
       sizeGB: 1
